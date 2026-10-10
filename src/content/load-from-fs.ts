@@ -1,9 +1,9 @@
 import { readdir, readFile } from 'node:fs/promises';
 import { join, relative, sep } from 'node:path';
-import { loadEntries, type LoadResult } from './loader';
+import { buildContent, type Content } from './build-content';
 
-/** Node-only: reads <rootDir>/content/**\/*.md and runs the shared loader. */
-export async function loadContentFromFs(rootDir: string): Promise<LoadResult> {
+/** Node-only: reads <rootDir>/content/**\/*.md and builds the shared content. */
+export async function loadContentFromFs(rootDir: string): Promise<Content> {
   const contentDir = join(rootDir, 'content');
   const dirents = await readdir(contentDir, { recursive: true, withFileTypes: true });
 
@@ -18,5 +18,5 @@ export async function loadContentFromFs(rootDir: string): Promise<LoadResult> {
       }),
   );
 
-  return loadEntries(files);
+  return buildContent(files);
 }

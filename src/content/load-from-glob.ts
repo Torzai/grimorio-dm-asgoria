@@ -1,4 +1,4 @@
-import { loadEntries, type LoadResult } from './loader';
+import { buildContent, type Content } from './build-content';
 
 const files = import.meta.glob<string>('/content/**/*.md', {
   query: '?raw',
@@ -7,6 +7,6 @@ const files = import.meta.glob<string>('/content/**/*.md', {
 });
 
 /** Browser-only: content bundled by Vite at build time. */
-export function loadContentFromGlob(): LoadResult {
-  return loadEntries(files);
+export function loadContentFromGlob(): Content {
+  return buildContent(files);
 }

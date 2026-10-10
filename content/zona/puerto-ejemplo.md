@@ -15,5 +15,5 @@ Zona **ficticia** para probar el grimorio. Aquí vive [[Tobías, mercader de eje
 
 | Lugar | Qué hay |
 |---|---|
-| Muelle de ejemplo | Puesto de Tobías |
+| Muelle de ejemplo | Puesto de [[tobias-mercader-ejemplo\|Tobías]] |
 | Faro de prueba | Templo del [[Culto del Faro de Ejemplo]] |
