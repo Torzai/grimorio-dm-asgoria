@@ -1,0 +1,138 @@
+# Spec — Grimorio del DM (Asgoria)
+
+## 1. Usuarios
+
+| Usuario | Situación | Necesidad principal |
+|---|---|---|
+| **DM narrando** | En partida, con NWN en la pantalla principal y el grimorio en la segunda | Encontrar en segundos un NPC, comando o varita aunque recuerde mal el nombre |
+| **DM preparando** | Antes de la sesión | Navegar por zona o facción, fijar lo que va a usar y repasar el diario |
+| **DM futuro** | Hereda el proyecto | Arrancarlo y añadir fichas sin saber React |
+
+## 2. Historias de usuario
+
+**HU-01 · Búsqueda rápida**
+Como DM narrando, quiero pulsar `Ctrl+K` y escribir parte de un nombre para saltar a la ficha sin soltar el teclado.
+- Abre desde cualquier pantalla; `Esc` cierra.
+- Resultados agrupados por tipo; `↑/↓` navega, `Enter` abre.
+- Encuentra con erratas leves ("Sigrund" → "Sigründ") y por prefijo ("var" → varitas).
+- Encuentra por alias.
+- Muestra la vista previa de la ficha seleccionada.
+
+**HU-02 · Navegar por categoría**
+Como DM preparando, quiero ver todas las fichas de un tipo y filtrarlas por zona, facción o tag.
+- Sidebar con los tipos y el número de fichas de cada uno.
+- Lista ordenada alfabéticamente; los filtros se combinan.
+- El estado de los filtros va en la URL (query params), para poder compartir o recargar.
+
+**HU-03 · Leer una ficha**
+Como DM, quiero ver cada ficha con un formato adecuado a su tipo.
+- NPC: cabecera, datos clave (ubicación, facción, raza/clase, tag del toolset) y secciones.
+- Varita: cargas, nivel de lanzador, recarga y uso destacado.
+- Comando: sintaxis en monoespaciada con botón de copiar.
+- Cualquier tipo: tags, relacionados, "mencionado en" (backlinks) y entradas del diario que la mencionan.
+
+**HU-04 · Enlaces internos**
+Como DM, quiero escribir `[[Nombre]]` en una ficha y que sea un enlace a otra.
+- Resuelve por slug, título o alias, sin distinguir mayúsculas ni tildes.
+- Admite `[[slug|texto visible]]`.
+- Un enlace roto se ve distinto (no navegable) y `validate` lo reporta como **warning**.
+
+**HU-05 · Fijados y recientes**
+Como DM narrando, quiero fijar las fichas de la sesión y ver las últimas abiertas.
+- Botón "Fijar" en cada ficha y en la palette (`Ctrl+Enter`).
+- Fijados en el sidebar; recientes (máx. 10) en la home.
+- Persisten en `localStorage` y la app funciona aunque `localStorage` falle.
+
+**HU-06 · Imágenes y mapas**
+Como DM, quiero ver el mapa de una zona y poder ampliarlo.
+- Imágenes en `content/assets/`, referenciadas desde el frontmatter (`mapa`) o el cuerpo.
+- Clic: visor a pantalla completa con zoom y desplazamiento.
+
+**HU-07 · Contenido robusto**
+Como DM futuro, quiero que si escribo mal una ficha me diga exactamente qué está mal.
+- `npm run validate` lista los errores con ruta, campo y motivo, en español.
+- En `dev`, las fichas inválidas se excluyen y aparece un aviso con el listado.
+
+**HU-08 · Arranque sencillo**
+Como DM futuro, quiero un README que me lleve de cero a la app abierta en menos de 15 minutos.
+
+**HU-09 · Importar el foro (final)**
+Como DM, quiero bajar el contenido de referencia del foro con mi sesión para convertirlo en fichas poco a poco.
+- Login manual en un navegador visible; la sesión se guarda en `scraper/auth.json` (ignorado por git).
+- Crawl limitado a las URLs semilla configuradas, en serie, con 1–2 s entre peticiones y reanudable.
+- Guarda HTML en bruto + `index.json` en `scraper/raw/` (ignorado por git).
+- Un conversor genera borradores Markdown en `content/_inbox/`, que la app **no** muestra y `validate` ignora.
+
+## 3. Modelo de contenido
+
+Un fichero = una ficha. El **slug** es el nombre del fichero sin extensión (kebab-case, único globalmente). La carpeta debe coincidir con `type`.
+
+### Campos comunes
+
+| Campo | Tipo | Obligatorio | Notas |
+|---|---|---|---|
+| `type` | enum | sí | `npc`, `zona`, `lore`, `varita`, `comando`, `herramienta`, `sesion` |
+| `title` | string | sí | |
+| `aliases` | string[] | no | Otros nombres o apodos |
+| `tags` | string[] | no | kebab-case |
+| `resumen` | string | no | Una línea; se usa en listas y en la palette |
+| `zona` | slug | no | Debe existir como ficha `zona` (warning si no) |
+| `relacionados` | slug[] | no | |
+| `actualizado` | fecha ISO | no | |
+
+### Campos por tipo
+
+| Tipo | Campos específicos |
+|---|---|
+| `npc` | `faccion?`, `raza?`, `clase?`, `ubicacion?`, `tag_toolset?` |
+| `zona` | `region?`, `mapa?` (ruta relativa a `content/assets/`) |
+| `lore` | `categoria`: `historia` \| `faccion` \| `religion` \| `cultura` \| `otro` |
+| `varita` | `cargas?` (int), `nivel_lanzador?` (int), `recarga?` (bool), `uso?` |
+| `comando` | `sintaxis` (obligatorio), `ejemplo?`, `ambito`: `jugador` \| `dm` |
+| `herramienta` | `uso?`, `donde?` |
+| `sesion` | `fecha` (obligatorio), `narradores?` (string[]) |
+
+### Convenciones de cuerpo (recomendadas, no validadas)
+
+- NPC: `## Cómo interpretarlo`, `## Qué sabe`, `## Ganchos`.
+- Varita: `## Efecto`, `## Reglas del server`.
+- Sesión: texto libre con `[[enlaces]]` a lo que apareció.
+
+### Ejemplo
+
+```markdown
+---
+type: npc
+title: "[Nombre del NPC]"
+aliases: ["[apodo]"]
+tags: [mercader]
+resumen: "Vende varitas en el puerto"
+zona: puerto-ejemplo
+faccion: "[Facción]"
+tag_toolset: npc_ejemplo_01
+---
+
+## Cómo interpretarlo
+...
+```
+
+> Las fichas de ejemplo del repo usan contenido **ficticio y claramente marcado** (`tags: [ejemplo]`). El lore real se mete a mano o con el importador.
+
+## 4. Requisitos no funcionales
+
+| ID | Requisito |
+|---|---|
+| RNF-01 | Búsqueda < 50 ms con 2.000 fichas |
+| RNF-02 | Carga inicial en `dev` < 2 s con 500 fichas |
+| RNF-03 | Usable de 1280 px a 1920 px de ancho (segunda pantalla); no se rompe a 390 px |
+| RNF-04 | Contraste AA y navegación completa por teclado |
+| RNF-05 | Sin peticiones de red en runtime salvo Google Fonts |
+| RNF-06 | Node LTS ≥ 22; Windows, macOS y Linux |
+
+## 5. Fuera de alcance
+
+- Login, usuarios o roles dentro de la app.
+- Editar fichas desde la UI (se editan los `.md`; como mucho, un botón "Abrir en editor" vía `vscode://`).
+- Sincronización en tiempo real entre DMs (se usa git).
+- Despliegue público (posible en el futuro; ver `plan.md` §8).
+- Integración directa con el juego o el servidor NWN.
