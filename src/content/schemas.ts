@@ -94,6 +94,20 @@ function isoDate(field: string) {
   });
 }
 
+function webAddress(field: string) {
+  return z.url({
+    protocol: /^https?$/,
+    error: expected(
+      `'${field}'`,
+      field,
+      'una dirección web completa, p. ej. https://asgoria.com.ar/foro/topic/…',
+    ),
+  });
+}
+
+export const PJ_ESTADOS = ['activo', 'inactivo', 'retirado', 'muerto'] as const;
+const MAX_CLASES = 3;
+
 const commonShape = {
   title: text('title'),
   aliases: textList('aliases').optional(),
@@ -113,6 +127,25 @@ export const entrySchemas = {
     clase: text('clase').optional(),
     ubicacion: text('ubicacion').optional(),
     tag_toolset: text('tag_toolset').optional(),
+  }),
+  pj: z.object({
+    type: z.literal('pj'),
+    ...commonShape,
+    /** The player's NWN account: it identifies the PJ in the game. */
+    cuenta_nwn: text('cuenta_nwn'),
+    sexo: text('sexo').optional(),
+    raza: text('raza').optional(),
+    clases: textList('clases')
+      .max(MAX_CLASES, { error: `'clases' admite como mucho ${MAX_CLASES} clases` })
+      .optional(),
+    /** Free text; pj.ts warns when it is not one of the 9 alignments. */
+    alineamiento: text('alineamiento').optional(),
+    deidad: text('deidad').optional(),
+    estado: oneOf('estado', PJ_ESTADOS),
+    /** The PJ's thread in the forum. */
+    hilo: webAddress('hilo').optional(),
+    /** When the entry was brought from the forum by the importer. */
+    importado: isoDate('importado').optional(),
   }),
   zona: z.object({
     type: z.literal('zona'),
@@ -151,6 +184,8 @@ export const entrySchemas = {
     ...commonShape,
     fecha: isoDate('fecha'),
     narradores: textList('narradores').optional(),
+    /** Slugs of the PJs that took part; links.ts links them both ways. */
+    participantes: slugList('participantes').optional(),
   }),
 } satisfies Record<EntryType, z.ZodObject>;
 
@@ -158,6 +193,7 @@ export const entryFrontmatterSchema = z.discriminatedUnion(
   'type',
   [
     entrySchemas.npc,
+    entrySchemas.pj,
     entrySchemas.zona,
     entrySchemas.lore,
     entrySchemas.varita,

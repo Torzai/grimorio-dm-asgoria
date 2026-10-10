@@ -1,11 +1,12 @@
 import { analyzeLinks, type LinkGraph } from './links';
 import { loadEntries } from './loader';
+import { pjIssues } from './pj';
 import { buildIndex, type SearchIndex } from './search-index';
 import type { ContentIssue, Entry } from './types';
 
 export interface Content {
   entries: Entry[];
-  /** Loader issues followed by link issues. */
+  /** Loader issues, then the warnings of each PJ, then link issues. */
   issues: ContentIssue[];
   links: LinkGraph;
   index: SearchIndex;
@@ -15,5 +16,10 @@ export interface Content {
 export function buildContent(files: Record<string, string>): Content {
   const { entries, issues } = loadEntries(files);
   const { issues: linkIssues, ...links } = analyzeLinks(entries);
-  return { entries, issues: [...issues, ...linkIssues], links, index: buildIndex(entries) };
+  return {
+    entries,
+    issues: [...issues, ...entries.flatMap(pjIssues), ...linkIssues],
+    links,
+    index: buildIndex(entries),
+  };
 }

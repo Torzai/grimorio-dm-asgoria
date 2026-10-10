@@ -1,5 +1,5 @@
 import type { Content } from './build-content';
-import { TYPE_NAV_ORDER } from './type-labels';
+import { PJ_ESTADO_LABELS, TYPE_NAV_ORDER } from './type-labels';
 import { ENTRY_TYPES, type Entry, type EntryType } from './types';
 
 export function isEntryType(value: string | undefined): value is EntryType {
@@ -14,7 +14,7 @@ export function getEntry(
   return entries.find((entry) => entry.type === type && entry.slug === slug);
 }
 
-export const FILTER_KEYS = ['zona', 'faccion', 'tag'] as const;
+export const FILTER_KEYS = ['zona', 'faccion', 'estado', 'tag'] as const;
 
 export type FilterKey = (typeof FILTER_KEYS)[number];
 
@@ -22,9 +22,9 @@ export type FilterKey = (typeof FILTER_KEYS)[number];
 export type EntryFilters = Partial<Record<FilterKey, string>>;
 
 export interface FilterValue {
-  /** What goes in the URL: a zona slug, a faction's exact text or a tag. */
+  /** What goes in the URL: a zona slug, a faction's exact text, a PJ's estado or a tag. */
   value: string;
-  /** What the DM reads; for zonas, the title of the zona entry. */
+  /** What the DM reads; for zonas, the title of the zona entry; for estados, 'Activo'… */
   label: string;
   count: number;
 }
@@ -37,11 +37,15 @@ export interface FilterGroup {
 // Spanish collation, ignoring case and accents: 'Álvaro' sorts next to 'Alba', not after 'Zoe'.
 const collator = new Intl.Collator('es', { sensitivity: 'base' });
 
-/** Filters that make sense for a type: no zona filter among zonas, factions only for NPCs. */
+/**
+ * Filters that make sense for a type: no zona filter among zonas, factions only for NPCs and
+ * estado only for PJs.
+ */
 export function filterKeysFor(type: EntryType): FilterKey[] {
   return FILTER_KEYS.filter((key) => {
     if (key === 'zona') return type !== 'zona';
     if (key === 'faccion') return type === 'npc';
+    if (key === 'estado') return type === 'pj';
     return true;
   });
 }
@@ -52,9 +56,19 @@ function filterValuesOf(entry: Entry, key: FilterKey): string[] {
       return entry.data.zona ? [entry.data.zona] : [];
     case 'faccion':
       return entry.data.type === 'npc' && entry.data.faccion ? [entry.data.faccion] : [];
+    case 'estado':
+      return entry.data.type === 'pj' ? [entry.data.estado] : [];
     case 'tag':
       return entry.data.tags ?? [];
   }
+}
+
+const estadoLabels: ReadonlyMap<string, string> = new Map(Object.entries(PJ_ESTADO_LABELS));
+
+function filterLabel(key: FilterKey, value: string, zoneTitles: ReadonlyMap<string, string>) {
+  if (key === 'zona') return zoneTitles.get(value) ?? value;
+  if (key === 'estado') return estadoLabels.get(value) ?? value;
+  return value;
 }
 
 function compareByTitle(a: Entry, b: Entry): number {
@@ -117,7 +131,7 @@ export function getFilterOptions(entries: readonly Entry[], type: EntryType): Fi
     }
     const values = [...counts].map(([value, count]) => ({
       value,
-      label: key === 'zona' ? (zoneTitles.get(value) ?? value) : value,
+      label: filterLabel(key, value, zoneTitles),
       count,
     }));
     values.sort((a, b) => collator.compare(a.label, b.label) || collator.compare(a.value, b.value));

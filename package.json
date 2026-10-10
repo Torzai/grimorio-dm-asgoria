@@ -10,8 +10,6 @@
     "preview": "vite preview",
     "lint": "eslint . --max-warnings 0",
     "format": "prettier --write .",
-    "test": "vitest run",
-    "test:e2e": "playwright test",
     "validate": "tsx scripts/validate-content.ts",
     "scrape:login": "tsx scraper/login.ts",
     "scrape:thread": "tsx scraper/crawl-thread.ts",
@@ -37,8 +35,6 @@
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.64.0",
-    "@testing-library/dom": "^10.4.2",
-    "@testing-library/react": "^16.3.3",
     "@types/mdast": "^4.0.4",
     "@types/node": "^24.19.2",
     "@types/react": "^19.3.0",
@@ -57,7 +53,6 @@
     "turndown-plugin-gfm": "^1.0.2",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.71.1",
-    "vite": "^8.3.4",
-    "vitest": "^5.0.3"
+    "vite": "^8.3.4"
   }
 }

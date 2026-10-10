@@ -47,13 +47,13 @@ Debe poder heredarse: el día que los DMs actuales se vayan, un DM nuevo tiene q
 ### P7 — Calidad de código
 - TypeScript `strict`. Prohibido `any`; si hace falta, `unknown` y narrowing.
 - Código, nombres y comentarios en **inglés**. UI y contenido en **español**.
-- Componentes funcionales y hooks. La lógica pura (parseo, índice, enlaces) va fuera de los componentes y se testea con **Vitest**.
+- Componentes funcionales y hooks. La lógica pura (parseo, índice, enlaces) va fuera de los componentes.
+- No se escriben tests automáticos (ni Vitest ni Playwright). Un test existente que rompa el build o el lint se borra.
 - ESLint + Prettier sin errores ni warnings para cerrar una tarea.
 
 ### P8 — Verificación
-- Tareas de lógica pura: Vitest, sin Playwright.
-- Tareas con UI: Vitest donde aplique y **verificación con Playwright** (navegar, interactuar y comprobar el resultado visible).
-- Una tarea no está cerrada si `npm run validate`, `npm run lint`, `npm run test` y `npm run build` no pasan.
+- Una tarea se cierra con `validate`, `lint` y `build` en verde y una comprobación manual en el navegador.
+- La comprobación manual puede hacerse a mano o navegando con Playwright, sin escribir specs.
 
 ### P9 — Flujo SDD
 - Constitución → spec → plan → tasks. **Una tarea por sesión.**
@@ -65,6 +65,7 @@ Debe poder heredarse: el día que los DMs actuales se vayan, un DM nuevo tiene q
 - Nunca se guardan credenciales en el repo. `auth.json`, `.env*` y `scraper/raw/` van en `.gitignore`.
 - El lore pertenece a Asgoria. No se publica fuera del círculo de DMs sin permiso de los admins.
 - No se almacenan mensajes privados ni datos personales de otros jugadores. Solo contenido de referencia (lore, reglas, sistemas, NPCs).
+- De los PJ, la cuenta de NWN sí se guarda; email y Discord nunca.
 
 ### P11 — Heredabilidad
 - `README.md` para cualquier DM: requisitos, cómo arrancar, cómo actualizar y cómo crear una ficha.
@@ -74,7 +75,7 @@ Debe poder heredarse: el día que los DMs actuales se vayan, un DM nuevo tiene q
 ## 3. Definición de "hecho" (para cualquier tarea)
 
 1. Cumple todos los criterios de aceptación de la tarea en `tasks.md`.
-2. Pasan `validate`, `lint`, `test` y `build`.
-3. Si la tarea tiene UI, se ha verificado con Playwright.
+2. Una tarea se cierra con `validate`, `lint` y `build` en verde y una comprobación manual en el navegador.
+3. No se han escrito tests.
 4. No hay cambios fuera de los ficheros que la tarea justifica.
 5. La respuesta final incluye: resumen, ficheros tocados (ruta completa desde la raíz), cómo verificarlo y mensaje de commit propuesto (Conventional Commits).

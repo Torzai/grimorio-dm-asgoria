@@ -8,7 +8,7 @@ raza: Humano
 clases: [Bárbaro]
 alineamiento: Caótico Neutral
 deidad: Skadi, diosa de la tierra y las montañas (Deidad Menor)
-estado: activo # provisional: el DM lo revisa
+estado: activo
 hilo: https://asgoria.com.ar/foro/topic/einar-eriksson-fernando10100
 importado: 2026-10-10
 tags: [importado]

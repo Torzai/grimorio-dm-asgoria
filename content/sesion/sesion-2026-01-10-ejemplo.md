@@ -5,6 +5,7 @@ tags: [ejemplo]
 resumen: "Sesión ficticia en la que los personajes llegan al Puerto de Ejemplo"
 fecha: 2026-01-10
 narradores: ["Narrador de ejemplo A"]
+participantes: [ragna-cazadora-ejemplo, corwin-bardo-ejemplo]
 zona: puerto-ejemplo
 ---
 

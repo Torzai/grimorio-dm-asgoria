@@ -7,7 +7,7 @@ import prettier from 'eslint-config-prettier';
 import { defineConfig, globalIgnores } from 'eslint/config';
 
 export default defineConfig([
-  globalIgnores(['dist', 'sdd', 'playwright-report', 'test-results', 'scraper/raw']),
+  globalIgnores(['dist', 'sdd', 'scraper/raw']),
   {
     files: ['**/*.{ts,tsx}'],
     extends: [
@@ -22,7 +22,7 @@ export default defineConfig([
     },
   },
   {
-    files: ['*.config.ts', 'scripts/**/*.ts', 'e2e/**/*.ts', 'scraper/**/*.ts'],
+    files: ['*.config.ts', 'scripts/**/*.ts', 'scraper/**/*.ts'],
     languageOptions: { globals: globals.node },
   },
   // Must stay last so it turns off any rule that conflicts with Prettier.

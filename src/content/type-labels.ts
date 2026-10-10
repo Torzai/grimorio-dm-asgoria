@@ -9,6 +9,7 @@ export interface TypeLabel {
 
 export const TYPE_LABELS: Readonly<Record<EntryType, TypeLabel>> = {
   npc: { singular: 'NPC', plural: 'NPCs' },
+  pj: { singular: 'PJ', plural: 'Personajes (PJ)' },
   zona: { singular: 'Zona', plural: 'Zonas y mapas' },
   lore: { singular: 'Lore', plural: 'Lore y facciones' },
   varita: { singular: 'Varita', plural: 'Varitas' },
@@ -20,6 +21,7 @@ export const TYPE_LABELS: Readonly<Record<EntryType, TypeLabel>> = {
 /** Order of the types in the sidebar and anywhere types are listed. */
 export const TYPE_NAV_ORDER: readonly EntryType[] = [
   'npc',
+  'pj',
   'zona',
   'lore',
   'varita',
@@ -34,4 +36,11 @@ export const LORE_CATEGORY_LABELS: Readonly<Record<FrontmatterOf<'lore'>['catego
   religion: 'Religión',
   cultura: 'Cultura',
   otro: 'Otro',
+};
+
+export const PJ_ESTADO_LABELS: Readonly<Record<FrontmatterOf<'pj'>['estado'], string>> = {
+  activo: 'Activo',
+  inactivo: 'Inactivo',
+  retirado: 'Retirado',
+  muerto: 'Muerto',
 };

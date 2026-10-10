@@ -20,6 +20,7 @@ import styles from './EntryListColumn.module.css';
 const FILTER_TEXT: Record<FilterKey, { name: string; all: string }> = {
   zona: { name: 'zona', all: 'Zona: todas' },
   faccion: { name: 'facción', all: 'Facción: todas' },
+  estado: { name: 'estado', all: 'Estado: todos' },
   tag: { name: 'tag', all: 'Tag: todas' },
 };
 
@@ -29,7 +30,10 @@ interface EntryListColumnProps {
   activeSlug?: string;
 }
 
-/** Filter chips, count line and cards for one type. Filters live in the URL (?zona=&faccion=&tag=). */
+/**
+ * Filter chips, count line and cards for one type. Filters live in the URL
+ * (?zona=&faccion=&estado=&tag=).
+ */
 export function EntryListColumn({ type, activeSlug }: EntryListColumnProps) {
   const { entries } = useContent();
   const { search } = useLocation();

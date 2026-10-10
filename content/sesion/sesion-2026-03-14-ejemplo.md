@@ -5,6 +5,7 @@ tags: [ejemplo]
 resumen: "Sesión ficticia en la Mina de Ejemplo"
 fecha: 2026-03-14
 narradores: ["Narrador de ejemplo B"]
+participantes: [ragna-cazadora-ejemplo, ysolde-cleriga-ejemplo]
 zona: mina-ejemplo
 relacionados: [brom-capataz-ejemplo]
 ---

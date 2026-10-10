@@ -5,6 +5,7 @@ tags: [ejemplo]
 resumen: "Sesión ficticia de viaje por el Bosque de Ejemplo"
 fecha: 2026-02-07
 narradores: ["Narrador de ejemplo A", "Narrador de ejemplo B"]
+participantes: [ragna-cazadora-ejemplo, ysolde-cleriga-ejemplo]
 zona: bosque-ejemplo
 ---
 

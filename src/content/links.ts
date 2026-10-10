@@ -11,7 +11,7 @@ export type Resolver = (target: string) => Entry | null;
 
 export interface LinkGraph {
   resolve: Resolver;
-  /** Slugs each entry links to (body and 'relacionados'), without duplicates. */
+  /** Slugs each entry links to (body, 'relacionados' and 'participantes'), without duplicates. */
   outgoing: Map<string, string[]>;
   /** Slugs of the entries that link to each entry, without self-links. */
   backlinks: Map<string, string[]>;
@@ -97,6 +97,27 @@ export function analyzeLinks(entries: readonly Entry[]): LinkAnalysis {
           `'relacionados' incluye '${slug}', pero no hay ninguna ficha con ese nombre de fichero`,
           'relacionados',
         );
+      }
+    }
+
+    // The PJs of a session: the session shows up in the journal box of each one.
+    if (entry.data.type === 'sesion') {
+      for (const slug of entry.data.participantes ?? []) {
+        const target = bySlug.get(slug);
+        if (!target) {
+          warn(
+            `'participantes' incluye '${slug}', pero no hay ninguna ficha con ese nombre de fichero`,
+            'participantes',
+          );
+          continue;
+        }
+        targets.add(slug);
+        if (target.type !== 'pj') {
+          warn(
+            `'participantes' incluye '${slug}', que es una ficha de tipo ${target.type}, no un PJ`,
+            'participantes',
+          );
+        }
       }
     }
 

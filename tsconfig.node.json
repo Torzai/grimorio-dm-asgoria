@@ -17,13 +17,5 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },
-  "include": [
-    "vite.config.ts",
-    "playwright.config.ts",
-    "scripts",
-    "e2e",
-    "scraper",
-    "src/content/load-from-fs.ts",
-    "src/content/load-from-fs.test.ts"
-  ]
+  "include": ["vite.config.ts", "scripts", "scraper", "src/content/load-from-fs.ts"]
 }

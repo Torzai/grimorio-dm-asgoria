@@ -3,6 +3,7 @@ import type { entrySchemas } from './schemas';
 
 export const ENTRY_TYPES = [
   'npc',
+  'pj',
   'zona',
   'lore',
   'varita',

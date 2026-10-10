@@ -20,5 +20,5 @@
     "paths": { "@/*": ["./src/*"] }
   },
   "include": ["src"],
-  "exclude": ["src/content/load-from-fs.ts", "src/content/load-from-fs.test.ts"]
+  "exclude": ["src/content/load-from-fs.ts"]
 }

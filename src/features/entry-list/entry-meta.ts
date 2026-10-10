@@ -1,4 +1,5 @@
-import { LORE_CATEGORY_LABELS } from '@/content/type-labels';
+import { historialOf, ultimaActividad } from '@/content/pj';
+import { LORE_CATEGORY_LABELS, PJ_ESTADO_LABELS } from '@/content/type-labels';
 import type { Entry } from '@/content/types';
 
 const dateFormat = new Intl.DateTimeFormat('es', {
@@ -14,11 +15,26 @@ export function formatDate(isoDate: string): string {
   return dateFormat.format(new Date(isoDate));
 }
 
+/** '2026-08-31' → '31/08/2026'. */
+export function formatNumericDate(isoDate: string): string {
+  const [year, month, day] = isoDate.split('-');
+  return `${day}/${month}/${year}`;
+}
+
 /**
  * Parts of the secondary line of a list card, skipping what the entry doesn't have:
  * zona title, then faction (NPC), category (lore) or date (session).
+ * A PJ shows its estado and the day of its latest history entry instead.
  */
 export function getEntryMeta(entry: Entry, zoneTitles: ReadonlyMap<string, string>): string[] {
+  if (entry.data.type === 'pj') {
+    const newest = ultimaActividad(historialOf(entry).entries);
+    return [
+      PJ_ESTADO_LABELS[entry.data.estado],
+      newest ? `Última actividad ${formatNumericDate(newest)}` : 'Sin historial',
+    ];
+  }
+
   const parts: string[] = [];
   const { zona } = entry.data;
   if (zona) parts.push(zoneTitles.get(zona) ?? zona);

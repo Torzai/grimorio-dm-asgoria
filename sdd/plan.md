@@ -8,14 +8,12 @@
 | UI | **React** + **TypeScript** strict | Elección del proyecto |
 | Routing | **React Router** (`createBrowserRouter`) | URLs limpias; desplegable sin cambios |
 | Frontmatter | **`yaml`** + split propio de `---` | `gray-matter` depende de `Buffer` y da problemas en el navegador |
-| Validación | **Zod** | Esquemas compartidos entre app, script y tests |
+| Validación | **Zod** | Esquemas compartidos entre app y script |
 | Markdown | **`react-markdown`** + **`remark-gfm`** | Tablas, sin `dangerouslySetInnerHTML` |
 | Wikilinks | Plugin remark propio (`src/content/remark-wikilinks.ts`) | Pequeño y controlado |
 | Búsqueda | **MiniSearch** | Fuzzy, prefijo y boost por campo; sin servidor |
 | Estilos | **CSS Modules** + `src/styles/tokens.css` | Sin dependencias; tokens centralizados |
 | Estado | React state + context mínimo | No hace falta store global |
-| Tests | **Vitest** + **@testing-library/react** | Lógica y componentes |
-| E2E | **Playwright** | Verificación de tareas de UI |
 | Calidad | ESLint (flat config) + Prettier + **Husky** + **lint-staged** | |
 | Scripts | **tsx** | Ejecutar `scripts/*.ts` en Node |
 | Importador | **Playwright** (lib) + **turndown** | Solo en `scraper/`, nunca en el bundle |
@@ -39,7 +37,7 @@
 │  │  ├─ schemas.ts             # Zod por tipo + unión discriminada
 │  │  ├─ frontmatter.ts         # split + parse YAML
 │  │  ├─ loader.ts              # glob → Entry[] + ContentIssue[]
-│  │  ├─ load-from-fs.ts        # misma API para Node (validate/tests)
+│  │  ├─ load-from-fs.ts        # misma API para Node (validate)
 │  │  ├─ normalize.ts           # minúsculas, sin tildes, slugify
 │  │  ├─ links.ts               # resolución [[...]], backlinks, enlaces rotos
 │  │  ├─ remark-wikilinks.ts
@@ -64,7 +62,6 @@
 │  ├─ login.ts  crawl.ts  convert.ts
 │  ├─ auth.json                 # gitignored
 │  └─ raw/                      # gitignored
-├─ e2e/                         # specs Playwright
 ├─ sdd/                         # constitution, spec, plan, tasks
 └─ README.md
 ```

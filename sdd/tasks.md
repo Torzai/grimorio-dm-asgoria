@@ -11,10 +11,12 @@
 | T04 | Tokens de diseño y layout base | T03 | 🎭 Sí |
 | T05 | Lista por tipo y filtros | T04 | 🎭 Sí |
 | T06 | Vista de ficha genérica | T05 | 🎭 Sí |
-| T07 | Cards por tipo | T06 | 🎭 Sí |
-| T08 | Command palette Ctrl+K | T06 | 🎭 Sí |
-| T09 | Fijados y recientes + home | T08 | 🎭 Sí |
-| T10 | Imágenes y visor de mapas | T06 | 🎭 Sí |
+| T06b | Tipo PJ, participantes en sesión y fix del bundle | T06 | 🎭 Sí |
+| T06c | Contenido a escala | T06b | No |
+| T07 | Cards por tipo | T06 | No |
+| T08 | Command palette Ctrl+K | T06 | No |
+| T09 | Fijados y recientes + home | T08 | No |
+| T10 | Imágenes y visor de mapas | T06 | No |
 | T11 | README, plantillas y pre-commit | T02 | No |
 | T12 | CI en GitHub Actions | T11 | No |
 | T13 | Importador: login y crawl del foro | T12 | No |
@@ -82,35 +84,51 @@
 
 **Aceptación (Playwright):** un `[[enlace]]` navega a la ficha correcta; los backlinks aparecen en la destino; un enlace roto no navega.
 
-## T07 · Cards por tipo 🎭
+## T06b · Tipo PJ, participantes en sesión y fix del bundle 🎭
+- `load-from-glob.ts` excluye `/content/_*/**` en el propio `import.meta.glob`: ni `_inbox` ni `_templates` llegan a `dist/`.
+- Tipo `pj` (spec §3): esquema Zod, etiquetas "PJ" / "Personajes (PJ)" justo después de NPCs, plantilla `content/_templates/pj.md`.
+- Lógica pura en `src/content/pj.ts`: `parseHistorial`, `ultimaActividad` (fecha máxima, derivada) y `normalizeAlignment`; warnings en `validate` para alineamiento desconocido, entradas mal formadas y historial desordenado.
+- `participantes` (slug[] de PJ) en `sesion`, enlazados en las dos direcciones; warning si no existe o no es un PJ.
+- Lista de PJ: filtro "Estado" y línea `<estado> · Última actividad DD/MM/AAAA` (o `Sin historial`).
+- Contenido: 3 PJ de ejemplo y el borrador de Einar promovido a `content/pj/`.
+
+**Aceptación (comprobación manual en el navegador):** `validate`, `lint` y `build` en verde; el sidebar muestra "Personajes (PJ)" tras NPCs; `/pj` lista estado y última actividad y el filtro Estado funciona; un PJ muestra su historial del más reciente al más antiguo y en "Diario de sesiones" las sesiones en las que participó; `dist/` no contiene texto de `_inbox` ni de `_templates`.
+
+## T06c · Contenido a escala
+- Índice de búsqueda generado en build (MiniSearch serializado) en lugar de construirse al arrancar.
+- Cuerpos cargados bajo demanda (`eager: false`), manteniendo el índice y el frontmatter eager.
+
+**Aceptación (comprobación manual en el navegador):** `validate`, `lint` y `build` en verde; la búsqueda encuentra fichas sin cargar sus cuerpos y abrir una ficha muestra su cuerpo completo.
+
+## T07 · Cards por tipo
 - Bloque de datos clave específico por tipo (spec HU-03): NPC, varita, comando (con botón Copiar sintaxis), herramienta, zona (miniatura del mapa si la hay), lore (categoría), sesión (fecha, narradores).
 - Registro `type → componente`; un tipo sin card usa el bloque genérico.
 
-**Aceptación (Playwright):** cada tipo de ejemplo muestra sus campos; Copiar pone la sintaxis en el portapapeles.
+**Aceptación (comprobación manual en el navegador):** cada tipo de ejemplo muestra sus campos; Copiar pone la sintaxis en el portapapeles.
 
-## T08 · Command palette Ctrl+K 🎭
+## T08 · Command palette Ctrl+K
 - `Ctrl+K` / `Cmd+K` abre desde cualquier ruta; también el campo del header. `Esc` cierra y devuelve el foco.
 - Input con resultados agrupados por tipo, chips para filtrar por tipo, vista previa a la derecha.
 - `↑/↓`, `Enter` abre, `Ctrl+Enter` fija (por ahora solo un stub hasta T09).
 - Accesible: `role="dialog"`, `aria-modal`, foco atrapado, `aria-activedescendant` en la lista.
 - `/buscar?q=` muestra los resultados completos.
 
-**Aceptación (Playwright):** abrir con atajo, escribir con una errata, navegar con flechas y abrir con Enter; Esc cierra y devuelve el foco.
+**Aceptación (comprobación manual en el navegador):** abrir con atajo, escribir con una errata, navegar con flechas y abrir con Enter; Esc cierra y devuelve el foco.
 
-## T09 · Fijados y recientes + home 🎭
+## T09 · Fijados y recientes + home
 - Hook `useLocalStorage` tolerante a fallos.
 - Fijar/desfijar desde la ficha y desde la palette; fijados en el sidebar.
 - Recientes (máx. 10, sin duplicados) al abrir una ficha.
 - Home: fijados, recientes, accesos por tipo y últimas 3 sesiones.
 
-**Aceptación (Playwright):** fijar persiste tras recargar; los recientes se ordenan del más nuevo al más antiguo; con `localStorage` bloqueado la app sigue funcionando.
+**Aceptación (comprobación manual en el navegador):** fijar persiste tras recargar; los recientes se ordenan del más nuevo al más antiguo; con `localStorage` bloqueado la app sigue funcionando.
 
-## T10 · Imágenes y visor de mapas 🎭
+## T10 · Imágenes y visor de mapas
 - Resolver imágenes de `content/assets/` en el frontmatter (`mapa`) y en el cuerpo (rutas relativas).
 - `features/image-viewer`: pantalla completa, zoom con rueda o botones, arrastre, `Esc` para cerrar. Sin librería salvo justificación.
 - Imagen que no existe → issue en `validate` y placeholder en la UI.
 
-**Aceptación (Playwright):** abrir el mapa de una zona de ejemplo, hacer zoom y cerrar con Esc.
+**Aceptación (comprobación manual en el navegador):** abrir el mapa de una zona de ejemplo, hacer zoom y cerrar con Esc.
 
 ## T11 · README, plantillas y pre-commit
 - `README.md`: qué es, requisitos (Node LTS, Git), instalación paso a paso para Windows y macOS, uso en partida, flujo git (`pull` antes, `commit`/`push` después), cómo crear una ficha.
@@ -121,13 +139,14 @@
 **Aceptación:** una persona sin contexto puede crear una ficha siguiendo solo el README; un commit con una ficha inválida se bloquea.
 
 ## T12 · CI en GitHub Actions
-- Workflow en push y PR a `main`: `npm ci`, `validate`, `lint`, `test`, `build`.
+- Workflow en push y PR a `main`: `npm ci`, `validate`, `lint`, `build`.
 - Cache de npm. Opcional: subir `dist/` como artefacto.
 
 **Aceptación:** el workflow pasa en verde con el estado actual y falla si se rompe una ficha.
 
 ## T13 · Importador: login y crawl del foro
 > Requiere antes: URL y software del foro, y la lista de secciones a bajar. Recomendado: avisar a los admins.
+> Ya existe un spike para hilos de PJ en `/scraper/` (login, descarga de un hilo y `posts.json`): T13 lo generaliza a secciones.
 - `scraper/config.ts`: URLs semilla, selectores (lista de hilos, paginación, posts), delay (1500 ms por defecto), user agent identificable.
 - `scraper/login.ts`: abre Chromium visible, el humano se loguea y se guarda `scraper/auth.json`.
 - `scraper/crawl.ts`: recorre solo las secciones semilla y su paginación, en serie; guarda `scraper/raw/<seccion>/<id>-<slug>.html`, imágenes en `scraper/raw/assets/` e `index.json` (url, título, autor, fecha, sección); reanudable; log de progreso; se para si detecta logout.
@@ -137,6 +156,7 @@
 **Aceptación:** con una sección pequeña de prueba se generan el HTML y el `index.json`; relanzar no vuelve a bajar lo ya bajado; `git status` no muestra nada de `scraper/raw` ni `auth.json`.
 
 ## T14 · Importador: conversión a borradores
+> Ya existe un spike para hilos de PJ en `/scraper/` (`convert-pj.ts` → `content/_inbox/pj/`): T14 lo generaliza a otros tipos de hilo.
 - `scraper/convert.ts`: HTML → Markdown con `turndown` (+ plugin GFM para tablas); limpia firmas, citas y boilerplate del foro según config.
 - Escribe `content/_inbox/<seccion>/<slug>.md` con un frontmatter mínimo (`title`, `source_url`, `source_date`, `type: borrador`) y copia las imágenes referenciadas a `content/_inbox/assets/`.
 - La app y `validate` siguen ignorando `_inbox/`.

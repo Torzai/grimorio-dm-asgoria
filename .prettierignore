@@ -1,8 +1,6 @@
 sdd
 node_modules
 dist
-playwright-report
-test-results
 package-lock.json
 content
 scraper/raw

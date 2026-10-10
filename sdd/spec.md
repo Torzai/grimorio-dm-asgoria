@@ -71,7 +71,7 @@ Un fichero = una ficha. El **slug** es el nombre del fichero sin extensión (keb
 
 | Campo | Tipo | Obligatorio | Notas |
 |---|---|---|---|
-| `type` | enum | sí | `npc`, `zona`, `lore`, `varita`, `comando`, `herramienta`, `sesion` |
+| `type` | enum | sí | `npc`, `pj`, `zona`, `lore`, `varita`, `comando`, `herramienta`, `sesion` |
 | `title` | string | sí | |
 | `aliases` | string[] | no | Otros nombres o apodos |
 | `tags` | string[] | no | kebab-case |
@@ -85,16 +85,29 @@ Un fichero = una ficha. El **slug** es el nombre del fichero sin extensión (keb
 | Tipo | Campos específicos |
 |---|---|
 | `npc` | `faccion?`, `raza?`, `clase?`, `ubicacion?`, `tag_toolset?` |
+| `pj` | `cuenta_nwn` (obligatorio), `estado` (obligatorio): `activo` \| `inactivo` \| `retirado` \| `muerto`, `sexo?`, `raza?`, `clases?` (string[], máx. 3), `alineamiento?` (texto libre), `deidad?`, `hilo?` (URL del hilo del foro), `importado?` (fecha ISO) |
 | `zona` | `region?`, `mapa?` (ruta relativa a `content/assets/`) |
 | `lore` | `categoria`: `historia` \| `faccion` \| `religion` \| `cultura` \| `otro` |
 | `varita` | `cargas?` (int), `nivel_lanzador?` (int), `recarga?` (bool), `uso?` |
 | `comando` | `sintaxis` (obligatorio), `ejemplo?`, `ambito`: `jugador` \| `dm` |
 | `herramienta` | `uso?`, `donde?` |
-| `sesion` | `fecha` (obligatorio), `narradores?` (string[]) |
+| `sesion` | `fecha` (obligatorio), `narradores?` (string[]), `participantes?` (slug[] de PJ) |
+
+### PJ: historial y última actividad
+
+Los NPC los interpretan los DMs; los PJ son los personajes de los jugadores. De un PJ importa sobre todo su historia y saber si sigue activo.
+
+- **Historial**: sección `## Historial` del cuerpo, con una entrada por quest con el formato `### AAAA-MM-DD · Nombre (@usuario)`, de la más reciente a la más antigua. El `(@usuario)` es opcional.
+- **Última actividad**: la fecha **máxima** del historial, sea cual sea su orden. Es un dato derivado: no se guarda en el frontmatter. La lista de PJ la muestra en cada tarjeta como `<estado> · Última actividad DD/MM/AAAA`, o `Sin historial`, y se filtra por `estado`.
+- **Alineamiento**: texto libre. Se normaliza (minúsculas, sin tildes, género indistinto; *maligno*, *malvado* y *malo* equivalen; *neutral auténtico*, *neutral neutral* y *neutral* son lo mismo) y se compara con los 9 alineamientos de D&D 3.5.
+- `validate` da **warning**, nunca error, si el alineamiento no es uno de los 9, si una entrada del historial no tiene el formato o su fecha no existe, y si el historial no va del más reciente al más antiguo.
+- **Participantes**: en una `sesion`, `participantes` lista los PJ que jugaron. Cuentan como enlaces en las dos direcciones, así que la sesión aparece en el "Diario de sesiones" de cada PJ. Un participante que no existe o que no es un PJ da **warning**.
+- **Privacidad** (constitución P10): se guarda la cuenta de NWN del jugador, nunca su email ni su usuario de Discord.
 
 ### Convenciones de cuerpo (recomendadas, no validadas)
 
 - NPC: `## Cómo interpretarlo`, `## Qué sabe`, `## Ganchos`.
+- PJ: `## Descripción Física`, `## Origen`, `## Objetivos`, `## Otras Notas` y `## Historial` (este con el formato de arriba, que sí se valida).
 - Varita: `## Efecto`, `## Reglas del server`.
 - Sesión: texto libre con `[[enlaces]]` a lo que apareció.
 

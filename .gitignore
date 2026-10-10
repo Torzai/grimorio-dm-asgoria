@@ -3,6 +3,3 @@ dist
 scraper/auth.json
 scraper/raw/
 .env*
-playwright-report
-test-results
-e2e/__screenshots__/
