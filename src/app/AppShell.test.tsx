@@ -95,17 +95,36 @@ describe('AppShell', () => {
 });
 
 describe('routes', () => {
-  it('shows the list placeholder with the type label and count', () => {
+  it('shows the list next to a hint while no entry is open', () => {
     renderAt('/npc');
     expect(screen.getByRole('heading', { level: 1, name: 'NPCs' })).toBeTruthy();
-    expect(screen.getByText('2 fichas')).toBeTruthy();
+    expect(screen.getByRole('region', { name: 'NPCs' })).toBeTruthy();
+    expect(screen.getByText('2 fichas · orden alfabético')).toBeTruthy();
+    expect(screen.getByText('Elige una ficha de la lista')).toBeTruthy();
+    expect(screen.getByText('NPCs · 2 fichas')).toBeTruthy();
+    expect(screen.queryByRole('link', { name: /Volver a/ })).toBeNull();
     expect(document.title).toBe('NPCs · Grimorio del DM');
   });
 
-  it('shows the entry title', () => {
-    renderAt('/npc/ana');
+  it('shows the entry next to the list, with a way back that keeps the filters', () => {
+    renderAt('/npc/ana?zona=puerto');
     expect(screen.getByRole('heading', { level: 1, name: 'Ana la Herrera' })).toBeTruthy();
+    expect(screen.getByRole('region', { name: 'NPCs' })).toBeTruthy();
+    expect(screen.queryByText('Elige una ficha de la lista')).toBeNull();
+    expect(screen.getByRole('link', { name: 'Volver a NPCs' }).getAttribute('href')).toBe(
+      '/npc?zona=puerto',
+    );
     expect(document.title).toBe('Ana la Herrera · Grimorio del DM');
+  });
+
+  it('keeps the list when moving from one entry to another', async () => {
+    renderAt('/npc/ana');
+    const list = screen.getByRole('list');
+
+    fireEvent.click(screen.getByRole('link', { name: /Bruno/ }));
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Bruno' })).toBeTruthy();
+    expect(screen.getByRole('list')).toBe(list);
   });
 
   it.each([

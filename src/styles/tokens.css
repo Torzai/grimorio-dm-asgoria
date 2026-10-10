@@ -87,6 +87,7 @@
 
   /* Shape */
   --border-width: 1px;
+  --border-width-accent: 2px; /* quote bar */
   --radius-sm: 3px;
   --radius-md: 4px;
   --radius-pill: 999px;
@@ -96,6 +97,8 @@
   /* Layout (outer sizes, border-box) */
   --header-height: 77px; /* 14px padding + 48px search box + 14px + 1px border */
   --sidebar-width: 253px; /* 220px content-box + 2 × 16px padding + 1px border */
+  --list-width: 341px; /* 300px content-box + 2 × 20px padding + 1px border */
+  --chip-height: 36px;
   --search-height: 48px;
   /* The mockup's 360px flex-basis is content-box: + 28px padding + 2px border. */
   --search-basis: 390px;

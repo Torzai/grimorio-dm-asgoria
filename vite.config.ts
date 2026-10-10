@@ -2,12 +2,17 @@ import { fileURLToPath } from 'node:url';
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vitest/config';
 
-export default defineConfig({
+export default defineConfig(({ command }) => ({
   plugins: [react()],
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
+  },
+  define: {
+    // Only for the "Editar .md" link, which exists in dev. A build gets an empty string,
+    // so the absolute path of whoever builds never ends up in dist/.
+    __REPO_ROOT__: JSON.stringify(command === 'serve' ? process.cwd().replaceAll('\\', '/') : ''),
   },
   build: {
     rolldownOptions: {
@@ -27,4 +32,4 @@ export default defineConfig({
     setupFiles: ['./src/test-setup.ts'],
     include: ['src/**/*.test.{ts,tsx}'],
   },
-});
+}));

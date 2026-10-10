@@ -1,0 +1,139 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-28);
+  padding: var(--space-32) var(--space-40) var(--space-48);
+}
+
+/* Header: kicker, title and subtitle on the left, actions on the right. */
+
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-16);
+}
+
+/* Wraps its text before dropping the actions under it. */
+.titles {
+  flex: 1 1 360px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  min-width: 0;
+}
+
+.kicker {
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-medium);
+  font-size: var(--font-size-2xs);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--color-gold);
+}
+
+.kickerLink {
+  color: inherit;
+  text-decoration: none;
+}
+
+.kickerLink:hover {
+  color: var(--color-gold-hover);
+  text-decoration: underline;
+  text-underline-offset: var(--space-4);
+}
+
+.title {
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-3xl);
+  line-height: var(--line-height-tight);
+  color: var(--color-gold-bright);
+  overflow-wrap: anywhere;
+}
+
+.subtitle {
+  font-style: italic;
+  font-size: var(--font-size-lg);
+  color: var(--color-text-muted);
+}
+
+.actions {
+  display: flex;
+  gap: var(--space-8);
+}
+
+/* The mockup's secondary button. */
+.secondaryButton {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--icon-button-size);
+  padding: 0 var(--space-18);
+  border: var(--border-width) solid var(--color-gold);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-2xs);
+  letter-spacing: var(--tracking-button);
+  text-transform: uppercase;
+  text-decoration: none;
+  color: var(--color-gold-bright);
+}
+
+.secondaryButton:hover {
+  background: var(--color-gold-tint);
+  color: var(--color-gold-hover);
+}
+
+/* Tags */
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-8);
+  margin: 0;
+  list-style: none;
+}
+
+.tag {
+  display: block;
+  padding: var(--space-4) var(--space-12);
+  border: var(--border-width) solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+  text-decoration: none;
+  color: var(--color-text-muted);
+}
+
+.tag:hover {
+  border-color: var(--color-gold);
+  color: var(--color-gold-bright);
+}
+
+/*
+ * Body and side boxes in a row that wraps (the mockup's 2:1): the aside goes under the body when
+ * the pane is too narrow for both, which is the case below ~1325px of window with the list open.
+ */
+
+.columns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-32);
+}
+
+.article {
+  flex: 2 1 380px;
+  min-width: 0;
+}
+
+@media (max-width: 899px) {
+  .page {
+    padding: var(--space-24) var(--space-16) var(--space-32);
+  }
+
+  .title {
+    font-size: var(--font-size-2xl);
+  }
+}

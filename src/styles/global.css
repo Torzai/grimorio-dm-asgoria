@@ -4,9 +4,14 @@
   box-sizing: border-box;
 }
 
-html {
+:root {
   /* Dark scrollbars and native controls (e.g. the search clear button). */
   color-scheme: dark;
+}
+
+html {
+  /* On html, not only body: the scrollbar-gutter strip is painted with the root's background. */
+  background-color: var(--color-bg);
   /* Keeps the layout from shifting when a route makes the page scroll. */
   scrollbar-gutter: stable;
   -webkit-text-size-adjust: 100%;

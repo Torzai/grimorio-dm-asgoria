@@ -1,0 +1,50 @@
+.layout {
+  display: grid;
+  grid-template-columns: var(--list-width) minmax(0, 1fr);
+}
+
+/* Sticky under the sticky header, scrolling on its own: the list can be long. */
+.list {
+  position: sticky;
+  top: var(--header-height);
+  align-self: start;
+  height: calc(100vh - var(--header-height));
+  overflow-y: auto;
+  border-right: var(--border-width) solid var(--color-border);
+}
+
+.detail {
+  min-width: 0;
+}
+
+.back {
+  display: none;
+  align-items: center;
+  gap: var(--space-6);
+  min-height: var(--icon-button-size);
+  padding: 0 var(--space-16);
+  text-decoration: none;
+}
+
+/* One column at a time: the list, or the entry with a way back. */
+@media (max-width: 1099px) {
+  .layout {
+    display: block;
+  }
+
+  .list {
+    position: static;
+    height: auto;
+    overflow-y: visible;
+    border-right: 0;
+  }
+
+  .narrowHidden {
+    display: none;
+  }
+
+  .back {
+    display: inline-flex;
+    margin-top: var(--space-8);
+  }
+}

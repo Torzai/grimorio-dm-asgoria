@@ -1,4 +1,4 @@
-import type { EntryType } from './types';
+import type { EntryType, FrontmatterOf } from './types';
 
 export interface TypeLabel {
   /** One entry of the type, e.g. in an eyebrow: 'NPC · Puerto'. */
@@ -27,3 +27,11 @@ export const TYPE_NAV_ORDER: readonly EntryType[] = [
   'herramienta',
   'sesion',
 ];
+
+export const LORE_CATEGORY_LABELS: Readonly<Record<FrontmatterOf<'lore'>['categoria'], string>> = {
+  historia: 'Historia',
+  faccion: 'Facción',
+  religion: 'Religión',
+  cultura: 'Cultura',
+  otro: 'Otro',
+};

@@ -1,0 +1,20 @@
+.empty {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  padding: var(--space-32) var(--space-40) var(--space-48);
+}
+
+.title {
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-2xl);
+  line-height: var(--line-height-tight);
+  color: var(--color-gold-bright);
+}
+
+.lead {
+  font-style: italic;
+  font-size: var(--font-size-lg);
+  color: var(--color-text-muted);
+}

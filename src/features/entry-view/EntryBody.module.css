@@ -1,0 +1,184 @@
+/*
+ * The Markdown is rendered as plain elements, so they are styled from the container.
+ * Sections follow the mockup: a heading 8px above its text, 22px between a text and the next heading.
+ */
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+  color: var(--color-text);
+  overflow-wrap: break-word;
+}
+
+.body > h2 {
+  margin-top: var(--space-10);
+  padding-bottom: var(--space-6);
+  border-bottom: var(--border-width) solid var(--color-border-strong);
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-xl);
+  line-height: var(--line-height-base);
+  color: var(--color-gold-title);
+}
+
+.body > h2:first-child {
+  margin-top: 0;
+}
+
+/* Closer to its text than the text before it. */
+.body > h2 + * {
+  margin-top: calc(var(--space-8) - var(--space-12));
+}
+
+.body > h3 {
+  margin-top: var(--space-6);
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-medium);
+  font-size: var(--font-size-md);
+  letter-spacing: var(--tracking-button);
+  color: var(--color-gold);
+}
+
+.body > h3:first-child {
+  margin-top: 0;
+}
+
+.body > h3 + * {
+  margin-top: calc(var(--space-6) - var(--space-12));
+}
+
+.body > h4,
+.body > h5,
+.body > h6 {
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-medium);
+  font-size: var(--font-size-sm);
+  letter-spacing: var(--tracking-field);
+  color: var(--color-text-subtle);
+}
+
+.body a {
+  text-underline-offset: var(--space-4);
+}
+
+.body ul,
+.body ol {
+  padding-left: var(--space-24);
+}
+
+.body li + li,
+.body li > ul,
+.body li > ol {
+  margin-top: var(--space-4);
+}
+
+.body li::marker {
+  color: var(--color-gold);
+}
+
+.body hr {
+  width: 100%;
+  margin: var(--space-8) 0;
+  border: 0;
+  border-top: var(--border-width) solid var(--color-border-strong);
+}
+
+/* Meant for what an NPC says. */
+.body blockquote {
+  margin: 0;
+  padding: var(--space-4) 0 var(--space-4) var(--space-18);
+  border-left: var(--border-width-accent) solid var(--color-gold);
+  font-style: italic;
+  font-size: var(--font-size-lg);
+  color: var(--color-text-muted);
+}
+
+.body blockquote > * + * {
+  margin-top: var(--space-8);
+}
+
+/* Code */
+
+.body code {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
+}
+
+.body :not(pre) > code {
+  padding: var(--space-2) var(--space-6);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-3);
+  color: var(--color-gold-bright);
+}
+
+.body pre {
+  margin: 0;
+  padding: var(--space-14) var(--space-18);
+  overflow-x: auto;
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-2);
+  line-height: 1.6;
+}
+
+/* Tables */
+
+.tableScroll {
+  overflow-x: auto;
+  border: var(--border-width) solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+}
+
+.tableScroll table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.tableScroll th,
+.tableScroll td {
+  padding: var(--space-8) var(--space-12);
+  border-bottom: var(--border-width) solid var(--color-border);
+  text-align: left;
+  vertical-align: top;
+}
+
+.tableScroll tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.tableScroll th {
+  background: var(--color-surface-2);
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-medium);
+  font-size: var(--font-size-3xs);
+  letter-spacing: var(--tracking-field);
+  white-space: nowrap;
+  color: var(--color-text-subtle);
+}
+
+/* Links */
+
+.broken {
+  color: var(--color-text-muted);
+  text-decoration: underline dashed;
+  text-decoration-color: var(--color-text-subtle);
+  text-underline-offset: var(--space-4);
+  cursor: help;
+}
+
+/* Images that are not resolved yet */
+
+.image {
+  display: inline-block;
+  padding: 0 var(--space-8);
+  border: var(--border-width) dashed var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  font-style: italic;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-subtle);
+}
+
+.empty {
+  font-style: italic;
+  color: var(--color-text-subtle);
+}

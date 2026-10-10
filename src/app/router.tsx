@@ -1,5 +1,6 @@
 import { createBrowserRouter, type RouteObject } from 'react-router';
-import { EntryListPage } from '@/features/entry-list/EntryListPage';
+import { EntryListEmpty } from '@/features/entry-list/EntryListEmpty';
+import { EntryListLayout } from '@/features/entry-list/EntryListLayout';
 import { EntryPage } from '@/features/entry-view/EntryPage';
 import { HomePage } from '@/features/home/HomePage';
 import { NotFoundPage } from '@/features/not-found/NotFoundPage';
@@ -13,9 +14,16 @@ export const routes: RouteObject[] = [
     children: [
       { index: true, element: <HomePage /> },
       { path: 'buscar', element: <SearchPage /> },
-      // Unknown types and slugs render NotFoundPage from the page itself.
-      { path: ':type', element: <EntryListPage /> },
-      { path: ':type/:slug', element: <EntryPage /> },
+      // The list stays mounted while the child changes. Unknown types render NotFoundPage from
+      // the layout, unknown slugs from EntryPage.
+      {
+        path: ':type',
+        element: <EntryListLayout />,
+        children: [
+          { index: true, element: <EntryListEmpty /> },
+          { path: ':slug', element: <EntryPage /> },
+        ],
+      },
       { path: '*', element: <NotFoundPage /> },
     ],
   },

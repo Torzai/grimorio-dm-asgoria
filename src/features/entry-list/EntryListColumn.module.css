@@ -1,0 +1,176 @@
+.column {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-14);
+  padding: var(--space-24) var(--space-20);
+}
+
+/* Filter chips */
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-8);
+}
+
+.chip,
+.select {
+  min-height: var(--chip-height);
+  padding: 0 var(--space-14);
+  border: var(--border-width) solid var(--color-border-strong);
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--color-text-muted);
+  font-family: var(--font-body);
+  font-size: var(--font-size-sm);
+}
+
+.chip:hover,
+.select:hover {
+  border-color: var(--color-border-accent);
+  color: var(--color-text);
+}
+
+.chip[aria-pressed='true'],
+.selectChip[data-active] .select {
+  border-color: var(--color-gold);
+  background: var(--color-gold-tint);
+  color: var(--color-gold-bright);
+}
+
+/* The native <select> keeps its keyboard and screen-reader behavior; only the caret is ours. */
+.selectChip {
+  position: relative;
+  display: inline-flex;
+  max-width: 100%;
+  color: var(--color-text-muted);
+}
+
+.selectChip[data-active] {
+  color: var(--color-gold-bright);
+}
+
+.selectChip::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: var(--space-14);
+  translate: 0 -25%;
+  border-inline: var(--space-4) solid transparent;
+  border-top: var(--space-6) solid currentColor;
+  pointer-events: none;
+}
+
+.select {
+  appearance: none;
+  /* Chip as wide as the shown value, not the longest option (browsers without it keep the latter). */
+  field-sizing: content;
+  min-width: 0;
+  max-width: 100%;
+  padding-right: calc(var(--space-14) + var(--space-16));
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+
+.select option {
+  background: var(--color-surface-2);
+  color: var(--color-text);
+}
+
+.subtitle {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-subtle);
+}
+
+/* Cards */
+
+.cards {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-14);
+  list-style: none;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-14) var(--space-16);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-2);
+  text-decoration: none;
+}
+
+.card:hover {
+  border-color: var(--color-border-accent);
+  background: var(--color-surface-3);
+}
+
+.card[aria-current='page'] {
+  border-color: var(--color-gold);
+  background: var(--color-surface-3);
+}
+
+.cardTitle {
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-md);
+  color: var(--color-text);
+  overflow-wrap: anywhere;
+}
+
+.card[aria-current='page'] .cardTitle {
+  color: var(--color-gold-bright);
+}
+
+.cardMeta {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-subtle);
+}
+
+.cardSummary {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+
+/* Empty states */
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-14);
+  color: var(--color-text-muted);
+}
+
+/* Same look as the mockup's outlined action button ("Editar .md"). */
+.clear {
+  min-height: var(--icon-button-size);
+  padding: 0 var(--space-18);
+  border: var(--border-width) solid var(--color-gold);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-gold-bright);
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-2xs);
+  letter-spacing: var(--tracking-button);
+  text-transform: uppercase;
+}
+
+.clear:hover {
+  background: var(--color-gold-tint);
+  color: var(--color-gold-hover);
+}
+
+/* Alone on screen: the same gutters as the other pages. */
+@media (max-width: 1099px) {
+  .column {
+    padding: var(--space-24) var(--space-16) var(--space-32);
+  }
+}

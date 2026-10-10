@@ -1,0 +1,72 @@
+/* Half the width of the body (the mockup's 1:2); EntryPage lets it wrap under the body. */
+.aside {
+  flex: 1 1 240px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+}
+
+.box {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-10);
+  padding: var(--space-18);
+  border: var(--border-width) solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-2);
+}
+
+.boxTitle {
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-medium);
+  font-size: var(--font-size-2xs);
+  letter-spacing: var(--tracking-field);
+  color: var(--color-gold);
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-10);
+  margin: 0;
+  list-style: none;
+}
+
+.link {
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+.link:hover {
+  text-decoration: underline;
+  text-underline-offset: var(--space-4);
+}
+
+.session {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+.date {
+  white-space: nowrap;
+}
+
+/* One block per type inside "En esta zona". */
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+.group + .group {
+  margin-top: var(--space-6);
+}
+
+.groupTitle {
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-medium);
+  font-size: var(--font-size-3xs);
+  letter-spacing: var(--tracking-field);
+  color: var(--color-text-subtle);
+}
