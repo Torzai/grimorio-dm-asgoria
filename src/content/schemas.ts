@@ -1,0 +1,178 @@
+import { z } from 'zod';
+import { ENTRY_TYPES, type EntryType } from './types';
+
+export const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+
+interface IssueInput {
+  input?: unknown;
+}
+
+/** Quotes back what the author wrote so the message points at the exact value. */
+export function describeValue(value: unknown): string {
+  if (typeof value === 'string') return `'${value}'`;
+  if (Array.isArray(value)) return 'una lista';
+  if (isObject(value)) return 'un bloque de campos';
+  return String(value);
+}
+
+function isObject(value: unknown): value is object {
+  return typeof value === 'object' && value !== null;
+}
+
+function missing(field: string): string {
+  return `falta el campo obligatorio '${field}'`;
+}
+
+/** Builds an error message: "missing" when absent, "must be <expected>" otherwise. */
+function expected(subject: string, field: string, what: string) {
+  return (issue: IssueInput): string =>
+    issue.input === undefined
+      ? missing(field)
+      : `${subject} debe ser ${what}; has puesto ${describeValue(issue.input)}`;
+}
+
+const SLUG_HINT = "el nombre de fichero de otra ficha (sin '.md'), p. ej. 'puerto-ejemplo'";
+const LIST_HINT = 'una lista, p. ej. [uno, dos]';
+
+function text(field: string) {
+  return z
+    .string({ error: expected(`'${field}'`, field, 'un texto') })
+    .trim()
+    .min(1, { error: `'${field}' no puede estar vacío` });
+}
+
+function textList(field: string) {
+  return z.array(
+    z.string({ error: expected(`cada elemento de '${field}'`, field, 'un texto') }),
+    { error: expected(`'${field}'`, field, LIST_HINT) },
+  );
+}
+
+function slug(subject: string, field: string) {
+  const message = expected(subject, field, SLUG_HINT);
+  return z.string({ error: message }).regex(SLUG_PATTERN, { error: message });
+}
+
+function slugList(field: string) {
+  return z.array(slug(`cada elemento de '${field}'`, field), {
+    error: expected(`'${field}'`, field, LIST_HINT),
+  });
+}
+
+function tagList() {
+  const message = expected(
+    'cada tag',
+    'tags',
+    "una palabra en minúsculas, sin tildes y con guiones, p. ej. 'mercader-rico'",
+  );
+  return z.array(z.string({ error: message }).regex(SLUG_PATTERN, { error: message }), {
+    error: expected("'tags'", 'tags', LIST_HINT),
+  });
+}
+
+function integer(field: string, min: number) {
+  const message = expected(`'${field}'`, field, 'un número entero');
+  return z
+    .number({ error: message })
+    .int({ error: message })
+    .min(min, { error: `'${field}' no puede ser menor que ${min}` });
+}
+
+function boolean(field: string) {
+  return z.boolean({ error: expected(`'${field}'`, field, 'true o false') });
+}
+
+function oneOf<const T extends readonly [string, ...string[]]>(field: string, values: T) {
+  return z.enum(values, {
+    error: expected(`'${field}'`, field, `uno de estos valores: ${values.join(', ')}`),
+  });
+}
+
+function isoDate(field: string) {
+  return z.iso.date({
+    error: expected(`'${field}'`, field, 'una fecha con formato AAAA-MM-DD, p. ej. 2026-03-14'),
+  });
+}
+
+const commonShape = {
+  title: text('title'),
+  aliases: textList('aliases').optional(),
+  tags: tagList().optional(),
+  resumen: text('resumen').optional(),
+  zona: slug("'zona'", 'zona').optional(),
+  relacionados: slugList('relacionados').optional(),
+  actualizado: isoDate('actualizado').optional(),
+};
+
+export const entrySchemas = {
+  npc: z.object({
+    type: z.literal('npc'),
+    ...commonShape,
+    faccion: text('faccion').optional(),
+    raza: text('raza').optional(),
+    clase: text('clase').optional(),
+    ubicacion: text('ubicacion').optional(),
+    tag_toolset: text('tag_toolset').optional(),
+  }),
+  zona: z.object({
+    type: z.literal('zona'),
+    ...commonShape,
+    region: text('region').optional(),
+    mapa: text('mapa').optional(),
+  }),
+  lore: z.object({
+    type: z.literal('lore'),
+    ...commonShape,
+    categoria: oneOf('categoria', ['historia', 'faccion', 'religion', 'cultura', 'otro']),
+  }),
+  varita: z.object({
+    type: z.literal('varita'),
+    ...commonShape,
+    cargas: integer('cargas', 0).optional(),
+    nivel_lanzador: integer('nivel_lanzador', 1).optional(),
+    recarga: boolean('recarga').optional(),
+    uso: text('uso').optional(),
+  }),
+  comando: z.object({
+    type: z.literal('comando'),
+    ...commonShape,
+    sintaxis: text('sintaxis'),
+    ejemplo: text('ejemplo').optional(),
+    ambito: oneOf('ambito', ['jugador', 'dm']),
+  }),
+  herramienta: z.object({
+    type: z.literal('herramienta'),
+    ...commonShape,
+    uso: text('uso').optional(),
+    donde: text('donde').optional(),
+  }),
+  sesion: z.object({
+    type: z.literal('sesion'),
+    ...commonShape,
+    fecha: isoDate('fecha'),
+    narradores: textList('narradores').optional(),
+  }),
+} satisfies Record<EntryType, z.ZodObject>;
+
+export const entryFrontmatterSchema = z.discriminatedUnion(
+  'type',
+  [
+    entrySchemas.npc,
+    entrySchemas.zona,
+    entrySchemas.lore,
+    entrySchemas.varita,
+    entrySchemas.comando,
+    entrySchemas.herramienta,
+    entrySchemas.sesion,
+  ],
+  {
+    error: (issue) => {
+      // Zod passes the whole frontmatter object here, not just the 'type' value.
+      const { input } = issue;
+      const value = isObject(input) ? ('type' in input ? input.type : undefined) : input;
+      return value === undefined
+        ? missing('type')
+        : `tipo desconocido ${describeValue(value)}; los tipos válidos son: ${ENTRY_TYPES.join(', ')}`;
+    },
+  },
+);
