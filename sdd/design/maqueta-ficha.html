@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Maqueta · Ficha (vista principal)</title>
+<!-- Referencia visual estática del Grimorio del DM. No es código de la app: estilos inline para leer medidas. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&amp;family=Crimson+Pro:ital,wght@0,400;0,500;0,600;1,400&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0b0d10}
+a{color:#e2c27f}a:hover{color:#f3dba6}
+</style>
+</head>
+<body>
+<div style="min-height: 980px; background: #0b0d10; color: #e8e2d4; font-family: 'Crimson Pro', Georgia, serif; font-size: 18px; line-height: 1.5; display: flex; flex-direction: column">
+
+  <header style="display: flex; flex-wrap: wrap; align-items: center; gap: 16px 32px; padding: 14px 32px; border-bottom: 1px solid #3a3226; background: #0e1014">
+    <div style="display: flex; align-items: baseline; gap: 14px">
+      <span style="font-family: Cinzel, serif; font-weight: 700; font-size: 30px; letter-spacing: 0.04em; color: #d9b46a">Asgoria</span>
+      <span style="font-family: Cinzel, serif; font-size: 13px; letter-spacing: 0.18em; text-transform: uppercase; color: #a59c8a">Grimorio del DM</span>
+    </div>
+    <div style="flex: 1 1 360px; display: flex; align-items: center; gap: 10px; padding: 0 14px; height: 46px; border: 1px solid #5a4a2e; border-radius: 4px; background: #14171c">
+      <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c9a35a" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-4-4"></path></svg>
+      <label for="q" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Buscar en el grimorio</label>
+      <input id="q" type="search" placeholder="Busca un NPC, comando, varita, zona…" style="flex: 1; min-width: 0; background: transparent; border: 0; outline: none; color: #e8e2d4; font-family: 'Crimson Pro', serif; font-size: 18px">
+      <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #a59c8a; border: 1px solid #3a3226; border-radius: 3px; padding: 2px 6px">Ctrl K</span>
+    </div>
+    <nav aria-label="Accesos" style="display: flex; gap: 8px">
+      <button type="button" aria-label="Favoritos" style="width: 44px; height: 44px; display: grid; place-items: center; background: transparent; border: 1px solid #3a3226; border-radius: 4px; cursor: pointer"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#d9b46a" stroke-width="1.8" stroke-linejoin="round"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"></path></svg></button>
+      <button type="button" aria-label="Recientes" style="width: 44px; height: 44px; display: grid; place-items: center; background: transparent; border: 1px solid #3a3226; border-radius: 4px; cursor: pointer"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#d9b46a" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"></circle><path d="M12 7.5V12l3 2"></path></svg></button>
+    </nav>
+  </header>
+
+  <div style="display: flex; flex-wrap: wrap; flex: 1">
+
+    <nav aria-label="Categorías" style="flex: 1 1 220px; max-width: 260px; padding: 24px 16px; border-right: 1px solid #2a2620; background: #0e1014; display: flex; flex-direction: column; gap: 4px">
+      <span style="font-family: Cinzel, serif; font-size: 12px; letter-spacing: 0.2em; color: #a59c8a; padding: 0 12px 10px">Biblioteca</span>
+      <a href="#" style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 4px; text-decoration: none; color: #e8e2d4">Lore y facciones</a>
+      <a href="#" aria-current="page" style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 4px; text-decoration: none; color: #0b0d10; background: #c9a35a; font-weight: 600">NPCs</a>
+      <a href="#" style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 4px; text-decoration: none; color: #e8e2d4">Zonas y mapas</a>
+      <a href="#" style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 4px; text-decoration: none; color: #e8e2d4">Varitas personalizadas</a>
+      <a href="#" style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 4px; text-decoration: none; color: #e8e2d4">Comandos</a>
+      <a href="#" style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 4px; text-decoration: none; color: #e8e2d4">Herramientas DM</a>
+      <a href="#" style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 4px; text-decoration: none; color: #e8e2d4">Diario de sesiones</a>
+      <div style="height: 1px; background: #2a2620; margin: 16px 12px"></div>
+      <span style="font-family: Cinzel, serif; font-size: 12px; letter-spacing: 0.2em; color: #a59c8a; padding: 0 12px 10px">Fijados esta sesión</span>
+      <a href="#" style="padding: 8px 12px; text-decoration: none; color: #e2c27f; font-size: 17px">[NPC fijado]</a>
+      <a href="#" style="padding: 8px 12px; text-decoration: none; color: #e2c27f; font-size: 17px">[Comando fijado]</a>
+    </nav>
+
+    <section aria-label="Resultados" style="flex: 1 1 300px; max-width: 380px; padding: 24px 20px; border-right: 1px solid #2a2620; display: flex; flex-direction: column; gap: 14px">
+      <div style="display: flex; flex-wrap: wrap; gap: 8px">
+        <button type="button" style="min-height: 36px; padding: 0 14px; border-radius: 999px; border: 1px solid #c9a35a; background: #2a2416; color: #e2c27f; font-family: 'Crimson Pro', serif; font-size: 16px">Todos</button>
+        <button type="button" style="min-height: 36px; padding: 0 14px; border-radius: 999px; border: 1px solid #3a3226; background: transparent; color: #c8bfae; font-family: 'Crimson Pro', serif; font-size: 16px">Por zona</button>
+        <button type="button" style="min-height: 36px; padding: 0 14px; border-radius: 999px; border: 1px solid #3a3226; background: transparent; color: #c8bfae; font-family: 'Crimson Pro', serif; font-size: 16px">Por facción</button>
+      </div>
+      <span style="font-size: 15px; color: #a59c8a">NPCs · orden alfabético</span>
+      <a href="#" style="display: flex; flex-direction: column; gap: 2px; padding: 14px 16px; border: 1px solid #c9a35a; border-radius: 4px; background: #171a20; text-decoration: none">
+        <span style="font-family: Cinzel, serif; font-weight: 600; font-size: 17px; color: #e2c27f">[Nombre del NPC]</span>
+        <span style="font-size: 16px; color: #a59c8a">[Zona] · [Facción]</span>
+      </a>
+      <a href="#" style="display: flex; flex-direction: column; gap: 2px; padding: 14px 16px; border: 1px solid #2a2620; border-radius: 4px; background: #12151a; text-decoration: none">
+        <span style="font-family: Cinzel, serif; font-weight: 600; font-size: 17px; color: #e8e2d4">[Otro NPC]</span>
+        <span style="font-size: 16px; color: #a59c8a">[Zona] · [Facción]</span>
+      </a>
+      <a href="#" style="display: flex; flex-direction: column; gap: 2px; padding: 14px 16px; border: 1px solid #2a2620; border-radius: 4px; background: #12151a; text-decoration: none">
+        <span style="font-family: Cinzel, serif; font-weight: 600; font-size: 17px; color: #e8e2d4">[Otro NPC]</span>
+        <span style="font-size: 16px; color: #a59c8a">[Zona] · [Facción]</span>
+      </a>
+      <a href="#" style="display: flex; flex-direction: column; gap: 2px; padding: 14px 16px; border: 1px solid #2a2620; border-radius: 4px; background: #12151a; text-decoration: none">
+        <span style="font-family: Cinzel, serif; font-weight: 600; font-size: 17px; color: #e8e2d4">[Otro NPC]</span>
+        <span style="font-size: 16px; color: #a59c8a">[Zona] · [Facción]</span>
+      </a>
+    </section>
+
+    <main style="flex: 999 1 520px; min-width: 0; padding: 32px 40px 48px; display: flex; flex-direction: column; gap: 28px">
+      <div style="display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 16px">
+        <div style="display: flex; flex-direction: column; gap: 6px">
+          <span style="font-family: Cinzel, serif; font-size: 13px; letter-spacing: 0.2em; text-transform: uppercase; color: #c9a35a">NPC · [Zona]</span>
+          <h1 style="margin: 0; font-family: Cinzel, serif; font-weight: 600; font-size: 44px; line-height: 1.1; color: #e2c27f">[Nombre del NPC]</h1>
+          <p style="margin: 0; font-style: italic; color: #c8bfae; font-size: 19px">[Título o apodo con el que lo conocen los jugadores]</p>
+        </div>
+        <div style="display: flex; gap: 8px">
+          <button type="button" style="min-height: 44px; padding: 0 18px; border: 0; border-radius: 3px; background: #c9a35a; color: #0b0d10; font-family: Cinzel, serif; font-weight: 600; font-size: 13px; letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer">Fijar</button>
+          <button type="button" style="min-height: 44px; padding: 0 18px; border: 1px solid #c9a35a; border-radius: 3px; background: transparent; color: #e2c27f; font-family: Cinzel, serif; font-weight: 600; font-size: 13px; letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer">Editar .md</button>
+        </div>
+      </div>
+
+      <div style="display: flex; flex-wrap: wrap; gap: 8px">
+        <span style="padding: 4px 12px; border: 1px solid #3a3226; border-radius: 3px; font-size: 15px; color: #c8bfae">#[facción]</span>
+        <span style="padding: 4px 12px; border: 1px solid #3a3226; border-radius: 3px; font-size: 15px; color: #c8bfae">#[ciudad]</span>
+        <span style="padding: 4px 12px; border: 1px solid #3a3226; border-radius: 3px; font-size: 15px; color: #c8bfae">#[trama]</span>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1px; background: #2a2620; border: 1px solid #2a2620; border-radius: 4px; overflow: hidden">
+        <div style="background: #12151a; padding: 14px 18px; display: flex; flex-direction: column; gap: 2px"><span style="font-family: Cinzel, serif; font-size: 12px; letter-spacing: 0.16em; color: #a59c8a">Ubicación</span><span>[Dónde encontrarlo]</span></div>
+        <div style="background: #12151a; padding: 14px 18px; display: flex; flex-direction: column; gap: 2px"><span style="font-family: Cinzel, serif; font-size: 12px; letter-spacing: 0.16em; color: #a59c8a">Facción</span><span>[Facción]</span></div>
+        <div style="background: #12151a; padding: 14px 18px; display: flex; flex-direction: column; gap: 2px"><span style="font-family: Cinzel, serif; font-size: 12px; letter-spacing: 0.16em; color: #a59c8a">Raza · Clase</span><span>[Raza] · [Clase]</span></div>
+        <div style="background: #12151a; padding: 14px 18px; display: flex; flex-direction: column; gap: 2px"><span style="font-family: Cinzel, serif; font-size: 12px; letter-spacing: 0.16em; color: #a59c8a">Tag en el toolset</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 15px; color: #e2c27f">[tag_npc]</span></div>
+      </div>
+
+      <div style="display: flex; flex-wrap: wrap; gap: 32px">
+        <article style="flex: 2 1 380px; min-width: 0; display: flex; flex-direction: column; gap: 22px">
+          <section style="display: flex; flex-direction: column; gap: 8px">
+            <h2 style="margin: 0; font-family: Cinzel, serif; font-weight: 600; font-size: 20px; color: #d9b46a; border-bottom: 1px solid #3a3226; padding-bottom: 6px">Cómo interpretarlo</h2>
+            <p style="margin: 0; color: #e8e2d4">[Personalidad, forma de hablar, muletillas, actitud con los forasteros.]</p>
+          </section>
+          <section style="display: flex; flex-direction: column; gap: 8px">
+            <h2 style="margin: 0; font-family: Cinzel, serif; font-weight: 600; font-size: 20px; color: #d9b46a; border-bottom: 1px solid #3a3226; padding-bottom: 6px">Qué sabe</h2>
+            <p style="margin: 0; color: #e8e2d4">[Rumores y secretos que puede soltar, y a quién.]</p>
+          </section>
+          <section style="display: flex; flex-direction: column; gap: 8px">
+            <h2 style="margin: 0; font-family: Cinzel, serif; font-weight: 600; font-size: 20px; color: #d9b46a; border-bottom: 1px solid #3a3226; padding-bottom: 6px">Ganchos de trama</h2>
+            <p style="margin: 0; color: #e8e2d4">[Encargos o conflictos que puede iniciar.]</p>
+          </section>
+        </article>
+
+        <aside style="flex: 1 1 240px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+          <div style="border: 1px solid #3a3226; border-radius: 4px; padding: 18px; background: #12151a; display: flex; flex-direction: column; gap: 10px">
+            <span style="font-family: Cinzel, serif; font-size: 13px; letter-spacing: 0.16em; color: #c9a35a">Relacionado</span>
+            <a href="#" style="text-decoration: none">→ Zona: [Zona]</a>
+            <a href="#" style="text-decoration: none">→ Facción: [Facción]</a>
+            <a href="#" style="text-decoration: none">→ NPC: [Aliado o rival]</a>
+          </div>
+          <div style="border: 1px solid #3a3226; border-radius: 4px; padding: 18px; background: #12151a; display: flex; flex-direction: column; gap: 8px">
+            <span style="font-family: Cinzel, serif; font-size: 13px; letter-spacing: 0.16em; color: #c9a35a">Diario de sesiones</span>
+            <span style="font-size: 16px; color: #c8bfae">[Fecha] · [Qué pasó con este NPC en partida]</span>
+          </div>
+        </aside>
+      </div>
+    </main>
+  </div>
+
+  <footer style="padding: 14px 32px; border-top: 1px solid #2a2620; font-style: italic; font-size: 15px; color: #a59c8a">Contenido en /content · se actualiza con git pull</footer>
+</div>
+</body>
+</html>

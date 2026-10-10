@@ -1,0 +1,105 @@
+/*
+ * Design tokens taken from sdd/design/maqueta-ficha.html.
+ * The only place in src/ where raw colors are allowed (constitution P5).
+ */
+:root {
+  /* Surfaces */
+  --color-bg: #0b0d10;
+  --color-surface: #0e1014;
+  --color-surface-2: #12151a;
+  --color-surface-3: #171a20;
+  --color-input: #14171c;
+
+  /* Borders */
+  --color-border: #2a2620;
+  --color-border-strong: #3a3226;
+  --color-border-accent: #5a4a2e;
+
+  /* Gold */
+  --color-gold: #c9a35a;
+  --color-gold-bright: #e2c27f;
+  --color-gold-title: #d9b46a;
+  --color-gold-hover: #f3dba6;
+  --color-gold-tint: #2a2416;
+  --color-on-gold: #0b0d10;
+
+  /* Text */
+  --color-text: #e8e2d4;
+  --color-text-muted: #c8bfae;
+  --color-text-subtle: #a59c8a;
+  /* Not in the mockup (it relies on the browser default, 3.9:1); 4.8:1 on --color-input. */
+  --color-text-placeholder: #8a8478;
+
+  /* Errors: 7.3:1 on --color-danger-tint, 7.8:1 on --color-surface. */
+  --color-danger: #e58f7f;
+  --color-danger-tint: #1f1413;
+  --color-danger-border: #6b3a30;
+
+  --color-selection: rgb(201 163 90 / 35%);
+
+  /* Typography */
+  --font-display: 'Cinzel', Georgia, serif;
+  --font-body: 'Crimson Pro', Georgia, serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, Consolas, 'Courier New', monospace;
+
+  --font-size-3xs: 12px; /* section labels, key hints */
+  --font-size-2xs: 13px; /* brand subtitle, eyebrows, buttons */
+  --font-size-xs: 15px; /* meta, tags, footer */
+  --font-size-sm: 16px; /* chips, secondary lines */
+  --font-size-md: 17px; /* list titles, pinned entries */
+  --font-size-base: 18px;
+  --font-size-lg: 19px; /* lead paragraph */
+  --font-size-xl: 20px; /* h2 */
+  --font-size-2xl: 30px; /* brand */
+  --font-size-3xl: 44px; /* h1 */
+
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  --line-height-base: 1.5;
+  --line-height-tight: 1.1;
+
+  --tracking-brand: 0.04em;
+  --tracking-button: 0.1em;
+  --tracking-field: 0.16em;
+  --tracking-subtitle: 0.18em;
+  --tracking-label: 0.2em;
+
+  /* Spacing */
+  --space-2: 2px;
+  --space-4: 4px;
+  --space-6: 6px;
+  --space-8: 8px;
+  --space-10: 10px;
+  --space-12: 12px;
+  --space-14: 14px;
+  --space-16: 16px;
+  --space-18: 18px;
+  --space-20: 20px;
+  --space-22: 22px;
+  --space-24: 24px;
+  --space-28: 28px;
+  --space-32: 32px;
+  --space-40: 40px;
+  --space-48: 48px;
+
+  /* Shape */
+  --border-width: 1px;
+  --radius-sm: 3px;
+  --radius-md: 4px;
+  --radius-pill: 999px;
+  --focus-ring-width: 2px;
+  --focus-ring-offset: 2px;
+
+  /* Layout (outer sizes, border-box) */
+  --header-height: 77px; /* 14px padding + 48px search box + 14px + 1px border */
+  --sidebar-width: 253px; /* 220px content-box + 2 × 16px padding + 1px border */
+  --search-height: 48px;
+  /* The mockup's 360px flex-basis is content-box: + 28px padding + 2px border. */
+  --search-basis: 390px;
+  --icon-button-size: 44px;
+  --icon-size: 18px;
+  --icon-stroke: 1.8;
+}

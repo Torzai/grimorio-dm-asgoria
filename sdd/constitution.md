@@ -38,6 +38,7 @@ Debe poder heredarse: el día que los DMs actuales se vayan, un DM nuevo tiene q
 - Todos los colores, tipografías y espaciados salen de tokens CSS en `src/styles/tokens.css`. Prohibidos los hex sueltos en componentes.
 - Contraste mínimo AA (4.5:1 en texto normal), foco visible, `<button>` y `<a>` reales, `aria-label` en botones de solo icono.
 - Sin librerías de componentes pesadas (MUI, Ant, Chakra…).
+- La referencia visual está en /sdd/design/maqueta-ficha.html y /sdd/design/maqueta-palette.html. Toda tarea de UI la consulta antes de maquetar.
 
 ### P6 — Simplicidad y dependencias cerradas
 - Stack fijado en `plan.md`. Añadir una dependencia de runtime requiere justificarla en la tarea y que el humano la apruebe.

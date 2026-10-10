@@ -9,6 +9,19 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
+  build: {
+    rolldownOptions: {
+      output: {
+        // Keeps every chunk under Vite's 500 kB warning; all of them still load eagerly.
+        codeSplitting: {
+          groups: [
+            { name: 'react', test: /node_modules\/(react|react-dom|react-router|scheduler)\// },
+            { name: 'vendor', test: /node_modules\// },
+          ],
+        },
+      },
+    },
+  },
   test: {
     environment: 'jsdom',
     setupFiles: ['./src/test-setup.ts'],

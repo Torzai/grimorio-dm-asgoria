@@ -15,6 +15,9 @@
     "validate": "tsx scripts/validate-content.ts"
   },
   "dependencies": {
+    "@fontsource/cinzel": "^5.3.0",
+    "@fontsource/crimson-pro": "^5.3.0",
+    "@fontsource/ibm-plex-mono": "^5.3.0",
     "minisearch": "^7.2.0",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",

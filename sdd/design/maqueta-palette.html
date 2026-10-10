@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Maqueta · Búsqueda rápida (Ctrl+K)</title>
+<!-- Referencia visual estática del Grimorio del DM. No es código de la app: estilos inline para leer medidas. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&amp;family=Crimson+Pro:ital,wght@0,400;0,500;0,600;1,400&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#07080a}
+a{color:#e2c27f}a:hover{color:#f3dba6}
+</style>
+</head>
+<body>
+<div style="min-height: 980px; background: #07080a; color: #e8e2d4; font-family: 'Crimson Pro', Georgia, serif; font-size: 18px; line-height: 1.5; display: flex; justify-content: center; align-items: flex-start; padding: 96px 16px 48px; box-sizing: border-box">
+
+  <div role="dialog" aria-label="Búsqueda rápida" style="width: 100%; max-width: 980px; border: 1px solid #5a4a2e; border-radius: 6px; background: #0e1014; box-shadow: 0 24px 80px rgba(0,0,0,0.6); overflow: hidden; display: flex; flex-direction: column">
+
+    <div style="display: flex; align-items: center; gap: 14px; padding: 0 22px; height: 68px; border-bottom: 1px solid #3a3226">
+      <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#c9a35a" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-4-4"></path></svg>
+      <label for="pq" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Buscar</label>
+      <input id="pq" type="search" value="var" style="flex: 1; min-width: 0; background: transparent; border: 0; outline: none; color: #e8e2d4; font-family: 'Crimson Pro', serif; font-size: 24px">
+      <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #a59c8a; border: 1px solid #3a3226; border-radius: 3px; padding: 2px 6px">Esc</span>
+    </div>
+
+    <div style="display: flex; flex-wrap: wrap; gap: 8px; padding: 12px 22px; border-bottom: 1px solid #2a2620">
+      <button type="button" style="min-height: 34px; padding: 0 14px; border-radius: 999px; border: 1px solid #c9a35a; background: #2a2416; color: #e2c27f; font-family: 'Crimson Pro', serif; font-size: 15px">Todo</button>
+      <button type="button" style="min-height: 34px; padding: 0 14px; border-radius: 999px; border: 1px solid #3a3226; background: transparent; color: #c8bfae; font-family: 'Crimson Pro', serif; font-size: 15px">Comandos</button>
+      <button type="button" style="min-height: 34px; padding: 0 14px; border-radius: 999px; border: 1px solid #3a3226; background: transparent; color: #c8bfae; font-family: 'Crimson Pro', serif; font-size: 15px">Varitas</button>
+      <button type="button" style="min-height: 34px; padding: 0 14px; border-radius: 999px; border: 1px solid #3a3226; background: transparent; color: #c8bfae; font-family: 'Crimson Pro', serif; font-size: 15px">NPCs</button>
+      <button type="button" style="min-height: 34px; padding: 0 14px; border-radius: 999px; border: 1px solid #3a3226; background: transparent; color: #c8bfae; font-family: 'Crimson Pro', serif; font-size: 15px">Lore</button>
+    </div>
+
+    <div style="display: flex; flex-wrap: wrap">
+      <div style="flex: 1 1 340px; min-width: 0; padding: 14px 12px; display: flex; flex-direction: column; gap: 4px; border-right: 1px solid #2a2620">
+        <span style="font-family: Cinzel, serif; font-size: 12px; letter-spacing: 0.2em; color: #a59c8a; padding: 6px 12px">Varitas</span>
+        <a href="#" style="display: flex; justify-content: space-between; gap: 12px; padding: 10px 12px; border-radius: 4px; background: #2a2416; border: 1px solid #c9a35a; text-decoration: none; color: #e2c27f"><span>Varita de [efecto]</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: #c8bfae">varita</span></a>
+        <a href="#" style="display: flex; justify-content: space-between; gap: 12px; padding: 10px 12px; border-radius: 4px; text-decoration: none; color: #e8e2d4"><span>Varita de [efecto]</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: #a59c8a">varita</span></a>
+        <span style="font-family: Cinzel, serif; font-size: 12px; letter-spacing: 0.2em; color: #a59c8a; padding: 12px 12px 6px">Comandos</span>
+        <a href="#" style="display: flex; justify-content: space-between; gap: 12px; padding: 10px 12px; border-radius: 4px; text-decoration: none; color: #e8e2d4"><span>[Comando que contiene «var»]</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: #a59c8a">comando</span></a>
+        <span style="font-family: Cinzel, serif; font-size: 12px; letter-spacing: 0.2em; color: #a59c8a; padding: 12px 12px 6px">NPCs</span>
+        <a href="#" style="display: flex; justify-content: space-between; gap: 12px; padding: 10px 12px; border-radius: 4px; text-decoration: none; color: #e8e2d4"><span>[NPC que vende varitas]</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: #a59c8a">npc</span></a>
+      </div>
+
+      <div style="flex: 1 1 340px; min-width: 0; padding: 24px 26px; display: flex; flex-direction: column; gap: 16px; background: #12151a">
+        <span style="font-family: Cinzel, serif; font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase; color: #c9a35a">Varita personalizada</span>
+        <h2 style="margin: 0; font-family: Cinzel, serif; font-weight: 600; font-size: 28px; line-height: 1.15; color: #e2c27f">Varita de [efecto]</h2>
+        <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1px; background: #2a2620; border: 1px solid #2a2620; border-radius: 4px; overflow: hidden">
+          <div style="background: #0e1014; padding: 10px 14px; display: flex; flex-direction: column"><span style="font-family: Cinzel, serif; font-size: 11px; letter-spacing: 0.16em; color: #a59c8a">Cargas</span><span>[n]</span></div>
+          <div style="background: #0e1014; padding: 10px 14px; display: flex; flex-direction: column"><span style="font-family: Cinzel, serif; font-size: 11px; letter-spacing: 0.16em; color: #a59c8a">NL</span><span>[n]</span></div>
+          <div style="background: #0e1014; padding: 10px 14px; display: flex; flex-direction: column"><span style="font-family: Cinzel, serif; font-size: 11px; letter-spacing: 0.16em; color: #a59c8a">Recarga</span><span>[sí / no]</span></div>
+        </div>
+        <p style="margin: 0; color: #e8e2d4">[Qué hace y reglas propias del server.]</p>
+        <div style="display: flex; flex-direction: column; gap: 6px">
+          <span style="font-family: Cinzel, serif; font-size: 12px; letter-spacing: 0.16em; color: #a59c8a">Uso</span>
+          <code style="display: block; padding: 12px 14px; border: 1px solid #3a3226; border-radius: 4px; background: #0b0d10; font-family: 'IBM Plex Mono', monospace; font-size: 15px; color: #e2c27f; overflow-x: auto">[sintaxis del comando o acción]</code>
+        </div>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-wrap: wrap; gap: 20px; padding: 12px 22px; border-top: 1px solid #2a2620; font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: #a59c8a">
+      <span>↑↓ navegar</span><span>Enter abrir</span><span>Ctrl+Enter fijar</span>
+    </div>
+  </div>
+</div>
+</body>
+</html>

@@ -1,3 +1,11 @@
+import { RouterProvider } from 'react-router/dom';
+import { router } from '@/app/router';
+import { ContentProvider } from '@/content/ContentContext';
+
 export default function App() {
-  return <h1>Grimorio del DM</h1>;
+  return (
+    <ContentProvider>
+      <RouterProvider router={router} />
+    </ContentProvider>
+  );
 }

@@ -1,0 +1,100 @@
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-10);
+  padding: var(--space-10) var(--space-32);
+  border-bottom: var(--border-width) solid var(--color-border-accent);
+  background: var(--color-surface-2);
+}
+
+.errors {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-10);
+  padding: var(--space-8) var(--space-14);
+  border: var(--border-width) solid var(--color-danger-border);
+  border-radius: var(--radius-md);
+  background: var(--color-danger-tint);
+}
+
+.bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-8) var(--space-16);
+}
+
+.errorTitle {
+  color: var(--color-danger);
+  font-weight: var(--font-weight-semibold);
+}
+
+.toggle {
+  min-height: var(--icon-button-size);
+  padding: 0 var(--space-18);
+  border: var(--border-width) solid var(--color-gold);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-gold-bright);
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-2xs);
+  letter-spacing: var(--tracking-button);
+  text-transform: uppercase;
+}
+
+.toggle:hover {
+  color: var(--color-gold-hover);
+  border-color: var(--color-gold-hover);
+}
+
+.warnings {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+}
+
+.summary {
+  cursor: pointer;
+  color: var(--color-text-subtle);
+}
+
+.warnings[open] .summary {
+  margin-bottom: var(--space-8);
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  list-style: none;
+  font-size: var(--font-size-xs);
+}
+
+.list[hidden] {
+  display: none;
+}
+
+.item {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4) var(--space-10);
+  color: var(--color-text);
+}
+
+.path {
+  font-family: var(--font-mono);
+  color: var(--color-gold-bright);
+  overflow-wrap: anywhere;
+}
+
+.field {
+  font-family: var(--font-mono);
+  color: var(--color-text-muted);
+}
+
+@media (max-width: 899px) {
+  .panel {
+    padding: var(--space-10) var(--space-16);
+  }
+}
