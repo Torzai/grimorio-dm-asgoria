@@ -107,7 +107,7 @@ Un fichero = una ficha. El **slug** es el nombre del fichero sin extensión (keb
 | `npc` | `faccion?`, `raza?`, `clase?`, `ubicacion?`, `tag_toolset?` |
 | `pj` | `cuenta_nwn` (obligatorio), `estado` (obligatorio): `activo` \| `inactivo` \| `retirado` \| `muerto`, `sexo?`, `raza?`, `clases?` (string[], máx. 3), `alineamiento?` (texto libre), `deidad?`, `hilo?` (URL del hilo del foro), `importado?` (fecha ISO) |
 | `zona` | `region?`, `mapa?` (ruta relativa a `content/assets/`) |
-| `lore` | `categoria`: `historia` \| `faccion` \| `religion` \| `cultura` \| `cosmologia` \| `otro`; `hilo?` (URL del hilo del foro; con él, o con anexos en `## Historial`, la ficha se ve como una crónica, con `## Contenido` en lugar de `## Situación`), `importado?` (fecha ISO), `importar?` (bool) |
+| `lore` | `categoria`: `historia` \| `faccion` \| `religion` \| `cultura` \| `cosmologia` | `normas` | `otro`\| `otro`; `hilo?` (URL del hilo del foro; con él, o con anexos en `## Historial`, la ficha se ve como una crónica, con `## Contenido` en lugar de `## Situación`), `importado?` (fecha ISO), `importar?` (bool) |
 | `cronica` | `hilo` (obligatorio, URL del hilo del foro), `importado?` (fecha ISO), `importar?` (bool) |
 | `varita` | `cargas?` (int), `nivel_lanzador?` (int), `recarga?` (bool), `uso?` |
 | `comando` | `sintaxis` (obligatorio), `ejemplo?`, `ambito`: `jugador` \| `dm` |

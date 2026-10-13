@@ -151,7 +151,7 @@ el kicker "Lore · <categoría>") cuando tiene `hilo:` o anexos en `## Historial
 lore se ven como siempre. Igual que en la Situación, una ficha sin anexos no muestra la barra de
 pestañas: solo el Contenido con su índice.
 
-Campos: `title`, `categoria` (`historia`, `faccion`, `religion`, `cultura`, `cosmologia` u
+Campos: `title`, `categoria` (`historia`, `faccion`, `religion`, `cultura`, `cosmologia`, `normas` u
 `otro`), `hilo?`, `importado?`, `importar?`, `zona?`, `resumen?`, `tags` y `relacionados`.
 
 ### Añadir un hilo de lore

@@ -537,6 +537,13 @@ export const TRACKED_TOPICS: readonly TrackedTopic[] = [
     slug: 'cosmos',
     title: 'El cosmos de Asgoria',
   },
+  {
+    url: 'https://asgoria.com.ar/foro/topic/importante-ampliacion-de-info-sobre-reglas-dm',
+    type: 'lore',
+    categoria: 'normas',
+    slug: 'reglas-dm',
+    title: 'Ampliación de reglas para DMs',
+  },
 ];
 
 /** The content folder: real entries, which `scrape:topics` writes to content/<type>/. */

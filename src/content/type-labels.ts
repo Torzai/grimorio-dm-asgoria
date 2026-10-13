@@ -38,6 +38,7 @@ export const LORE_CATEGORY_LABELS: Readonly<Record<FrontmatterOf<'lore'>['catego
   religion: 'Religión',
   cultura: 'Cultura',
   cosmologia: 'Cosmología',
+  normas: 'Normas DM',
   otro: 'Otro',
 };
 
