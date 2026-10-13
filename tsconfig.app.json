@@ -20,5 +20,5 @@
     "paths": { "@/*": ["./src/*"] }
   },
   "include": ["src"],
-  "exclude": ["src/content/load-from-fs.ts"]
+  "exclude": ["src/content/load-from-fs.ts", "src/content/vite-plugin-content.ts"]
 }

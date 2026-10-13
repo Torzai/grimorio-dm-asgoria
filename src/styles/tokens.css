@@ -35,6 +35,16 @@
   --color-danger-tint: #1f1413;
   --color-danger-border: #6b3a30;
 
+  /* PJ estado (sdd/design/maqueta-pj.html), all ≥ 8:1 on --color-bg and the surfaces. */
+  --color-status-active: #8fbf7a; /* 9.2:1 on --color-bg */
+  --color-status-retired: #9fb4c8; /* 9.1:1 on --color-bg */
+  --color-status-dead: var(--color-danger); /* 7.9:1 on --color-bg */
+  --color-status-inactive: var(--color-text-subtle);
+
+  /* Search matches: 6.3:1. */
+  --color-mark-bg: var(--color-border-accent);
+  --color-mark-text: var(--color-gold-hover);
+
   --color-selection: rgb(201 163 90 / 35%);
 
   /* Typography */
@@ -44,12 +54,14 @@
 
   --font-size-3xs: 12px; /* section labels, key hints */
   --font-size-2xs: 13px; /* brand subtitle, eyebrows, buttons */
+  --font-size-2xs-plus: 14px; /* participant chips of a history entry */
   --font-size-xs: 15px; /* meta, tags, footer */
   --font-size-sm: 16px; /* chips, secondary lines */
   --font-size-md: 17px; /* list titles, pinned entries */
   --font-size-base: 18px;
   --font-size-lg: 19px; /* lead paragraph */
   --font-size-xl: 20px; /* h2 */
+  --font-size-date: 26px; /* day of a history entry */
   --font-size-2xl: 30px; /* brand */
   --font-size-3xl: 44px; /* h1 */
 
@@ -63,6 +75,7 @@
 
   --tracking-brand: 0.04em;
   --tracking-button: 0.1em;
+  --tracking-date: 0.14em;
   --tracking-field: 0.16em;
   --tracking-subtitle: 0.18em;
   --tracking-label: 0.2em;
@@ -105,4 +118,6 @@
   --icon-button-size: 44px;
   --icon-size: 18px;
   --icon-stroke: 1.8;
+  --historial-date-width: 72px; /* date column of a history entry */
+  --flash-duration: 2.4s; /* gold highlight of the entry a link points to */
 }

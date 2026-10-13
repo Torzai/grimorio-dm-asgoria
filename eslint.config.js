@@ -22,7 +22,13 @@ export default defineConfig([
     },
   },
   {
-    files: ['*.config.ts', 'scripts/**/*.ts', 'scraper/**/*.ts'],
+    files: [
+      '*.config.ts',
+      'scripts/**/*.ts',
+      'scraper/**/*.ts',
+      'src/content/load-from-fs.ts',
+      'src/content/vite-plugin-content.ts',
+    ],
     languageOptions: { globals: globals.node },
   },
   // Must stay last so it turns off any rule that conflicts with Prettier.

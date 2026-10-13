@@ -10,32 +10,36 @@ const entryPath = (entry: Entry) => `/${entry.type}/${entry.slug}`;
 
 interface EntryAsideProps {
   context: EntryContext;
+  /** Boxes of a specific type that go before the common ones (e.g. a PJ's narrators). */
+  before?: ReactNode;
 }
 
 /** Side boxes of an entry; each one only when it has something to show. */
-export function EntryAside({ context }: EntryAsideProps) {
+export function EntryAside({ context, before }: EntryAsideProps) {
   const { related, mentionedIn, sessions, inZone } = context;
-  if (related.length + mentionedIn.length + sessions.length + inZone.length === 0) return null;
+  const count = related.length + mentionedIn.length + sessions.length + inZone.length;
+  if (count === 0 && !before) return null;
 
   return (
     <aside className={styles.aside} aria-label="Fichas relacionadas">
+      {before}
       {related.length > 0 && (
-        <Box title="Relacionado">
+        <AsideBox title="Relacionado">
           <TypedList entries={related} />
-        </Box>
+        </AsideBox>
       )}
       {mentionedIn.length > 0 && (
-        <Box title="Mencionado en">
+        <AsideBox title="Mencionado en">
           <TypedList entries={mentionedIn} />
-        </Box>
+        </AsideBox>
       )}
       {sessions.length > 0 && (
-        <Box title="Diario de sesiones">
+        <AsideBox title="Diario de sesiones">
           <SessionList sessions={sessions} />
-        </Box>
+        </AsideBox>
       )}
       {inZone.length > 0 && (
-        <Box title="En esta zona">
+        <AsideBox title="En esta zona">
           {inZone.map(({ type, entries }) => (
             <div key={type} className={styles.group}>
               <h3 className={styles.groupTitle}>{TYPE_LABELS[type].plural}</h3>
@@ -54,13 +58,13 @@ export function EntryAside({ context }: EntryAsideProps) {
               )}
             </div>
           ))}
-        </Box>
+        </AsideBox>
       )}
     </aside>
   );
 }
 
-function Box({ title, children }: { title: string; children: ReactNode }) {
+export function AsideBox({ title, children }: { title: string; children: ReactNode }) {
   const id = useId();
   return (
     <div className={styles.box} role="group" aria-labelledby={id}>

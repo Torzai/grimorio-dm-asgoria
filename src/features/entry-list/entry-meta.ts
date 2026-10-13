@@ -1,4 +1,4 @@
-import { historialOf, ultimaActividad } from '@/content/pj';
+import { pjSummaryOf } from '@/content/pj-data';
 import { LORE_CATEGORY_LABELS, PJ_ESTADO_LABELS } from '@/content/type-labels';
 import type { Entry } from '@/content/types';
 
@@ -28,7 +28,7 @@ export function formatNumericDate(isoDate: string): string {
  */
 export function getEntryMeta(entry: Entry, zoneTitles: ReadonlyMap<string, string>): string[] {
   if (entry.data.type === 'pj') {
-    const newest = ultimaActividad(historialOf(entry).entries);
+    const newest = pjSummaryOf(entry.slug)?.last;
     return [
       PJ_ESTADO_LABELS[entry.data.estado],
       newest ? `Última actividad ${formatNumericDate(newest)}` : 'Sin historial',

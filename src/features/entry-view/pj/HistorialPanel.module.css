@@ -1,0 +1,355 @@
+/* Measures from sdd/design/maqueta-pj.html. */
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+}
+
+/* Search box and filter chips */
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-8);
+}
+
+.search {
+  flex: 1 1 280px;
+  display: flex;
+  align-items: center;
+  gap: var(--space-10);
+  height: var(--icon-button-size);
+  padding: 0 var(--space-14);
+  border: var(--border-width) solid var(--color-border-accent);
+  border-radius: var(--radius-md);
+  background: var(--color-input);
+}
+
+/* Gold while it filters, as in the mockup, and while focused. */
+.search:has(.searchInput:not(:placeholder-shown)),
+.search:focus-within {
+  border-color: var(--color-gold);
+}
+
+.searchIcon {
+  flex: none;
+  width: var(--icon-size);
+  height: var(--icon-size);
+  stroke: var(--color-gold);
+  stroke-width: var(--icon-stroke);
+}
+
+.searchInput {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  border: 0;
+  background: transparent;
+  color: var(--color-text);
+}
+
+.searchInput::placeholder {
+  color: var(--color-text-placeholder);
+}
+
+/* The box shows its focus with the border. */
+.searchInput:focus-visible {
+  outline: none;
+}
+
+.count {
+  flex: none;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-subtle);
+}
+
+.count:empty {
+  display: none;
+}
+
+/* Same chips as the list filters (T05). */
+.chip {
+  composes: chip from '../../entry-list/EntryListColumn.module.css';
+  display: inline-flex;
+  align-items: center;
+}
+
+.chip:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+
+.selectChip {
+  composes: selectChip from '../../entry-list/EntryListColumn.module.css';
+}
+
+.select {
+  composes: select from '../../entry-list/EntryListColumn.module.css';
+}
+
+/* Year chips */
+
+.years {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-8);
+}
+
+.yearChip {
+  padding: var(--space-4) var(--space-12);
+  border: var(--border-width) solid var(--color-border-strong);
+  border-radius: var(--radius-pill);
+  background: transparent;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+
+.yearChip:hover {
+  border-color: var(--color-border-accent);
+  color: var(--color-text);
+}
+
+.yearChip[aria-pressed='true'] {
+  border-color: var(--color-gold);
+  background: var(--color-gold-tint);
+  color: var(--color-gold-bright);
+}
+
+/* Year groups */
+
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+}
+
+.groupTitle {
+  margin-top: var(--space-8);
+  padding-bottom: var(--space-6);
+  border-bottom: var(--border-width) solid var(--color-border-strong);
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-xl);
+  color: var(--color-gold-title);
+}
+
+.groupCount {
+  font-weight: var(--font-weight-medium);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-subtle);
+}
+
+.empty {
+  font-style: italic;
+  color: var(--color-text-subtle);
+}
+
+/* Entries */
+
+.entry {
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-2);
+  /* Clear of the sticky header when a link scrolls here. */
+  scroll-margin-top: calc(var(--header-height) + var(--space-16));
+  /* A long history only lays out the entries on screen. */
+  content-visibility: auto;
+  contain-intrinsic-size: auto 96px;
+}
+
+.entry[data-open] {
+  border-color: var(--color-gold);
+  background: var(--color-surface-3);
+}
+
+.entry[data-flash] {
+  animation: flash var(--flash-duration) ease-out;
+}
+
+@keyframes flash {
+  0%,
+  30% {
+    border-color: var(--color-gold-hover);
+    box-shadow: 0 0 0 var(--focus-ring-width) var(--color-gold);
+    background: var(--color-gold-tint);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .entry[data-flash] {
+    animation-duration: 0.01s;
+  }
+}
+
+.entryHead {
+  width: 100%;
+  display: grid;
+  grid-template-columns: var(--historial-date-width) minmax(0, 1fr) auto;
+  align-items: start;
+  gap: var(--space-18);
+  padding: var(--space-14) var(--space-18);
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: inherit;
+  text-align: left;
+}
+
+.entry[data-open] .entryHead {
+  padding-top: var(--space-16);
+  padding-bottom: var(--space-16);
+}
+
+.entryHead:hover .caret {
+  color: var(--color-gold);
+}
+
+.date {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-family: var(--font-display);
+  line-height: var(--line-height-tight);
+  color: var(--color-text-muted);
+}
+
+.entry[data-open] .date {
+  color: var(--color-gold-bright);
+}
+
+.day {
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-date);
+}
+
+.monthYear {
+  font-size: var(--font-size-3xs);
+  letter-spacing: var(--tracking-date);
+  white-space: nowrap;
+}
+
+.summary {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  min-width: 0;
+}
+
+.narrator {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-subtle);
+}
+
+.narratorName {
+  color: var(--color-text);
+}
+
+.participants {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-6);
+}
+
+.participant {
+  padding: var(--border-width) var(--space-8);
+  border: var(--border-width) solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-2xs-plus);
+  color: var(--color-text-muted);
+}
+
+.more {
+  padding: var(--border-width) var(--space-8);
+  font-size: var(--font-size-2xs-plus);
+  color: var(--color-text-subtle);
+}
+
+.preview {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  color: var(--color-text-muted);
+}
+
+.caret {
+  font-size: var(--font-size-base);
+  color: var(--color-text-subtle);
+}
+
+.entry[data-open] .caret {
+  color: var(--color-gold);
+}
+
+/* Lined up with the text column: 18px padding + 72px date + 18px gap. */
+.entryBody {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+  padding: 0 var(--space-18) var(--space-18) calc(var(--space-18) * 2 + var(--historial-date-width));
+}
+
+.noText {
+  font-style: italic;
+  color: var(--color-text-subtle);
+}
+
+.entryFoot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-8);
+  padding-top: var(--space-4);
+  border-top: var(--border-width) solid var(--color-border);
+}
+
+.reward {
+  flex: 1 1 260px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-8);
+  font-size: var(--font-size-xs);
+}
+
+.rewardLabel {
+  color: var(--color-text-subtle);
+}
+
+.rewardText {
+  flex: 1 1 200px;
+  padding: var(--space-2) var(--space-10);
+  border: var(--border-width) solid var(--color-border-accent);
+  border-radius: var(--radius-sm);
+  white-space: pre-line;
+  color: var(--color-gold-bright);
+}
+
+.copy {
+  margin-left: auto;
+  padding: var(--space-2) 0;
+  border: 0;
+  background: transparent;
+  font-size: var(--font-size-xs);
+  color: var(--color-gold-bright);
+}
+
+.copy:hover {
+  color: var(--color-gold-hover);
+  text-decoration: underline;
+  text-underline-offset: var(--space-4);
+}
+
+@media (max-width: 599px) {
+  .entryHead {
+    gap: var(--space-12);
+    padding-inline: var(--space-12);
+  }
+
+  .entryBody {
+    padding: 0 var(--space-12) var(--space-14);
+  }
+}

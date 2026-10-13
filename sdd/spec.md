@@ -63,6 +63,16 @@ Como DM, quiero bajar el contenido de referencia del foro con mi sesión para co
 - Guarda HTML en bruto + `index.json` en `scraper/raw/` (ignorado por git).
 - Un conversor genera borradores Markdown en `content/_inbox/`, que la app **no** muestra y `validate` ignora.
 
+**HU-10 · Historial de PJ navegable**
+Como DM, quiero leer y buscar dentro del historial de un PJ (cientos de quests) y llegar a una entrada concreta desde la búsqueda global.
+- Ficha de PJ con cabecera (estado en color, raza · clases · alineamiento · deidad · cuenta), datos (última actividad, quests, en juego desde, DMs distintos, origen) y pestañas "Historial" y "Ficha y trasfondo" (`?tab=ficha`).
+- Historial plegado y agrupado por año, del más reciente al más antiguo; cada entrada muestra fecha, narrador, participantes y una vista previa, y se despliega con su texto, su recompensa y "Enlace a esta entrada" (`#h-AAAA-MM-DD-autor`).
+- Buscador interno sin tildes ni mayúsculas (`?q=`) que despliega y resalta lo que coincide; filtros por DM, compañero y año, combinables y en la URL.
+- Participantes y recompensa se detectan en el texto (lista de nombres al principio; línea "Recompensa…"/"Premios…"); si no encajan, el texto se muestra intacto.
+- Panel: "Narrado por", "Suele jugar con" (enlaza a los PJ que existen) y relacionados.
+- La búsqueda global indexa cada entrada como resultado propio ("Entrada de historial") y la abre desplegada y resaltada; la ficha se indexa sin el historial.
+- Todo se calcula al compilar, no en el navegador.
+
 ## 3. Modelo de contenido
 
 Un fichero = una ficha. El **slug** es el nombre del fichero sin extensión (kebab-case, único globalmente). La carpeta debe coincidir con `type`.

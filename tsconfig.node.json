@@ -17,5 +17,11 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },
-  "include": ["vite.config.ts", "scripts", "scraper", "src/content/load-from-fs.ts"]
+  "include": [
+    "vite.config.ts",
+    "scripts",
+    "scraper",
+    "src/content/load-from-fs.ts",
+    "src/content/vite-plugin-content.ts"
+  ]
 }

@@ -5,6 +5,7 @@ import remarkGfm from 'remark-gfm';
 import { remarkWikilinks } from '@/content/remark-wikilinks';
 import type { Entry } from '@/content/types';
 import { useContent } from '@/content/use-content';
+import { rehypeMark } from './pj/highlight';
 import styles from './EntryBody.module.css';
 
 const BROKEN_LINK_TITLE = 'Enlace roto: no existe ninguna ficha con ese nombre';
@@ -84,25 +85,45 @@ interface EntryBodyProps {
   entry: Entry;
 }
 
+/** The body of an entry; a placeholder when it has no text yet. */
+export function EntryBody({ entry }: EntryBodyProps) {
+  if (!entry.body.trim()) {
+    return <p className={styles.empty}>Esta ficha todavía no tiene texto.</p>;
+  }
+  return <MarkdownBody markdown={entry.body} />;
+}
+
+interface MarkdownBodyProps {
+  markdown: string;
+  /** Normalized search terms to wrap in <mark>; none by default. */
+  highlight?: readonly string[];
+}
+
+const NO_TERMS: readonly string[] = [];
+
 /**
- * The Markdown of an entry: GFM and [[wikilinks]]. No raw HTML is rendered.
- * Memoized, so it renders again only when the entry (or the content) changes, not on every
+ * Markdown with GFM and [[wikilinks]]. No raw HTML is rendered.
+ * Memoized, so it renders again only when its text, terms or the content change, not on every
  * change of the URL's filters.
  */
-export const EntryBody = memo(function EntryBody({ entry }: EntryBodyProps) {
+export const MarkdownBody = memo(function MarkdownBody({
+  markdown,
+  highlight = NO_TERMS,
+}: MarkdownBodyProps) {
   const { links } = useContent();
   const remarkPlugins = useMemo<Options['remarkPlugins']>(
     () => [remarkGfm, [remarkWikilinks, links.resolve]],
     [links.resolve],
   );
+  const rehypePlugins = useMemo<Options['rehypePlugins']>(
+    () => (highlight.length > 0 ? [[rehypeMark, highlight]] : []),
+    [highlight],
+  );
 
-  if (!entry.body.trim()) {
-    return <p className={styles.empty}>Esta ficha todavía no tiene texto.</p>;
-  }
   return (
     <div className={styles.body}>
-      <Markdown remarkPlugins={remarkPlugins} components={components}>
-        {entry.body}
+      <Markdown remarkPlugins={remarkPlugins} rehypePlugins={rehypePlugins} components={components}>
+        {markdown}
       </Markdown>
     </div>
   );

@@ -13,6 +13,7 @@
 | T06 | Vista de ficha genérica | T05 | 🎭 Sí |
 | T06b | Tipo PJ, participantes en sesión y fix del bundle | T06 | 🎭 Sí |
 | T06c | Contenido a escala | T06b | No |
+| T06d | Historial de PJ navegable | T06c | 🎭 Sí |
 | T07 | Cards por tipo | T06 | No |
 | T08 | Command palette Ctrl+K | T06 | No |
 | T09 | Fijados y recientes + home | T08 | No |
@@ -99,6 +100,13 @@
 - Cuerpos cargados bajo demanda (`eager: false`), manteniendo el índice y el frontmatter eager.
 
 **Aceptación (comprobación manual en el navegador):** `validate`, `lint` y `build` en verde; la búsqueda encuentra fichas sin cargar sus cuerpos y abrir una ficha muestra su cuerpo completo.
+
+## T06d · Historial de PJ navegable 🎭
+- Lógica pura en `src/content/pj.ts` y `pj-historial.ts`: entradas del historial con id estable, participantes y recompensa detectados, vista previa y agregados (DMs, compañeros, años); calculado en el build por `vite-plugin-content.ts`.
+- Vista `src/features/entry-view/pj/`: cabecera y datos de `sdd/design/maqueta-pj.html`, pestañas ARIA (`?tab=ficha`), historial por años con buscador (`?q=`), filtros DM/Con/año, entradas desplegables y aside "Narrado por" / "Suele jugar con".
+- Búsqueda global: un documento por entrada (`<slug>#<id>`) que abre `/pj/<slug>?tab=historial&q=…#<id>`; la ficha se indexa sin historial.
+
+**Aceptación (comprobación manual en el navegador):** `validate`, `lint` y `build` en verde; `/pj/einar-eriksson` se lee como la maqueta; buscar "drak" deja solo las entradas que lo mencionan, desplegadas y con `<mark>`; "DM: Mimir" + 2023 filtra; buscar "Drak'Nar" en la cabecera lleva a la entrada desplegada y resaltada; "Ficha y trasfondo" no contiene historial.
 
 ## T07 · Cards por tipo
 - Bloque de datos clave específico por tipo (spec HU-03): NPC, varita, comando (con botón Copiar sintaxis), herramienta, zona (miniatura del mapa si la hay), lore (categoría), sesión (fecha, narradores).

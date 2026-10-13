@@ -9,6 +9,7 @@ import { useDocumentTitle } from '@/hooks/use-document-title';
 import { EntryAside } from './EntryAside';
 import { EntryBody } from './EntryBody';
 import { editorUrl } from './editor-link';
+import { PjView } from './pj/PjView';
 import styles from './EntryPage.module.css';
 
 /** /:type/:slug, the detail pane next to the list. */
@@ -26,6 +27,22 @@ function EntryView({ entry }: { entry: Entry }) {
   const titleRef = useRef<HTMLHeadingElement>(null);
   useDocumentTitle(entry.data.title);
   useFocusTitleOnChange(entry, titleRef);
+
+  if (entry.data.type === 'pj') {
+    return (
+      <PjView
+        // A fresh view per PJ, so the history's search and open entries don't carry over.
+        key={entry.slug}
+        entry={entry as Entry<'pj'>}
+        context={context}
+        title={
+          <h1 ref={titleRef} tabIndex={-1} className={styles.title}>
+            {entry.data.title}
+          </h1>
+        }
+      />
+    );
+  }
 
   const { aliases = [], tags = [], resumen } = entry.data;
   const subtitle = aliases.length > 0 ? `También conocido como: ${aliases.join(' · ')}` : resumen;
@@ -97,7 +114,8 @@ function EntryView({ entry }: { entry: Entry }) {
 function useFocusTitleOnChange(entry: Entry, titleRef: RefObject<HTMLHeadingElement | null>) {
   const navigationType = useNavigationType();
   const focusTitle = useEffectEvent(() => {
-    if (navigationType === 'POP') return;
+    // A link to a part of the page (#h-… in a PJ's history) scrolls there instead.
+    if (navigationType === 'POP' || window.location.hash) return;
     window.scrollTo(0, 0);
     titleRef.current?.focus({ preventScroll: true });
   });

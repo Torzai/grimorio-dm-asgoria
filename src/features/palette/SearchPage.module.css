@@ -1,0 +1,43 @@
+/* Result cards, the same look as the list cards (T05). */
+
+.results {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-14);
+  max-width: 760px;
+  list-style: none;
+}
+
+.result {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-14) var(--space-16);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-2);
+  text-decoration: none;
+}
+
+.result:hover {
+  border-color: var(--color-border-accent);
+  background: var(--color-surface-3);
+}
+
+.title {
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-md);
+  color: var(--color-text);
+  overflow-wrap: anywhere;
+}
+
+.meta {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-subtle);
+}
+
+.empty {
+  font-style: italic;
+  color: var(--color-text-subtle);
+}

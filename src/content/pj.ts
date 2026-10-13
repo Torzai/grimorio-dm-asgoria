@@ -1,4 +1,4 @@
-import { normalize } from './normalize';
+import { normalize, slugify } from './normalize';
 import type { ContentIssue, Entry } from './types';
 
 /** One entry of a PJ's history, from a heading like '### 2026-08-31 · She Wolf (@she-wolf)'. */
@@ -8,8 +8,13 @@ export interface HistorialEntry {
   authorName: string;
   /** Forum user without the '@'; undefined when the heading has none. */
   authorHandle?: string;
-  /** Unique within the PJ: 'historial-2026-08-31', then '-2', '-3'… when a date repeats. */
-  anchorId: string;
+  /**
+   * Stable anchor, unique within the PJ: 'h-2026-08-31-she-wolf', then '-2', '-3'… when the
+   * same date and author repeat.
+   */
+  id: string;
+  /** The Markdown under the heading, up to the next entry, trimmed. */
+  body: string;
 }
 
 export interface Historial {
@@ -17,6 +22,8 @@ export interface Historial {
   entries: HistorialEntry[];
   /** Why some headings of the section are not entries; in Spanish, for validate. */
   problems: string[];
+  /** The body without the '## Historial' section: what "Ficha y trasfondo" shows. */
+  fichaBody: string;
 }
 
 export const HISTORIAL_FORMAT = '### AAAA-MM-DD · Nombre (@usuario)';
@@ -29,40 +36,60 @@ const FENCE = /^ {0,3}(`{3,}|~{3,})/;
 
 /**
  * Reads the '## Historial' section of a PJ body and its '### AAAA-MM-DD · Nombre (@usuario)'
- * headings, up to the next '#' or '##' heading. Fenced code is skipped.
+ * headings, up to the next '#' or '##' heading. Headings inside fenced code are not entries.
+ * Text under a heading that can't be read stays with the entry before it.
  */
 export function parseHistorial(body: string): Historial {
   const entries: HistorialEntry[] = [];
   const problems: string[] = [];
   const timesSeen = new Map<string, number>();
+  const fichaLines: string[] = [];
+  let entryLines: string[] | undefined;
   let inSection = false;
   let fence: string | undefined;
 
+  const closeEntry = () => {
+    const last = entries.at(-1);
+    if (last && entryLines) last.body = entryLines.join('\n').trim();
+    entryLines = undefined;
+  };
+
   for (const line of body.split(/\r?\n/)) {
+    // Lines of fenced code, fences included, are never headings.
     const fenceMark = FENCE.exec(line)?.[1];
+    let isCode = true;
     if (fence !== undefined) {
       if (fenceMark?.[0] === fence[0] && fenceMark.length >= fence.length) fence = undefined;
-      continue;
-    }
-    if (fenceMark !== undefined) {
+    } else if (fenceMark !== undefined) {
       fence = fenceMark;
-      continue;
+    } else {
+      isCode = false;
     }
-    if (SECTION.test(line)) {
+
+    if (!isCode && SECTION.test(line)) {
       inSection = true;
       continue;
     }
-    if (!inSection) continue;
-    if (NEXT_SECTION.test(line)) {
+    if (!isCode && inSection && NEXT_SECTION.test(line)) {
+      closeEntry();
       inSection = false;
+    }
+    if (!inSection) {
+      fichaLines.push(line);
       continue;
     }
 
-    const heading = ENTRY_HEADING.exec(line)?.[1];
-    if (heading === undefined) continue;
+    const heading = isCode ? undefined : ENTRY_HEADING.exec(line)?.[1];
+    if (heading === undefined) {
+      entryLines?.push(line);
+      continue;
+    }
     const match = ENTRY.exec(heading);
     if (!match) {
-      problems.push(`la entrada '### ${heading}' del historial no sigue el formato '${HISTORIAL_FORMAT}'`);
+      problems.push(
+        `la entrada '### ${heading}' del historial no sigue el formato '${HISTORIAL_FORMAT}'`,
+      );
+      entryLines?.push(line);
       continue;
     }
     const [, date, authorName, authorHandle] = match;
@@ -70,28 +97,24 @@ export function parseHistorial(body: string): Historial {
       problems.push(
         `la entrada '### ${heading}' del historial tiene una fecha que no existe o no tiene el formato AAAA-MM-DD`,
       );
+      entryLines?.push(line);
       continue;
     }
-    const count = (timesSeen.get(date) ?? 0) + 1;
-    timesSeen.set(date, count);
+    closeEntry();
+    const baseId = `h-${date}-${slugify(authorName) || 'autor'}`;
+    const count = (timesSeen.get(baseId) ?? 0) + 1;
+    timesSeen.set(baseId, count);
     entries.push({
       date,
       authorName,
       ...(authorHandle === undefined ? {} : { authorHandle }),
-      anchorId: count === 1 ? `historial-${date}` : `historial-${date}-${count}`,
+      id: count === 1 ? baseId : `${baseId}-${count}`,
+      body: '',
     });
+    entryLines = [];
   }
-  return { entries, problems };
-}
-
-/** The newest date of the history, whatever the order it is written in; undefined without entries. */
-export function ultimaActividad(entries: readonly HistorialEntry[]): string | undefined {
-  let newest: string | undefined;
-  for (const { date } of entries) {
-    // ISO dates (AAAA-MM-DD) compare chronologically as plain text.
-    if (newest === undefined || date > newest) newest = date;
-  }
-  return newest;
+  closeEntry();
+  return { entries, problems, fichaBody: fichaLines.join('\n').trim() };
 }
 
 const parsed = new WeakMap<Entry, Historial>();

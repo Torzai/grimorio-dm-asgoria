@@ -12,14 +12,24 @@ export interface Content {
   index: SearchIndex;
 }
 
+/**
+ * What the content plugin already computed at build time, so the browser doesn't go through
+ * every PJ's history again.
+ */
+export interface Prebuilt {
+  index: SearchIndex;
+  /** pjIssues() of every PJ. */
+  pjIssues: ContentIssue[];
+}
+
 /** Everything the app and validate need from the raw Markdown files. */
-export function buildContent(files: Record<string, string>): Content {
+export function buildContent(files: Record<string, string>, prebuilt?: Prebuilt): Content {
   const { entries, issues } = loadEntries(files);
   const { issues: linkIssues, ...links } = analyzeLinks(entries);
   return {
     entries,
-    issues: [...issues, ...entries.flatMap(pjIssues), ...linkIssues],
+    issues: [...issues, ...(prebuilt?.pjIssues ?? entries.flatMap(pjIssues)), ...linkIssues],
     links,
-    index: buildIndex(entries),
+    index: prebuilt?.index ?? buildIndex(entries),
   };
 }

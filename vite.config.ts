@@ -1,9 +1,10 @@
 import { fileURLToPath } from 'node:url';
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
+import { grimorioContent } from './src/content/vite-plugin-content';
 
 export default defineConfig(({ command }) => ({
-  plugins: [react()],
+  plugins: [react(), grimorioContent()],
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),

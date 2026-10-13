@@ -1,5 +1,5 @@
 import { useId, useMemo } from 'react';
-import { Link, useLocation, useSearchParams } from 'react-router';
+import { Link, useSearchParams } from 'react-router';
 import {
   FILTER_KEYS,
   countByType,
@@ -36,10 +36,20 @@ interface EntryListColumnProps {
  */
 export function EntryListColumn({ type, activeSlug }: EntryListColumnProps) {
   const { entries } = useContent();
-  const { search } = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const filters = useMemo(() => readFilters(searchParams, type), [searchParams, type]);
+  // Only the list's filters travel to the entry; the open entry's own parameters (a PJ's
+  // ?tab= or history search) would make no sense in another one.
+  const search = useMemo(() => {
+    const kept = new URLSearchParams();
+    for (const key of FILTER_KEYS) {
+      const value = searchParams.get(key);
+      if (value) kept.set(key, value);
+    }
+    const text = kept.toString();
+    return text ? `?${text}` : '';
+  }, [searchParams]);
   const hasFilters = Object.keys(filters).length > 0;
   const total = useMemo(() => countByType(entries)[type], [entries, type]);
   const visible = useMemo(() => listEntries(entries, type, filters), [entries, type, filters]);
