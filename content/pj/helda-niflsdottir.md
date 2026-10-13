@@ -1,7 +1,6 @@
 ---
 type: pj
 title: Helda Niflsdóttir
-aliases: [Helda]
 cuenta_nwn: Torzai
 sexo: Femenino
 raza: Humano

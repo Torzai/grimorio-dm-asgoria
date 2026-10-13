@@ -1,7 +1,6 @@
 ---
 type: pj
 title: Hildr Olsen
-aliases: [Hildr]
 cuenta_nwn: Urracaparlanchina
 sexo: Femenino
 raza: Humano

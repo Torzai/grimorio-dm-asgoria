@@ -1,7 +1,6 @@
 ---
 type: pj
 title: Kael Sivart
-aliases: [Kael]
 cuenta_nwn: Pereza
 sexo: Masculino
 raza: Humano

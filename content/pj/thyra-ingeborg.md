@@ -1,7 +1,6 @@
 ---
 type: pj
 title: Thyra Ingeborg
-aliases: [Thyra]
 cuenta_nwn: nicolascadel
 sexo: Femenino
 raza: Semiorco

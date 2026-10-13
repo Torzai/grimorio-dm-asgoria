@@ -1,7 +1,6 @@
 ---
 type: pj
 title: Deacon Walker
-aliases: [Deacon]
 cuenta_nwn: NiwOr
 sexo: Masculino
 raza: Humano

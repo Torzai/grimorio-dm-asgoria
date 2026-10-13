@@ -1,7 +1,6 @@
 ---
 type: pj
 title: Karl Godvenn
-aliases: [Karl]
 cuenta_nwn: MacNCheese
 sexo: Masculino
 raza: Humano

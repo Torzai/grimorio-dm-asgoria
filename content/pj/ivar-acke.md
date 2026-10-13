@@ -1,7 +1,6 @@
 ---
 type: pj
 title: Ivar Acke
-aliases: [Ivar]
 cuenta_nwn: Cano
 sexo: Masculino
 raza: Humano

@@ -1,7 +1,6 @@
 ---
 type: pj
 title: Liv Arroyo
-aliases: [Liv]
 cuenta_nwn: Cybele
 sexo: Femenino
 raza: Humano

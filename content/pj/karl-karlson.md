@@ -1,7 +1,6 @@
 ---
 type: pj
 title: Karl Karlson
-aliases: [Karl]
 cuenta_nwn: Karl
 sexo: Masculino
 raza: Humano

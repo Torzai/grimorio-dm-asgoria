@@ -1,7 +1,6 @@
 ---
 type: pj
 title: Nostril Belethor
-aliases: [Nostril]
 cuenta_nwn: Chakal
 sexo: Masculino
 raza: Semielfo

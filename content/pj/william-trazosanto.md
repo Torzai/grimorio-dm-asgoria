@@ -1,7 +1,6 @@
 ---
 type: pj
 title: William Trazosanto
-aliases: [William]
 cuenta_nwn: Neddy
 sexo: Masculino
 raza: Humano

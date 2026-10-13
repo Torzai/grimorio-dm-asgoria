@@ -1,7 +1,6 @@
 ---
 type: pj
 title: Viggo Olaf Runa
-aliases: [Viggo]
 cuenta_nwn: klotar2
 sexo: Masculino
 raza: Humano

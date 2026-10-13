@@ -1,7 +1,6 @@
 ---
 type: pj
 title: Helda Jorgensdóttir
-aliases: [Helda]
 cuenta_nwn: ArgonEro
 sexo: Femenino
 raza: Semielfo

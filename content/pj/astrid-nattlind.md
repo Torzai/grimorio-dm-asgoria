@@ -1,7 +1,6 @@
 ---
 type: pj
 title: Astrid Nattlind
-aliases: [Astrid]
 cuenta_nwn: Kira
 sexo: Femenino
 raza: Humano

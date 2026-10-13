@@ -1,7 +1,6 @@
 ---
 type: pj
 title: Bjorn Martillador
-aliases: [Bjorn]
 cuenta_nwn: Melisa
 sexo: Masculino
 raza: Enano

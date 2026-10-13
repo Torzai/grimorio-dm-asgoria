@@ -1,7 +1,6 @@
 ---
 type: pj
 title: Mia Steffen
-aliases: [Mia]
 cuenta_nwn: Sihi-chan
 sexo: Femenino
 raza: Humano

@@ -1,7 +1,6 @@
 ---
 type: pj
 title: Isabella Corazónvaliente
-aliases: [Isabella]
 cuenta_nwn: Nihito
 sexo: Femenino
 raza: Humano

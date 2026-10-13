@@ -1,7 +1,6 @@
 ---
 type: pj
 title: Viktor Knightley
-aliases: [Viktor]
 cuenta_nwn: Madness
 sexo: Masculino
 raza: Humano

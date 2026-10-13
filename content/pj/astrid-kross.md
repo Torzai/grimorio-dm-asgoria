@@ -1,7 +1,6 @@
 ---
 type: pj
 title: Astrid Kross
-aliases: [Astrid]
 cuenta_nwn: LadyPain
 sexo: Femenino
 raza: Humano

@@ -1,7 +1,6 @@
 ---
 type: pj
 title: Thalion Elessar
-aliases: [Thalion]
 cuenta_nwn: Rhaegis
 sexo: Masculino
 raza: Elfo

@@ -1,7 +1,6 @@
 ---
 type: pj
 title: William Thatcher
-aliases: [William]
 cuenta_nwn: William Thatcher
 sexo: Masculino
 raza: Humano

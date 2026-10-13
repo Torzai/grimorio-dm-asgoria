@@ -1,7 +1,6 @@
 ---
 type: pj
 title: Mert Kienner
-aliases: [Mert]
 cuenta_nwn: Ignacio
 sexo: Masculino
 raza: Humano

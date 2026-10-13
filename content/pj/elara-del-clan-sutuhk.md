@@ -1,7 +1,6 @@
 ---
 type: pj
 title: Elara del Clan Sutuhk
-aliases: [Elara]
 cuenta_nwn: Chaos-Chaos
 sexo: Femenino
 raza: Humano

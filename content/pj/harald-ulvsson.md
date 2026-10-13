@@ -1,7 +1,6 @@
 ---
 type: pj
 title: Harald Ulvsson
-aliases: [Harald]
 cuenta_nwn: Torzai
 sexo: Masculino
 raza: Humano

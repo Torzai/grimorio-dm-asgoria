@@ -1,7 +1,6 @@
 ---
 type: pj
 title: Vidar Snokrag
-aliases: [Vidar]
 cuenta_nwn: Kittiam
 sexo: Masculino
 raza: Semielfo

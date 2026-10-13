@@ -1,7 +1,6 @@
 ---
 type: pj
 title: Johan Heldebrand
-aliases: [Johan]
 cuenta_nwn: Blackmane
 sexo: Masculino
 raza: Humano

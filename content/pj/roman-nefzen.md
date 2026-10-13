@@ -1,7 +1,6 @@
 ---
 type: pj
 title: Roman Nefzen
-aliases: [Roman]
 cuenta_nwn: RomanNefzen
 sexo: Masculino
 raza: Humano

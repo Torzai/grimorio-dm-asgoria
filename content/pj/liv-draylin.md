@@ -1,7 +1,6 @@
 ---
 type: pj
 title: Liv Draylin
-aliases: [Liv]
 cuenta_nwn: Kaeldar
 sexo: Femenino
 raza: Humano

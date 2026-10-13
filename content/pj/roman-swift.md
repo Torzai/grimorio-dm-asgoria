@@ -1,7 +1,6 @@
 ---
 type: pj
 title: Román Swift
-aliases: [Román]
 cuenta_nwn: Rivendell
 sexo: Masculino
 raza: Humano

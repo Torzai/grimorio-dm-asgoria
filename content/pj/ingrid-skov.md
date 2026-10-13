@@ -1,7 +1,6 @@
 ---
 type: pj
 title: Ingrid Skov
-aliases: [Ingrid]
 cuenta_nwn: Smallthings
 sexo: Femenino
 raza: Humano

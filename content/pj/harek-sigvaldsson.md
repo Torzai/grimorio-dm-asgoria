@@ -6,7 +6,7 @@ cuenta_nwn: Harek
 sexo: Masculino
 raza: Enano
 clases: [Monje]
-alineamiento: Legal Malgino
+alineamiento: Legal maligno
 deidad: Loki, dios de las mentiras y el engaño (Deidad Mayor)
 estado: inactivo # por el último post del hilo (2025-03-08); el DM lo revisa
 hilo: https://asgoria.com.ar/foro/topic/harek-sigvaldsson-harek

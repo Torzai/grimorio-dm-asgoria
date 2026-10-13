@@ -1,7 +1,6 @@
 ---
 type: pj
 title: Isabella Morganthorn
-aliases: [Isabella]
 cuenta_nwn: Elisabeth
 sexo: Femenino
 raza: Humano

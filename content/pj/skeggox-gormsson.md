@@ -6,7 +6,7 @@ cuenta_nwn: D.Ace
 sexo: Masculino
 raza: Humano
 clases: [Bárbaro, Explorador]
-alineamiento: Caóotico Neutral
+alineamiento: Caótico neutral
 deidad: Forseti, dios de la justicia y la ley (Deidad Intermedia)
 estado: inactivo # por el último post del hilo (2024-08-21); el DM lo revisa
 hilo: https://asgoria.com.ar/foro/topic/skeggox-gormsson-d-ace

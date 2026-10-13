@@ -1,7 +1,6 @@
 ---
 type: pj
 title: Harald Kvedulfr
-aliases: [Harald]
 cuenta_nwn: Ser Pato
 sexo: Masculino
 raza: Semielfo

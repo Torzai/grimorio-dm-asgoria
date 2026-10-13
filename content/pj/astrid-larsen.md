@@ -1,7 +1,6 @@
 ---
 type: pj
 title: Astrid Larsen
-aliases: [Astrid]
 cuenta_nwn: zendu
 sexo: Femenino
 raza: Humano

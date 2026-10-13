@@ -1,7 +1,6 @@
 ---
 type: pj
 title: Hans Larson
-aliases: [Hans]
 cuenta_nwn: Saintspit
 sexo: Masculino
 raza: Humano

@@ -1,7 +1,6 @@
 ---
 type: pj
 title: Drake Winterson
-aliases: [Drake]
 cuenta_nwn: Rayne
 sexo: Masculino
 raza: Humano

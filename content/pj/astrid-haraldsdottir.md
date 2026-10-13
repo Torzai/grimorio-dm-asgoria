@@ -1,7 +1,6 @@
 ---
 type: pj
 title: Astrid Haraldsdottir
-aliases: [Astrid]
 cuenta_nwn: CharlyGandia
 sexo: Femenino
 raza: Humano

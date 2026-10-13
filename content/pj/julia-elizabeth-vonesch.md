@@ -1,7 +1,6 @@
 ---
 type: pj
 title: Julia Elizabeth Vonesch
-aliases: [Julia]
 cuenta_nwn: GatoNero
 sexo: Femenino
 raza: Humano

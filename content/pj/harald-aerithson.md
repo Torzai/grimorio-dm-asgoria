@@ -1,7 +1,6 @@
 ---
 type: pj
 title: Harald Aerithson
-aliases: [Harald]
 cuenta_nwn: Ser Pato
 sexo: Masculino
 raza: Semielfo

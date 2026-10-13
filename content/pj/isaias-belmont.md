@@ -6,7 +6,6 @@ cuenta_nwn: joseanmt
 sexo: Masculino
 raza: Semielfo
 clases: [Mago, Explorador]
-alineamiento: Seleccionar alineamiento...
 deidad: Odin, Padre de Todos, dios del conocimiento y la guerra (Deidad Mayor)
 estado: inactivo # por el último post del hilo (2025-08-25); el DM lo revisa
 hilo: https://asgoria.com.ar/foro/topic/isaias-belmont-joseanmt

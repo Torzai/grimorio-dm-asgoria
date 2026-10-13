@@ -1,7 +1,6 @@
 ---
 type: pj
 title: Ake Runa
-aliases: [Ake]
 cuenta_nwn: Asgar
 sexo: Masculino
 raza: Humano

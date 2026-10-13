@@ -1,7 +1,6 @@
 ---
 type: pj
 title: Haldor Fjellheim
-aliases: [Haldor]
 cuenta_nwn: SonOfRuss
 sexo: Masculino
 raza: Humano

@@ -1,7 +1,6 @@
 ---
 type: pj
 title: Viggo Draegor
-aliases: [Viggo]
 cuenta_nwn: KRAY
 sexo: Masculino
 raza: Humano

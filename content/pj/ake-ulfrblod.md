@@ -1,7 +1,6 @@
 ---
 type: pj
 title: Ake Ulfrblod
-aliases: [Ake]
 cuenta_nwn: Saintspit
 sexo: Masculino
 raza: Humano

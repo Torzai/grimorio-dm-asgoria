@@ -1,7 +1,6 @@
 ---
 type: pj
 title: Harald Grimnar
-aliases: [Harald]
 cuenta_nwn: SonOfRuss
 sexo: Masculino
 raza: Humano

@@ -1,7 +1,6 @@
 ---
 type: pj
 title: Magnus Gudriksson
-aliases: [Magnus]
 cuenta_nwn: Balo
 sexo: Masculino
 raza: Humano

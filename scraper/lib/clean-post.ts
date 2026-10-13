@@ -46,6 +46,7 @@ export function cleanPostHtml(html: string): CleanedPost {
   const discordPaste = flattenDiscordPastes(fragment);
   const droppedLinks = dropPrivateLinks(fragment);
   const images = linkImages(fragment);
+  flattenHeadings(fragment);
 
   const container = doc.createElement('div');
   container.append(fragment);
@@ -104,6 +105,30 @@ function authorLine(doc: Document, author: string): HTMLParagraphElement {
   line.append(strong);
   return line;
 }
+
+/**
+ * A heading inside a post (a Discord username, a line written as a title) would become a
+ * '### ' line and split the history, so it becomes a bold paragraph. Its inline marks go:
+ * the whole line is bold already, and '<strong><b>X</b></strong>' or '<i>—</i>' would come
+ * out as '****X****' or '_—_'. Links stay. Empty headings go.
+ */
+function flattenHeadings(root: DocumentFragment): void {
+  const doc = root.ownerDocument;
+  for (const heading of root.querySelectorAll('h1, h2, h3, h4, h5, h6')) {
+    if (!textOf(heading)) {
+      heading.remove();
+      continue;
+    }
+    for (const mark of heading.querySelectorAll(INLINE_MARKS)) mark.replaceWith(...mark.childNodes);
+    const line = doc.createElement('p');
+    const strong = doc.createElement('strong');
+    strong.append(...heading.childNodes);
+    line.append(strong);
+    heading.replaceWith(line);
+  }
+}
+
+const INLINE_MARKS = 'strong, b, em, i, u, s, span, font';
 
 /** One block per message; lists inside a paste are flattened too, so each item is a paragraph. */
 function flattenDiscordPastes(root: DocumentFragment): boolean {

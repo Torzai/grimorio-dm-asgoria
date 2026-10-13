@@ -1,7 +1,6 @@
 ---
 type: pj
 title: Lars Yggr
-aliases: [Lars]
 cuenta_nwn: Blueblood
 sexo: Masculino
 raza: Humano

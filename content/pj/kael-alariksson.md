@@ -1,7 +1,6 @@
 ---
 type: pj
 title: Kael Alariksson
-aliases: [Kael]
 cuenta_nwn: Black Bird
 sexo: Masculino
 raza: Humano

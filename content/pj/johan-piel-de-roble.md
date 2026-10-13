@@ -1,7 +1,6 @@
 ---
 type: pj
 title: Johan Piel de Roble
-aliases: [Johan]
 cuenta_nwn: Assabby
 sexo: Masculino
 raza: Semiorco

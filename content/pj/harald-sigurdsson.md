@@ -1,7 +1,6 @@
 ---
 type: pj
 title: Harald Sigurdsson
-aliases: [Harald]
 cuenta_nwn: Duff
 sexo: Masculino
 raza: Mediano

@@ -1,7 +1,6 @@
 ---
 type: pj
 title: Thyra Anvil
-aliases: [Thyra]
 cuenta_nwn: Kólmar Romperrocas
 sexo: Femenino
 raza: Humano

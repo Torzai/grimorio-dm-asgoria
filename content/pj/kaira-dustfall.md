@@ -1,7 +1,6 @@
 ---
 type: pj
 title: Kaira Dustfall
-aliases: [Kaira]
 cuenta_nwn: Eywa
 sexo: Femenino
 raza: Humano

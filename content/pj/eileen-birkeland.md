@@ -1,7 +1,6 @@
 ---
 type: pj
 title: Eileen Birkeland
-aliases: [Eileen]
 cuenta_nwn: Arick
 sexo: Femenino
 raza: Semielfo

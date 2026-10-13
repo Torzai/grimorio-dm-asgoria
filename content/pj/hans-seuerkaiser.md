@@ -1,7 +1,6 @@
 ---
 type: pj
 title: Hans Seuerkaiser
-aliases: [Hans]
 cuenta_nwn: Rugnus
 sexo: Masculino
 raza: Humano

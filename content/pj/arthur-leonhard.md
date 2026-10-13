@@ -1,7 +1,6 @@
 ---
 type: pj
 title: Arthur Leonhard
-aliases: [Arthur]
 cuenta_nwn: sheo
 sexo: Masculino
 raza: Semielfo

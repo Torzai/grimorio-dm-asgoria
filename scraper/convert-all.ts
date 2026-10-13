@@ -2,7 +2,9 @@ import { existsSync } from 'node:fs';
 import { readdir, readFile, writeFile } from 'node:fs/promises';
 import { join, relative } from 'node:path';
 import { parseArgs } from 'node:util';
-import { parseDocument } from 'yaml';
+import { isScalar, isSeq, parseDocument, type Document } from 'yaml';
+import { normalize } from '../src/content/normalize';
+import { ALIGNMENT_LABELS, readAlignment } from '../src/content/pj';
 import {
   DISCORD_TAG_PATTERN,
   EMAIL_PATTERN,
@@ -13,21 +15,32 @@ import {
 } from './config';
 import { localDay } from './lib/dates';
 import { pjIndexSchema, type PjIndexEntry } from './lib/pj-index';
-import { draftMarkdown, renderPjDraft, YAML_OPTIONS, type PjDraft } from './lib/pj-draft';
+import {
+  draftMarkdown,
+  pjFirstName,
+  pjTitle,
+  renderPjDraft,
+  YAML_OPTIONS,
+  type PjDraft,
+} from './lib/pj-draft';
 import { isAuthorizationForm } from './lib/pj-sheet';
-import { threadDumpSchema } from './lib/thread-page';
+import { threadDumpSchema, type ThreadDump } from './lib/thread-page';
 
 // npm run scrape:convert-all -- [--only <hilo>]…
 // Turns every PJ thread downloaded by scrape:pjs (scraper/raw/pj/<hilo>/posts.json) into a real
 // entry in content/pj/<personaje>.md. An entry that already exists for the same thread (found
 // by its `hilo`) keeps its whole frontmatter: only `hilo` and `importado` change, and the body
-// (form + history) is generated again. With `importar: false` in its frontmatter it is not
-// touched at all. `estado` is only decided when the entry is created.
+// (form + history) is generated again. Two fixes reach the frontmatter of an existing entry:
+// an alignment that needed fixing (comment, typo or empty template) is written again, and in
+// entries tagged `importado` the first name goes from `aliases` when another PJ shares it. With
+// `importar: false` in its frontmatter it is not touched at all. `estado` is only decided when
+// the entry is created. The first name is only added as alias when no other PJ shares it.
 // Prints a report (no post texts) and saves it to scraper/raw/pj/_convert-report.txt.
 
 const { values } = parseArgs({ options: { only: { type: 'string', multiple: true } } });
 
-type Action = 'creada' | 'actualizada' | 'sin cambios' | 'protegida (importar: false)';
+type Action =
+  'creada' | 'actualizada' | 'frontmatter' | 'sin cambios' | 'protegida (importar: false)';
 
 interface Converted {
   thread: string;
@@ -41,6 +54,29 @@ interface Converted {
 interface ExistingEntry {
   slug: string;
   file: string;
+  title?: string;
+  hilo?: string;
+}
+
+interface Downloaded {
+  thread: string;
+  dump: ThreadDump;
+  listed?: PjIndexEntry;
+  threadUrl: string;
+  title?: string;
+}
+
+/** What to do with an entry: the Markdown to write, if any, and the frontmatter fixes. */
+interface EntryResult {
+  action: Action;
+  markdown?: string;
+  fixes?: FrontmatterFixes;
+}
+
+/** What updateEntry changed in the frontmatter of an existing entry. */
+interface FrontmatterFixes {
+  aliasRemoved?: string;
+  alineamiento?: { from: string; to?: string };
 }
 
 const PJ_RAW_DIR = join(RAW_DIR, 'pj');
@@ -48,10 +84,14 @@ const FRONTMATTER_BLOCK = /^---[ \t]*\n([\s\S]*?\n)?---[ \t]*\n/;
 
 const today = localDay(new Date());
 const index = await readIndex();
-const { byThread, slugs } = await readExistingEntries();
+const existingEntries = await readExistingEntries();
+const { byThread, slugs } = existingEntries;
 const converted: Converted[] = [];
 const skipped: { thread: string; reason: string }[] = [];
+const fixes: { file: string; fixes: FrontmatterFixes }[] = [];
 
+// First the name of every PJ, so a first name only becomes an alias when it is unique.
+const downloaded: Downloaded[] = [];
 for (const thread of await downloadedThreads()) {
   const dump = threadDumpSchema.parse(
     JSON.parse(await readFile(join(PJ_RAW_DIR, thread, 'posts.json'), 'utf8')) as unknown,
@@ -61,15 +101,25 @@ for (const thread of await downloadedThreads()) {
     skipped.push({ thread, reason: 'el post #1 no es una ficha de autorización' });
     continue;
   }
-
   const listed = index.get(thread);
-  const threadUrl = listed?.url ?? dump.url.replace(/\/$/, '');
+  downloaded.push({
+    thread,
+    dump,
+    listed,
+    threadUrl: listed?.url ?? dump.url.replace(/\/$/, ''),
+    title: pjTitle(opening.html, dump.title || listed?.title),
+  });
+}
+const isUniqueFirstName = firstNameCounter(downloaded, existingEntries.all);
+
+for (const { thread, dump, listed, threadUrl, title } of downloaded) {
   const draft = renderPjDraft({
     threadUrl,
     threadTitle: dump.title || listed?.title,
     subforum: listed?.subforum,
     posts: dump.posts,
     today,
+    firstNameAlias: isUniqueFirstName(pjFirstName(title)),
   });
 
   const existing = byThread.get(threadUrl);
@@ -77,16 +127,19 @@ for (const thread of await downloadedThreads()) {
   const file = existing?.file ?? join(PJ_CONTENT_DIR, `${slug}.md`);
   slugs.add(slug);
 
-  const result = existing ? await updateEntry(file, threadUrl, draft) : createEntry(draft);
+  const result = existing
+    ? await updateEntry(file, threadUrl, draft, isUniqueFirstName)
+    : createEntry(draft);
+  const entry = {
+    thread,
+    file,
+    action: result.action,
+    draft,
+    posts: dump.posts.length,
+    subforum: listed?.subforum,
+  };
   if (result.markdown === undefined) {
-    converted.push({
-      thread,
-      file,
-      action: result.action,
-      draft,
-      posts: dump.posts.length,
-      subforum: listed?.subforum,
-    });
+    converted.push(entry);
     continue;
   }
   const leak = personalDataIn(result.markdown);
@@ -95,14 +148,8 @@ for (const thread of await downloadedThreads()) {
     continue;
   }
   await writeFile(file, result.markdown);
-  converted.push({
-    thread,
-    file,
-    action: result.action,
-    draft,
-    posts: dump.posts.length,
-    subforum: listed?.subforum,
-  });
+  converted.push(entry);
+  if (result.fixes) fixes.push({ file, fixes: result.fixes });
 }
 
 const report = buildReport();
@@ -133,11 +180,13 @@ async function downloadedThreads(): Promise<string[]> {
   return names.filter((name) => values.only?.includes(name));
 }
 
-/** The PJ entries that exist, by their thread, and every slug taken. */
+/** The PJ entries that exist (all, and by their thread) and every slug taken. */
 async function readExistingEntries(): Promise<{
+  all: ExistingEntry[];
   byThread: Map<string, ExistingEntry>;
   slugs: Set<string>;
 }> {
+  const all: ExistingEntry[] = [];
   const byThread = new Map<string, ExistingEntry>();
   const slugs = new Set<string>();
   for (const name of await readdir(PJ_CONTENT_DIR)) {
@@ -146,10 +195,43 @@ async function readExistingEntries(): Promise<{
     const file = join(PJ_CONTENT_DIR, name);
     slugs.add(slug);
     const block = FRONTMATTER_BLOCK.exec(normalizeNewlines(await readFile(file, 'utf8')));
-    const hilo: unknown = block ? parseDocument(block[1] ?? '').get('hilo') : undefined;
-    if (typeof hilo === 'string') byThread.set(hilo.replace(/\/$/, ''), { slug, file });
+    const doc = parseDocument(block?.[1] ?? '');
+    const hilo: unknown = doc.get('hilo');
+    const title: unknown = doc.get('title');
+    const entry: ExistingEntry = {
+      slug,
+      file,
+      ...(typeof title === 'string' ? { title } : {}),
+      ...(typeof hilo === 'string' ? { hilo: hilo.replace(/\/$/, '') } : {}),
+    };
+    all.push(entry);
+    if (entry.hilo) byThread.set(entry.hilo, entry);
   }
-  return { byThread, slugs };
+  return { all, byThread, slugs };
+}
+
+/**
+ * Whether a first name ('Einar') belongs to one PJ only, among the threads being converted and
+ * every PJ entry that exists. A one-word name counts too: 'Bjorn' takes 'Bjorn' from
+ * 'Bjorn Thorkelsson'. An entry of a downloaded thread counts once, with the title it has.
+ */
+function firstNameCounter(
+  threads: readonly Downloaded[],
+  entries: readonly ExistingEntry[],
+): (name: string | undefined) => boolean {
+  const owners = new Map<string, Set<string>>();
+  const add = (title: string | undefined, owner: string) => {
+    const key = normalize(title?.split(' ')[0] ?? '');
+    if (key !== '') owners.set(key, (owners.get(key) ?? new Set<string>()).add(owner));
+  };
+  const threadUrls = new Set(threads.map(({ threadUrl }) => threadUrl));
+  for (const { threadUrl, title } of threads) {
+    add(byThread.get(threadUrl)?.title ?? title, threadUrl);
+  }
+  for (const { file, hilo, title } of entries) {
+    if (!hilo || !threadUrls.has(hilo)) add(title, file);
+  }
+  return (name) => name !== undefined && owners.get(normalize(name))?.size === 1;
 }
 
 /** The PJ's name; with the account when another PJ has it; then numbered. */
@@ -161,7 +243,7 @@ function freeSlug(draft: PjDraft): string {
   return `${draft.fallbackSlug}-${n}`;
 }
 
-function createEntry(draft: PjDraft): { action: Action; markdown?: string } {
+function createEntry(draft: PjDraft): EntryResult {
   return { action: 'creada', markdown: draftMarkdown(draft) };
 }
 
@@ -173,21 +255,76 @@ async function updateEntry(
   file: string,
   threadUrl: string,
   draft: PjDraft,
-): Promise<{ action: Action; markdown?: string }> {
+  isUniqueFirstName: (name: string | undefined) => boolean,
+): Promise<EntryResult> {
   const text = normalizeNewlines(await readFile(file, 'utf8'));
   const block = FRONTMATTER_BLOCK.exec(text);
   const doc = parseDocument(block?.[1] ?? '');
   if (doc.get('importar') === false) return { action: 'protegida (importar: false)' };
 
+  const fixes = fixFrontmatter(doc, isUniqueFirstName);
   const body = block ? text.slice(block[0].length).replace(/^\n+/, '') : text;
-  if (body === draft.body && doc.get('hilo') === threadUrl) return { action: 'sin cambios' };
+  const bodyChanged = body !== draft.body || doc.get('hilo') !== threadUrl;
+  if (!bodyChanged && !fixes.aliasRemoved && !fixes.alineamiento) {
+    return { action: 'sin cambios' };
+  }
 
-  doc.set('hilo', threadUrl);
-  doc.set('importado', today);
+  // Fixing the frontmatter alone is no new import: 'importado' keeps its day.
+  if (bodyChanged) {
+    doc.set('hilo', threadUrl);
+    doc.set('importado', today);
+  }
   return {
-    action: 'actualizada',
+    action: bodyChanged ? 'actualizada' : 'frontmatter',
     markdown: `---\n${doc.toString(YAML_OPTIONS)}---\n\n${draft.body}`,
+    fixes,
   };
+}
+
+/**
+ * The two fixes that reach the frontmatter of an existing entry: an alignment that needed a
+ * fix is written as one of the 9 (or goes, when it is the empty template), and in an entry
+ * tagged 'importado' the first name leaves `aliases` when another PJ shares it.
+ */
+function fixFrontmatter(
+  doc: Document,
+  isUniqueFirstName: (name: string | undefined) => boolean,
+): FrontmatterFixes {
+  const fixes: FrontmatterFixes = {};
+
+  const alineamiento: unknown = doc.get('alineamiento');
+  if (typeof alineamiento === 'string') {
+    const reading = readAlignment(alineamiento);
+    if (reading.placeholder) {
+      doc.delete('alineamiento');
+      fixes.alineamiento = { from: alineamiento };
+    } else if (reading.alignment && reading.corrected) {
+      const to = ALIGNMENT_LABELS[reading.alignment];
+      doc.set('alineamiento', to);
+      fixes.alineamiento = { from: alineamiento, to };
+    }
+  }
+
+  const title: unknown = doc.get('title');
+  const tags: unknown = doc.get('tags');
+  const aliases: unknown = doc.get('aliases');
+  const firstName = typeof title === 'string' ? pjFirstName(title) : undefined;
+  const imported =
+    isSeq(tags) && tags.items.some((tag) => isScalar(tag) && tag.value === 'importado');
+  if (firstName && imported && isSeq(aliases) && !isUniqueFirstName(firstName)) {
+    const index = aliases.items.findIndex(
+      (alias) =>
+        isScalar(alias) &&
+        typeof alias.value === 'string' &&
+        normalize(alias.value) === normalize(firstName),
+    );
+    if (index !== -1) {
+      aliases.items.splice(index, 1);
+      if (aliases.items.length === 0) doc.delete('aliases');
+      fixes.aliasRemoved = firstName;
+    }
+  }
+  return fixes;
 }
 
 /** Last line of defence: the cleanup already redacted these from every text of the entry. */
@@ -223,8 +360,8 @@ function buildReport(): string[] {
   lines.push(
     '',
     `Creadas: ${count('creada')} · actualizadas: ${count('actualizada')} · ` +
-      `sin cambios: ${count('sin cambios')} · protegidas: ${count('protegida (importar: false)')} · ` +
-      `saltadas: ${skipped.length}`,
+      `solo frontmatter: ${count('frontmatter')} · sin cambios: ${count('sin cambios')} · ` +
+      `protegidas: ${count('protegida (importar: false)')} · saltadas: ${skipped.length}`,
   );
 
   const list = (title: string, items: string[]) => {
@@ -253,6 +390,22 @@ function buildReport(): string[] {
   list(
     'Sin sexo',
     created.filter((c) => c.draft.report.sexoFrom === 'desconocido').map((c) => c.thread),
+  );
+  list(
+    'Nombre de pila quitado de aliases (lo comparte otro PJ)',
+    fixes.flatMap(({ file, fixes: { aliasRemoved } }) =>
+      aliasRemoved ? [`${shown(file)}: ${aliasRemoved}`] : [],
+    ),
+  );
+  list(
+    'Alineamiento corregido en el frontmatter',
+    fixes.flatMap(({ file, fixes: { alineamiento } }) =>
+      alineamiento ? [`${shown(file)} → ${alineamiento.to ?? '(se quita: plantilla vacía)'}`] : [],
+    ),
+  );
+  list(
+    'Alineamiento sin interpretar (se deja como está escrito)',
+    converted.filter((c) => c.draft.report.alineamientoFrom === 'ilegible').map((c) => c.thread),
   );
 
   const labels = new Map<string, number>();

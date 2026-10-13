@@ -1,7 +1,6 @@
 ---
 type: pj
 title: Elara Medialuna
-aliases: [Elara]
 cuenta_nwn: Nihito
 sexo: Femenino
 raza: Semielfo

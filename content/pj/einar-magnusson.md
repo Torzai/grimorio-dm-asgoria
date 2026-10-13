@@ -1,7 +1,6 @@
 ---
 type: pj
 title: Einar Magnusson
-aliases: [Einar]
 cuenta_nwn: Bladdes
 sexo: Masculino
 raza: Humano

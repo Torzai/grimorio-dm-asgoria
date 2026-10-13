@@ -6,7 +6,7 @@ cuenta_nwn: Nostradamus
 sexo: Masculino
 raza: Mediano
 clases: [Monje, Asesino]
-alineamiento: Legal Malvado (de momento)
+alineamiento: Legal maligno
 deidad: Loki, dios de las mentiras y el engaño (Deidad Mayor)
 estado: inactivo # por el último post del hilo (2023-06-23); el DM lo revisa
 hilo: https://asgoria.com.ar/foro/topic/throdin-piesligeros-nostradamus
@@ -49,6 +49,12 @@ Su objetivo principal es asegurarse de que nunca vuelva a pasar hambre, frío o 
 Con una mentalidad maquiavélica y una voluntad de hierro, Throdin se convierte en una figura siniestra y despiadada en los bajos fondos de la ciudad. Su ambición y su falta de moral lo impulsan hacia el poder y la riqueza, sin importar el precio que deba pagar para alcanzar sus metas.
 
 No ha superado la pérdida de sus padres, y en las noches donde el silencio impera, su mente aún lo arrastra a lugares donde incluso él se siente como un niño abandonado y sólo en un mundo frío y despiadado.
+
+## Otros datos
+
+### Nota sobre el alineamiento
+
+de momento
 
 ## Historial
 

@@ -1,7 +1,6 @@
 ---
 type: pj
 title: Bofur Oroviejo
-aliases: [Bofur]
 cuenta_nwn: Assabby
 sexo: Masculino
 raza: Enano

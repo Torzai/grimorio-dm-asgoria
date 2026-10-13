@@ -1,7 +1,6 @@
 ---
 type: pj
 title: Astrid Tormenhindottir
-aliases: [Astrid]
 cuenta_nwn: Shadeoow
 sexo: Femenino
 raza: Humano

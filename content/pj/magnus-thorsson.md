@@ -1,7 +1,6 @@
 ---
 type: pj
 title: Magnus Thorsson
-aliases: [Magnus]
 cuenta_nwn: THX1133
 sexo: Masculino
 raza: Humano

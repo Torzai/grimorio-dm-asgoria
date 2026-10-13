@@ -1,7 +1,6 @@
 ---
 type: pj
 title: Eira Rune
-aliases: [Eira]
 cuenta_nwn: Jose-G-C
 sexo: Femenino
 raza: Humano

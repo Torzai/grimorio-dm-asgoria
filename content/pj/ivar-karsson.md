@@ -1,7 +1,6 @@
 ---
 type: pj
 title: Ivar Karsson
-aliases: [Ivar]
 cuenta_nwn: Lanthalas
 sexo: Masculino
 raza: Humano

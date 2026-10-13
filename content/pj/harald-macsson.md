@@ -1,7 +1,6 @@
 ---
 type: pj
 title: Harald Macsson
-aliases: [Harald]
 cuenta_nwn: LooteoAdistancia
 sexo: Masculino
 raza: Humano

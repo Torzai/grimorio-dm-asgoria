@@ -1,7 +1,6 @@
 ---
 type: pj
 title: Einar Eriksson
-aliases: [Einar]
 cuenta_nwn: Fernando10100
 sexo: Masculino
 raza: Humano

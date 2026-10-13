@@ -606,29 +606,29 @@ Finalmente se le entrega una runa que la representará
 
 **"LAGUZ", lagu o lögr. Es la ley primigenia, la vida, el mar y, también, la caída.**
 
-#### -Mejora el magnetismo personal.
+**-Mejora el magnetismo personal.**
 
-#### -Da entusiasmo y pasión por las ideas.
+**-Da entusiasmo y pasión por las ideas.**
 
-#### -Mejora las facetas más profundas y espirituales.
+**-Mejora las facetas más profundas y espirituales.**
 
-#### Laguz, se asocia con el **agua**, un símbolo de **vida**, ya que en ella se origina la existencia, pero también es símbolo de profundidad y peligro, por eso se dice que ésta runa, es la unión entre la **vida y la muerte.**
+**Laguz, se asocia con el agua, un símbolo de vida, ya que en ella se origina la existencia, pero también es símbolo de profundidad y peligro, por eso se dice que ésta runa, es la unión entre la vida y la muerte.**
 
-#### Está vinculada con el mundo del **inconsciente**, de la **intuición** y de los sentimientos escondidos en nuestro interior más profundo. En el Seidr: Adivinación, hechicería y manipulación de fuerzas espirituales
+**Está vinculada con el mundo del inconsciente, de la intuición y de los sentimientos escondidos en nuestro interior más profundo. En el Seidr: Adivinación, hechicería y manipulación de fuerzas espirituales**
 
 Luego cumple su palabra consultando sobre Kastoryce y la runa que cae es la Runa Blanca o Runa de Odin:
 
-#### Para no perder la esperanza.
+**Para no perder la esperanza.**
 
-#### -Para tener fe.
+**-Para tener fe.**
 
 **-Para no temer a la muerte.**
 
 **-Para enfrentar el destino, sea cual sea.**
 
-#### Esta runa es **blanca** como suma de todas las demás, pues en ella está la **energía** **de todas las runas.**
+**Esta runa es blanca como suma de todas las demás, pues en ella está la energía de todas las runas.**
 
-#### Simboliza lo impredecible, lo **desconocido**, el Todo, ya que, Odín erigió las estrellas, los planetas, sus lunas, las montañas, los océanos y, finalmente, **creó a todos los seres vivos** que habitan en el planeta, entre ellos a los primeros humanos y quizás a los últimos, los que morirán o están por morir.
+**Simboliza lo impredecible, lo desconocido, el Todo, ya que, Odín erigió las estrellas, los planetas, sus lunas, las montañas, los océanos y, finalmente, creó a todos los seres vivos que habitan en el planeta, entre ellos a los primeros humanos y quizás a los últimos, los que morirán o están por morir.**
 
 Al mover esta Runa, la misma cae al suelo, indicando que lo que suceda con la pequeña Kastoryce no puede ser modificado por mortales.
 

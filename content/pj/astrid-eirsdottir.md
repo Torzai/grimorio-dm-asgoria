@@ -1,7 +1,6 @@
 ---
 type: pj
 title: Astrid Eirsdottir
-aliases: [Astrid]
 cuenta_nwn: Elisabeth
 sexo: Femenino
 raza: Humano

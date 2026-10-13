@@ -417,7 +417,7 @@ _(imagen no disponible: enlace caducado)_
 
 _(imagen no disponible: enlace caducado)_
 
-### Balder -QM-
+**Balder -QM-**
 
 **Observaciones**: Buenas interpretación de roles. Hakkon sobresalió junto con Kyndra rol e interpratación. Todos +1PDR salvo Lunalesia, que ya recibio en el día. Todos +1 Fama Gadélica. +1PDR adicional a Kyndra por nivel e interpretación. Zafir por ser nivel bajo, muy bien manejo en el tablero/combate. Sin cobres, ni xp, salvo la del combate. **Nota QM/DM:** Gancho para seguir profanado/robando cadaveres como ingredientes para la nigromancia, en diferentes regiones cementerios del servidor. Karak, Margnur, Loren, etc. Posiblemente Humanos Cultitas de Hela, Sin conocimientos religiosos en esta oportunidad. Como el lugar estaba profano/corrupto se pudo a ver utilizado magia nigromántica/prohibida para animar a Daren no-vivo para la ayudarles en la carga de "ingredientes"
 

@@ -1,7 +1,6 @@
 ---
 type: pj
 title: Thalion El Proscrito
-aliases: [Thalion]
 cuenta_nwn: Guthwine
 sexo: Masculino
 raza: Semielfo

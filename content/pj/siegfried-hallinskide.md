@@ -1,7 +1,6 @@
 ---
 type: pj
 title: Siegfried Hallinskide
-aliases: [Siegfried]
 cuenta_nwn: Rhaegis
 sexo: Masculino
 raza: Humano

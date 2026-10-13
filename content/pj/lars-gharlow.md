@@ -1,7 +1,6 @@
 ---
 type: pj
 title: Lars Gharlow
-aliases: [Lars]
 cuenta_nwn: Kaeldar
 sexo: Masculino
 raza: Humano

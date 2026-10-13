@@ -1,7 +1,6 @@
 ---
 type: pj
 title: Haldor Skaldsson
-aliases: [Haldor]
 cuenta_nwn: Blackmane
 sexo: Masculino
 raza: Humano

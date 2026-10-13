@@ -1,7 +1,6 @@
 ---
 type: pj
 title: Bofur Escudoferreo
-aliases: [Bofur]
 cuenta_nwn: Assabby
 sexo: Masculino
 raza: Enano

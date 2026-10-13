@@ -5,7 +5,7 @@ cuenta_nwn: tamian1990
 sexo: Masculino
 raza: Semiorco
 clases: [Clérigo, Nigromante]
-alineamiento: Neutral Malvado //pasaría a NA
+alineamiento: Neutral maligno
 deidad: Hela, diosa de la muerte y el inframundo (Deidad Intermedia)
 estado: inactivo # por el último post del hilo (2024-10-15); el DM lo revisa
 hilo: https://asgoria.com.ar/foro/topic/skjorn-tamian1990
@@ -64,3 +64,9 @@ Feedback:
 Me gustó muchísimo la historia. Cuando respondas, modifico yo esa parte y ya, solo dime qué opinas.
 
 //Rta: Estoy de acuerdo con los cambios muchas gracias
+
+## Otros datos
+
+### Nota sobre el alineamiento
+
+pasaría a NA

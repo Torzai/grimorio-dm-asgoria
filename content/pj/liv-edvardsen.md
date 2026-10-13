@@ -1,7 +1,6 @@
 ---
 type: pj
 title: LIv Edvardsen
-aliases: [LIv]
 cuenta_nwn: xemaniator
 sexo: Femenino
 raza: Humano

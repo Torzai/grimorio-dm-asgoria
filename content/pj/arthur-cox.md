@@ -1,7 +1,6 @@
 ---
 type: pj
 title: Arthur Cox
-aliases: [Arthur]
 cuenta_nwn: Vallack
 sexo: Masculino
 raza: Humano

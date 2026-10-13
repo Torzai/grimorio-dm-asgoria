@@ -1,7 +1,6 @@
 ---
 type: pj
 title: Eira Ragnarsdottir
-aliases: [Eira]
 cuenta_nwn: Kira
 sexo: Femenino
 raza: Humano

@@ -1,7 +1,6 @@
 ---
 type: pj
 title: Einar Skaldsson
-aliases: [Einar]
 cuenta_nwn: Dantés Jr
 sexo: Masculino
 raza: Humano

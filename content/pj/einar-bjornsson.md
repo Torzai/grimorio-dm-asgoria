@@ -1,7 +1,6 @@
 ---
 type: pj
 title: Einar Bjornsson
-aliases: [Einar]
 cuenta_nwn: AlieneilA
 sexo: Masculino
 raza: Humano

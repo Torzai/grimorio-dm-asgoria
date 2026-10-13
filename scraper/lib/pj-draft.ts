@@ -1,5 +1,6 @@
 import { Document as YamlDocument, isScalar, visit } from 'yaml';
 import { normalize, slugify } from '../../src/content/normalize';
+import { ALIGNMENT_LABELS, readAlignment } from '../../src/content/pj';
 import {
   ACTIVE_DAYS,
   PJ_SUBFORUMS,
@@ -9,7 +10,7 @@ import {
 } from '../config';
 import type { ImageNote } from './clean-post';
 import { daysBetween, isoDay, spanishDay } from './dates';
-import { postToMarkdown, redactPersonalData } from './markdown';
+import { escapeMarkdown, postToMarkdown, redactPersonalData } from './markdown';
 import type { PjSubforum } from './pj-index';
 import { parseSheet, type PjSheet, type SheetField } from './pj-sheet';
 import { threadSlug, type ForumPost } from './thread-page';
@@ -37,11 +38,18 @@ export interface DraftReport {
   estado: 'activo' | 'inactivo';
   /** Day of the newest post of the thread; undefined when no post has a date. */
   lastPost?: string;
+  /**
+   * How the form's alignment was read: as written, fixed (comment taken out or typo), left
+   * out (empty template) or kept as written because it can't be read.
+   */
+  alineamientoFrom: 'ficha' | 'corregido' | 'plantilla' | 'ilegible' | 'sin valor';
 }
 
 export interface PjDraft {
   /** File name, without '.md': the PJ's name. */
   slug: string;
+  /** The PJ's name, from the form or the thread title. */
+  title?: string;
   /** File name when `slug` belongs to another PJ: name and account. */
   fallbackSlug: string;
   /** YAML of a new entry, without the '---' lines. */
@@ -60,10 +68,18 @@ export interface PjDraftInput {
   posts: ForumPost[];
   /** 'YYYY-MM-DD' */
   today: string;
+  /**
+   * Whether the first name ('Einar' of 'Einar Eriksson') goes in `aliases`. convert-all only
+   * adds it when no other PJ shares it, so [[Einar]] never points to the wrong one.
+   */
+  firstNameAlias?: boolean;
 }
 
 /** Same YAML style everywhere the importer writes: one line per value, lists in brackets. */
 export const YAML_OPTIONS = { lineWidth: 0, flowCollectionPadding: false } as const;
+
+/** Heading in "Otros datos" for what the player added to the alignment. */
+const ALIGNMENT_NOTE = 'Nota sobre el alineamiento';
 
 const REQUIRED_FIELDS: SheetField[] = [
   'title',
@@ -83,9 +99,7 @@ export function renderPjDraft(input: PjDraftInput): PjDraft {
   if (form?.number !== 1) throw new Error('falta el post #1, que es la ficha del personaje');
 
   const sheet = parseSheet(form.html);
-  const fromTitle = THREAD_TITLE_PATTERN.exec(input.threadTitle ?? '');
-  const titleName = (fromTitle?.[1] ?? input.threadTitle ?? '').trim();
-  const titleAccount = fromTitle?.[2].trim() ?? '';
+  const titleAccount = THREAD_TITLE_PATTERN.exec(input.threadTitle ?? '')?.[2].trim() ?? '';
 
   const lastPost = input.posts
     .flatMap((post) => (post.postedAt ? [isoDay(post.postedAt)] : []))
@@ -97,6 +111,14 @@ export function renderPjDraft(input: PjDraftInput): PjDraft {
   const formSexo = sheet.fields.sexo;
   const knownSexo = formSexo ? normalizeSexo(formSexo) : undefined;
   const sexo = formSexo ? (knownSexo ?? formSexo) : subforumSexo(input.subforum);
+
+  const formAlineamiento = sheet.fields.alineamiento;
+  const reading = formAlineamiento ? readAlignment(formAlineamiento) : undefined;
+  const alineamiento = reading?.alignment
+    ? ALIGNMENT_LABELS[reading.alignment]
+    : reading?.placeholder
+      ? undefined
+      : formAlineamiento;
 
   const report: DraftReport = {
     entries: 0,
@@ -110,7 +132,9 @@ export function renderPjDraft(input: PjDraftInput): PjDraft {
     unknownLabels: sheet.others.map(({ label }) => label),
     discardedLabels: sheet.discarded,
     missingFields: [
-      ...REQUIRED_FIELDS.filter((field) => !sheet.fields[field]),
+      ...REQUIRED_FIELDS.filter((field) =>
+        field === 'alineamiento' ? !alineamiento : !sheet.fields[field],
+      ),
       ...(sheet.clases.length === 0 ? ['clases'] : []),
     ],
     oddPosts: [],
@@ -124,18 +148,32 @@ export function renderPjDraft(input: PjDraftInput): PjDraft {
         : 'desconocido',
     estado,
     lastPost,
+    alineamientoFrom: !reading
+      ? 'sin valor'
+      : reading.placeholder
+        ? 'plantilla'
+        : !reading.alignment
+          ? 'ilegible'
+          : reading.corrected
+            ? 'corregido'
+            : 'ficha',
   };
 
-  const title = sheet.fields.title ?? (titleName ? redactPersonalData(titleName) : undefined);
+  const title = sheet.fields.title ?? threadName(input.threadTitle);
   const cuenta =
     sheet.fields.cuenta_nwn ?? (titleAccount ? redactPersonalData(titleAccount) : UNKNOWN_ACCOUNT);
   if (!sheet.fields.title && title) report.oddPosts.push('nombre tomado del título del hilo');
 
+  // The comment of a fixed alignment ('// pasaría a NA') is kept in "Otros datos".
+  const others = [...sheet.others];
+  if (reading?.alignment && reading.comment) {
+    others.push({ label: ALIGNMENT_NOTE, markdown: escapeMarkdown(reading.comment) });
+  }
   const blocks: string[] = [];
   for (const { heading, markdown } of sheet.sections) blocks.push(`## ${heading}`, markdown);
-  if (sheet.others.length > 0) {
+  if (others.length > 0) {
     blocks.push('## Otros datos');
-    for (const { label, markdown } of sheet.others) blocks.push(`### ${label}`, markdown);
+    for (const { label, markdown } of others) blocks.push(`### ${label}`, markdown);
   }
   // A PJ without replies has no history, so no empty section either.
   if (replies.length > 0) blocks.push('## Historial');
@@ -144,20 +182,41 @@ export function renderPjDraft(input: PjDraftInput): PjDraft {
   const slug = slugify(title ?? '') || threadSlug(input.threadUrl) || 'pj-sin-nombre';
   return {
     slug,
+    title,
     fallbackSlug: cuenta === UNKNOWN_ACCOUNT ? `${slug}-2` : `${slug}-${slugify(cuenta)}`,
     frontmatter: frontmatter({
       sheet,
       title,
       cuenta,
       sexo,
+      alineamiento,
       estado,
       lastPost,
+      firstNameAlias: input.firstNameAlias ?? true,
       threadUrl: input.threadUrl,
       today: input.today,
     }),
     body: `${blocks.join('\n\n')}\n`,
     report,
   };
+}
+
+/** The PJ's name as renderPjDraft finds it: in the form (post #1), or in the thread title. */
+export function pjTitle(formHtml: string, threadTitle: string | undefined): string | undefined {
+  return parseSheet(formHtml).fields.title ?? threadName(threadTitle);
+}
+
+/** 'Einar Eriksson' of the thread title 'Einar Eriksson ( cuenta )'. */
+function threadName(threadTitle: string | undefined): string | undefined {
+  const fromTitle = THREAD_TITLE_PATTERN.exec(threadTitle ?? '');
+  const name = (fromTitle?.[1] ?? threadTitle ?? '').trim();
+  return name ? redactPersonalData(name) : undefined;
+}
+
+/** 'Einar' of 'Einar Eriksson'; undefined for a one-word name, which is its own alias. */
+export function pjFirstName(title: string | undefined): string | undefined {
+  const words = title?.split(' ') ?? [];
+  return words.length > 1 ? words[0] : undefined;
 }
 
 /** A whole new file: frontmatter and body. */
@@ -170,23 +229,25 @@ function frontmatter(values: {
   title: string | undefined;
   cuenta: string;
   sexo: string | undefined;
+  alineamiento: string | undefined;
   estado: DraftReport['estado'];
   lastPost: string | undefined;
+  firstNameAlias: boolean;
   threadUrl: string;
   today: string;
 }): string {
   const { sheet, title } = values;
-  const { raza, alineamiento, deidad } = sheet.fields;
-  const words = title?.split(' ') ?? [];
+  const { raza, deidad } = sheet.fields;
+  const firstName = values.firstNameAlias ? pjFirstName(title) : undefined;
   const doc = new YamlDocument({
     type: 'pj',
     title,
-    aliases: words.length > 1 ? [words[0]] : undefined,
+    aliases: firstName ? [firstName] : undefined,
     cuenta_nwn: values.cuenta,
     sexo: values.sexo,
     raza,
     clases: sheet.clases.length > 0 ? sheet.clases : undefined,
-    alineamiento,
+    alineamiento: values.alineamiento,
     deidad,
     estado: values.estado,
     hilo: values.threadUrl,

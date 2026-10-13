@@ -1,7 +1,6 @@
 ---
 type: pj
 title: Kael Thir
-aliases: [Kael]
 cuenta_nwn: KaelThir
 sexo: Masculino
 raza: Humano

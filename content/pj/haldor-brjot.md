@@ -1,7 +1,6 @@
 ---
 type: pj
 title: Haldor Brjót
-aliases: [Haldor]
 cuenta_nwn: kingtuto
 sexo: Masculino
 raza: Humano

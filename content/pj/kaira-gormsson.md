@@ -1,7 +1,6 @@
 ---
 type: pj
 title: Kaira Gormsson
-aliases: [Kaira]
 cuenta_nwn: Elisabeth
 sexo: Femenino
 raza: Humano

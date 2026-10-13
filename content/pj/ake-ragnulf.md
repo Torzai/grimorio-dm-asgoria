@@ -1,7 +1,6 @@
 ---
 type: pj
 title: Ake Ragnulf
-aliases: [Ake]
 cuenta_nwn: Saintspit
 sexo: Masculino
 raza: Humano

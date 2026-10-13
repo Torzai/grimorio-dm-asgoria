@@ -1,7 +1,6 @@
 ---
 type: pj
 title: Siegfried Dunkelschwert
-aliases: [Siegfried]
 cuenta_nwn: Graco
 sexo: Masculino
 raza: Humano

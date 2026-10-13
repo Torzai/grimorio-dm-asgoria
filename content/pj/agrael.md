@@ -33,7 +33,7 @@ Buscará el dios que más se adecúe a su desarrollo como mago, ya que Odín le 
 
 ### 2025-04-29 · WilliamTrazosanto (@williamtrazosanto)
 
-### Gold -QM- _—_ 25/4/25, 15:26
+**Gold -QM- — 25/4/25, 15:26**
 
 Titulo: Einar Andersson El tramposo Personajes: Agrael Desarrollo: El tramposo ingresa a la tienda de Magia en los bajos haciendo un mandado para su nuevo grupo (un importante grupo de Asesinos que entre sus filas tienen algunos arcanos y buscaban runas) Al ingresar, Agrael nota la presencia pero no llega a reaccionar, el hombre se pierde rapidamente entre los callejones de los bajos. Tras un trabajo de vigilancia, Agrael puede ver salir a mas de 30 asesinos por los techos, ventanas y puertas de el sitio de reunion asi como tambien a su lider, un hombre de un casco Dorado. Tras unos minutos, un herido de muerte Einar es expulsado por una ventana donde es inteceptado por Agrael invisible. Este lo Domina (dominar persona) y lo lleva a un almacen abandonado donde lo ejecuta tras confirmar su intencion de matarlo tanto a el (agrael) como a sus dos compañeros. Tras eliminarlo con un conjuro Dedo de la muerte, lo reanima como muerto viviente y luego los destruye. Incinera los restos de hueso,carne y sangre con cautela y luego se mueve invisibile del sitio dejandose ver por otras personas en un distrito distinto. Recompensa: 1 PDR Observaciones: Excelente Agrael Nuevamente- A discrecion si le agregan puntos de maligno
 

@@ -1,7 +1,6 @@
 ---
 type: pj
 title: Astrid Melin
-aliases: [Astrid]
 cuenta_nwn: hela
 sexo: Femenino
 raza: Elfo

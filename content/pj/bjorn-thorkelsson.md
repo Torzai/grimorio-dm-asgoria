@@ -1,7 +1,6 @@
 ---
 type: pj
 title: Bjorn Thorkelsson
-aliases: [Bjorn]
 cuenta_nwn: NigraLupus
 sexo: Masculino
 raza: Humano

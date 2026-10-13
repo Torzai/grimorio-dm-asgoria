@@ -1,7 +1,6 @@
 ---
 type: pj
 title: Roman Vikeroy
-aliases: [Roman]
 cuenta_nwn: klotar2
 sexo: Masculino
 raza: Humano

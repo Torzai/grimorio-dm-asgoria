@@ -1,7 +1,6 @@
 ---
 type: pj
 title: Deacon Reavers
-aliases: [Deacon]
 cuenta_nwn: Stails
 sexo: Masculino
 raza: Humano
@@ -98,7 +97,7 @@ haz que su sueño no sea verdad.
 Recuerda el viento que te ha guiado  
 y con su aliento llegarás.
 
-### ****Eärwen Saerwen****
+**Eärwen Saerwen**
 
 Con ello, se acercan a la tienda de alquimia ya que el nombre suena élfico, quienes les dicen no conocerlo pero que el pelo es de Venado blanco legendario, por lo que deciden ir al norte.
 
