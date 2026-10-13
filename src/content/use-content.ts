@@ -1,5 +1,5 @@
 import { createContext, useContext } from 'react';
-import type { Content } from './build-content';
+import type { Content } from './build-content.ts';
 
 // Lives apart from ContentContext.tsx so that file only exports components (Fast Refresh).
 export const ContentContext = createContext<Content | null>(null);

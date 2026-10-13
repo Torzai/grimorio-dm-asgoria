@@ -1,6 +1,6 @@
 import { readdir, readFile } from 'node:fs/promises';
 import { join, relative, sep } from 'node:path';
-import { buildContent, type Content } from './build-content';
+import { buildContent, type FullContent } from './build-content.ts';
 
 /** Node-only: the raw text of <rootDir>/content/**\/*.md, keyed 'content/<type>/<slug>.md'. */
 export async function readContentFiles(rootDir: string): Promise<Record<string, string>> {
@@ -21,6 +21,6 @@ export async function readContentFiles(rootDir: string): Promise<Record<string, 
 }
 
 /** Node-only: reads <rootDir>/content/**\/*.md and builds the shared content. */
-export async function loadContentFromFs(rootDir: string): Promise<Content> {
+export async function loadContentFromFs(rootDir: string): Promise<FullContent> {
   return buildContent(await readContentFiles(rootDir));
 }

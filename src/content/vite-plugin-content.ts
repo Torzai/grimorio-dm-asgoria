@@ -1,50 +1,77 @@
 import { resolve, sep } from 'node:path';
 import type { Plugin, ViteDevServer } from 'vite';
-import { readContentFiles } from './load-from-fs';
-import { loadEntries } from './loader';
-import { pjIssues } from './pj';
-import { buildPjHistorial, type PjHistorialData, type PjSummary } from './pj-historial';
-import { buildIndex, serializeIndex } from './search-index';
+import { buildContent } from './build-content.ts';
+import { readContentFiles } from './load-from-fs.ts';
+import {
+  buildPjHistorial,
+  type HistorialItemMeta,
+  type PjHistorialData,
+  type PjSummary,
+} from './pj-historial.ts';
+import { buildIndex, serializeIndex } from './search-index.ts';
+import type { EntryMeta } from './types.ts';
 
 /*
- * Node-only. Does at build time (and once per change in dev) the heavy work over the content:
- * the search index, serialized, and each PJ's history split into entries. The browser gets
- * them as virtual modules:
- *   virtual:grimorio/content    index, PJ warnings, PJ summaries and a loader per PJ (eager)
- *   virtual:grimorio/pj/<slug>  the history of one PJ (its own chunk, loaded on demand)
+ * Node-only. Does at build time (and once per change in dev) the heavy work over the content
+ * and hands the browser two virtual modules:
+ *   virtual:grimorio/content       every entry without its body, the issues, the link graph,
+ *                                  and each PJ's history without the text of its entries (eager)
+ *   virtual:grimorio/search-index  the MiniSearch index, serialized (its own chunk, loaded
+ *                                  when the browser is idle or the search is first used)
+ * The bodies are not here: load-from-glob.ts imports each .md on its own when it is opened.
  */
 
 const CONTENT_ID = 'virtual:grimorio/content';
-const PJ_PREFIX = 'virtual:grimorio/pj/';
+const INDEX_ID = 'virtual:grimorio/search-index';
 
 interface Computed {
   contentModule: string;
-  historiales: Map<string, PjHistorialData>;
+  indexModule: string;
 }
 
 async function compute(rootDir: string): Promise<Computed> {
-  const { entries } = loadEntries(await readContentFiles(rootDir));
-  const pjs = entries.filter((entry) => entry.type === 'pj');
+  const { entries, issues, links } = buildContent(await readContentFiles(rootDir));
 
   const historiales = new Map<string, PjHistorialData>();
   const summaries: Record<string, PjSummary> = {};
-  for (const pj of pjs) {
+  const items: Record<string, HistorialItemMeta[]> = {};
+  for (const pj of entries.filter((entry) => entry.type === 'pj')) {
     const { summary, data } = buildPjHistorial(pj);
     historiales.set(pj.slug, data);
     summaries[pj.slug] = summary;
+    // Without bodyMarkdown and searchText; JSON leaves out the fields that are undefined.
+    items[pj.slug] = data.items.map(
+      ({ id, date, authorName, authorHandle, participantes, recompensa, preview }) => ({
+        id,
+        date,
+        authorName,
+        authorHandle,
+        participantes,
+        recompensa,
+        preview,
+      }),
+    );
   }
 
-  const index = serializeIndex(buildIndex(entries, historiales));
-  const loaders = pjs
-    .map(({ slug }) => `  ${JSON.stringify(slug)}: () => import(${JSON.stringify(PJ_PREFIX + slug)}),`)
-    .join('\n');
+  const metas: EntryMeta[] = entries.map(({ slug, type, path, data }) => ({
+    slug,
+    type,
+    path,
+    data,
+  }));
   const contentModule = [
-    `export const searchIndex = ${jsonModuleValue(index)};`,
-    `export const pjIssues = ${jsonModuleValue(pjs.flatMap(pjIssues))};`,
+    `export const entries = ${jsonModuleValue(metas)};`,
+    `export const issues = ${jsonModuleValue(issues)};`,
+    `export const links = ${jsonModuleValue({
+      outgoing: [...links.outgoing],
+      backlinks: [...links.backlinks],
+      byZona: [...links.byZona],
+    })};`,
     `export const pjSummaries = ${jsonModuleValue(summaries)};`,
-    `export const pjHistorialLoaders = {\n${loaders}\n};`,
+    `export const pjHistoriales = ${jsonModuleValue(items)};`,
   ].join('\n');
-  return { contentModule, historiales };
+  const index = serializeIndex(buildIndex(entries, historiales));
+  return { contentModule, indexModule: `export default ${jsonModuleValue(index)};` };
 }
 
 /** JSON.parse of a string literal is parsed faster than the same object as a JS literal. */
@@ -63,10 +90,9 @@ export function grimorioContent(): Plugin {
       if (!resolve(file).startsWith(contentDir) || !file.toLowerCase().endsWith('.md')) return;
       computed = undefined;
       const graph = server.environments.client.moduleGraph;
-      for (const module of graph.idToModuleMap.values()) {
-        if (module.id?.startsWith(`\0${CONTENT_ID}`) || module.id?.startsWith(`\0${PJ_PREFIX}`)) {
-          graph.invalidateModule(module);
-        }
+      for (const id of [CONTENT_ID, INDEX_ID]) {
+        const module = graph.getModuleById(`\0${id}`);
+        if (module) graph.invalidateModule(module);
       }
       server.ws.send({ type: 'full-reload' });
     };
@@ -82,15 +108,13 @@ export function grimorioContent(): Plugin {
     },
     configureServer: watchContent,
     resolveId(id) {
-      if (id === CONTENT_ID || id.startsWith(PJ_PREFIX)) return `\0${id}`;
+      if (id === CONTENT_ID || id === INDEX_ID) return `\0${id}`;
       return undefined;
     },
     async load(id) {
       if (id === `\0${CONTENT_ID}`) return (await get()).contentModule;
-      if (!id.startsWith(`\0${PJ_PREFIX}`)) return undefined;
-      const slug = id.slice(`\0${PJ_PREFIX}`.length);
-      const data = (await get()).historiales.get(slug) ?? { items: [], fichaBody: '' };
-      return `export default ${jsonModuleValue(data)};`;
+      if (id === `\0${INDEX_ID}`) return (await get()).indexModule;
+      return undefined;
     },
   };
 }

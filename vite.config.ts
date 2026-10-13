@@ -1,7 +1,7 @@
 import { fileURLToPath } from 'node:url';
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
-import { grimorioContent } from './src/content/vite-plugin-content';
+import { grimorioContent } from './src/content/vite-plugin-content.ts';
 
 export default defineConfig(({ command }) => ({
   plugins: [react(), grimorioContent()],

@@ -1,4 +1,4 @@
-import type { EntryType, FrontmatterOf } from './types';
+import type { EntryType, FrontmatterOf } from './types.ts';
 
 export interface TypeLabel {
   /** One entry of the type, e.g. in an eyebrow: 'NPC · Puerto'. */

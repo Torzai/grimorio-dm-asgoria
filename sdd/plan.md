@@ -70,16 +70,24 @@
 
 ```
 content/**/*.md
-   │  import.meta.glob('/content/**/*.md', { query: '?raw', import: 'default', eager: true })
+   │  vite-plugin-content.ts (Node: en build y en cada cambio en dev)
    ▼
 loader.ts ── frontmatter.ts ── schemas.ts (Zod)
    │            └─► ContentIssue[] (error | warning)
    ▼
-Entry[]  ──► links.ts (resolver, backlinks, rotos)
+Entry[] ──► links.ts · pj-historial.ts · search-index.ts
    │
-   ├─► search-index.ts (MiniSearch, construido una vez al arrancar)
-   └─► ContentContext (React) ─► features/*
+   ├─► virtual:grimorio/content       (eager)  fichas sin cuerpo, issues, grafo de enlaces,
+   │                                            historiales de PJ sin texto y sus agregados
+   ├─► virtual:grimorio/search-index  (chunk propio) MiniSearch serializado
+   └─► import.meta.glob('/content/**/*.md', { query: '?raw' })  (lazy, un chunk por ficha)
+            ▼
+ContentContext (React) ─► features/*   ·   useEntryBody(path) ─► cuerpo al abrir la ficha
 ```
+
+- El navegador arranca solo con los **metadatos**: todo lo de cada ficha menos el cuerpo, más lo que necesitan sidebar, listas, filtros, aside, aviso de issues, resolver de wikilinks y la vista de PJ plegada (por entrada: id, fecha, autor, participantes, recompensa y vista previa).
+- El **índice** de búsqueda se carga en un chunk propio cuando el navegador queda ocioso o al usar la búsqueda por primera vez (`search-data.ts`).
+- El **cuerpo** de cada ficha es un chunk propio que se importa al abrirla (`use-entry-body.ts`, con caché en memoria). En un PJ, ese cuerpo da la pestaña Ficha y el texto de cada entrada, partido en el cliente con las mismas funciones puras del build (`parseHistorial`, `historialItem`).
 
 - `loader.ts` excluye rutas que empiezan por `_` (`_templates`, `_inbox`) y `assets/`.
 - `load-from-fs.ts` lee del disco con `fs` + `fast-glob` (o `fs.readdir` recursivo) y reutiliza **las mismas funciones puras**, para que la app y `validate` nunca diverjan.
@@ -112,7 +120,7 @@ interface ContentIssue {
 - Opciones: `prefix: true`, `fuzzy: 0.2`, `combineWith: 'AND'`.
 - `processTerm` normaliza (minúsculas, sin tildes) **en indexado y en consulta**.
 - `storeFields`: `slug`, `type`, `title`, `resumen`, `zona`.
-- Se construye una vez y se expone desde `ContentContext`. Con HMR se reconstruye.
+- Se construye en el build (plugin de contenido) y llega serializado en un chunk propio, cargado en idle o al primer uso (§3). En dev se reconstruye al cambiar un `.md`.
 
 ## 6. Rutas
 
@@ -126,7 +134,7 @@ interface ContentIssue {
 
 ## 7. Decisiones (ADR-lite)
 
-1. **Carga eager del contenido.** Con miles de fichas de texto, el peso es asumible y simplifica la búsqueda. Si algún día pesa demasiado, se pasa a `eager: false` para los cuerpos y se mantiene el índice eager.
+1. **Metadatos eager, índice y cuerpos bajo demanda (T06c).** El plugin de build hace el trabajo pesado (validar, enlaces, historiales de PJ, índice MiniSearch) y entrega al navegador un módulo de metadatos que se carga al arrancar: fichas sin cuerpo, issues, grafo de enlaces y los historiales de PJ sin el texto de las entradas. El índice serializado va en su propio chunk y se carga en idle o al primer uso de la búsqueda. Cada cuerpo es un chunk que se importa al abrir la ficha; mientras llega, la cabecera, los datos y la lista plegada del historial ya se ven, y el texto muestra "Cargando…". El chunk principal no contiene texto de los cuerpos (salvo las vistas previas, participantes y recompensas del historial), así que crece con el número de fichas, no con lo que ocupa su texto.
 2. **Validación en dos sitios con un único código.** En el navegador, para no romper la app; en Node, para bloquear commits y builds rotos.
 3. **Sin store global.** Contenido de solo lectura en context; fijados y recientes con un hook sobre `localStorage`.
 4. **Wikilinks como plugin remark**, no como regex sobre HTML.

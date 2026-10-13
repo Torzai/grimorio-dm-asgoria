@@ -1,6 +1,5 @@
 import {
-  Suspense,
-  use,
+  useEffect,
   useId,
   useMemo,
   useRef,
@@ -11,11 +10,12 @@ import {
 import { Link, createSearchParams, useSearchParams } from 'react-router';
 import type { EntryContext } from '@/content/content-queries';
 import { normalize } from '@/content/normalize';
-import { loadPjHistorial, pjSummaryOf } from '@/content/pj-data';
-import type { NameCount, PjSummary } from '@/content/pj-historial';
+import { pjHistorialOf, pjSummaryOf, splitPjBody, type PjBody } from '@/content/pj-data';
+import { ownNamesOf, type NameCount, type PjSummary } from '@/content/pj-historial';
 import { PJ_ESTADO_LABELS } from '@/content/type-labels';
-import type { Entry } from '@/content/types';
+import type { EntryMeta } from '@/content/types';
 import { useContent } from '@/content/use-content';
+import { useEntryBody } from '@/content/use-entry-body';
 import { formatNumericDate } from '@/features/entry-list/entry-meta';
 import { AsideBox, EntryAside } from '../EntryAside';
 import { MarkdownBody } from '../EntryBody';
@@ -35,18 +35,29 @@ const EMPTY_SUMMARY: PjSummary = { total: 0, dms: [], companions: [], years: [] 
 const TOP_DMS = 5;
 
 interface PjViewProps {
-  entry: Entry<'pj'>;
+  entry: EntryMeta<'pj'>;
   context: EntryContext;
   /** The page title, which EntryPage focuses when the DM moves to another entry. */
   title: ReactNode;
 }
 
-/** /pj/:slug — header, key data, and the history and the sheet in two tabs. */
+/**
+ * /pj/:slug — header, key data, and the history and the sheet in two tabs. All of it comes
+ * from the metadata at once except the text of the entries and the sheet, which come with the
+ * PJ's body, loaded when the PJ opens.
+ */
 export function PjView({ entry, context, title }: PjViewProps) {
   const summary = pjSummaryOf(entry.slug) ?? EMPTY_SUMMARY;
+  const items = pjHistorialOf(entry.slug);
   const [params, setParams] = useSearchParams();
   const tab: TabId = params.get('tab') === 'ficha' ? 'ficha' : 'historial';
-  const historial = loadPjHistorial(entry.slug);
+  const rawBody = useEntryBody(entry.path);
+  const body = useMemo(
+    () => (rawBody === undefined ? undefined : splitPjBody(rawBody, ownNamesOf(entry))),
+    [rawBody, entry],
+  );
+  // Splits the entries little by little, so the first search of the history is instant.
+  useEffect(() => body?.prepareWhenIdle(), [body]);
 
   function selectTab(next: TabId) {
     setParams(
@@ -141,19 +152,11 @@ export function PjView({ entry, context, title }: PjViewProps) {
           aria-labelledby={tabId(tab)}
           className={styles.panel}
         >
-          <Suspense
-            fallback={
-              <p className={styles.loading} aria-busy="true">
-                Cargando historial…
-              </p>
-            }
-          >
-            {tab === 'historial' ? (
-              <HistorialTab entry={entry} summary={summary} historial={historial} />
-            ) : (
-              <FichaTab entry={entry} historial={historial} />
-            )}
-          </Suspense>
+          {tab === 'historial' ? (
+            <HistorialPanel entry={entry} items={items} summary={summary} body={body} />
+          ) : (
+            <FichaTab entry={entry} body={body} />
+          )}
         </div>
         <EntryAside
           context={context}
@@ -164,23 +167,8 @@ export function PjView({ entry, context, title }: PjViewProps) {
   );
 }
 
-type HistorialPromise = ReturnType<typeof loadPjHistorial>;
-
-function HistorialTab({
-  entry,
-  summary,
-  historial,
-}: {
-  entry: Entry<'pj'>;
-  summary: PjSummary;
-  historial: HistorialPromise;
-}) {
-  const data = use(historial);
-  return <HistorialPanel entry={entry} data={data} summary={summary} />;
-}
-
-function FichaTab({ entry, historial }: { entry: Entry<'pj'>; historial: HistorialPromise }) {
-  const { fichaBody } = use(historial);
+/** Tags at once; the sheet once the body is loaded. */
+function FichaTab({ entry, body }: { entry: EntryMeta<'pj'>; body: PjBody | undefined }) {
   const { tags = [] } = entry.data;
   return (
     <div className={styles.ficha}>
@@ -198,8 +186,12 @@ function FichaTab({ entry, historial }: { entry: Entry<'pj'>; historial: Histori
           ))}
         </ul>
       )}
-      {fichaBody ? (
-        <MarkdownBody markdown={fichaBody} />
+      {!body ? (
+        <p className={styles.loading} aria-busy="true">
+          Cargando…
+        </p>
+      ) : body.fichaBody ? (
+        <MarkdownBody markdown={body.fichaBody} />
       ) : (
         <p className={styles.loading}>Esta ficha todavía no tiene trasfondo.</p>
       )}
@@ -208,7 +200,7 @@ function FichaTab({ entry, historial }: { entry: Entry<'pj'>; historial: Histori
 }
 
 /** 'Humano · Bárbaro · Caótico Neutral · Skadi · cuenta Fernando10100'. */
-function IdentityLine({ entry }: { entry: Entry<'pj'> }) {
+function IdentityLine({ entry }: { entry: EntryMeta<'pj'> }) {
   const { raza, clases = [], alineamiento, deidad, cuenta_nwn } = entry.data;
   // 'Skadi, diosa de la tierra… (Deidad Menor)' → 'Skadi'; the whole text stays as a tooltip.
   const deidadName = deidad?.split(/[,(]/)[0].trim();
@@ -304,12 +296,12 @@ function Tabs({ tabs, selected, onSelect }: TabsProps) {
 }
 
 /** "Narrado por" and "Suele jugar con", before the boxes every entry has. */
-function PjAsideBoxes({ entry, summary }: { entry: Entry<'pj'>; summary: PjSummary }) {
+function PjAsideBoxes({ entry, summary }: { entry: EntryMeta<'pj'>; summary: PjSummary }) {
   const [showAllDms, setShowAllDms] = useState(false);
   const { entries } = useContent();
   // A companion is a link when a PJ has that name as its title or one of its aliases.
   const pjByName = useMemo(() => {
-    const map = new Map<string, Entry>();
+    const map = new Map<string, EntryMeta>();
     for (const other of entries) {
       if (other.type !== 'pj' || other === entry) continue;
       for (const name of [other.data.title, ...(other.data.aliases ?? [])]) {

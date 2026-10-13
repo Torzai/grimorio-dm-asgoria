@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react';
-import type { HistorialItem } from '@/content/pj-historial';
+import type { HistorialItemMeta, HistorialItemText } from '@/content/pj-historial';
 import { MarkdownBody } from '../EntryBody';
 import { findRanges } from './highlight';
 import styles from './HistorialPanel.module.css';
@@ -9,7 +9,9 @@ const MAX_CHIPS = 6;
 const COPIED_MS = 2000;
 
 interface HistorialEntryProps {
-  item: HistorialItem;
+  item: HistorialItemMeta;
+  /** The text of the open entry; undefined while the PJ's body loads. */
+  text: HistorialItemText | undefined;
   /** The PJ's slug, for the entry's link. */
   slug: string;
   terms: readonly string[];
@@ -21,7 +23,7 @@ interface HistorialEntryProps {
  * One history entry: a button with date, narrator, participants and preview that opens the
  * whole text. Folded entries don't render their body.
  */
-export function HistorialEntry({ item, slug, terms, open, onToggle }: HistorialEntryProps) {
+export function HistorialEntry({ item, text, slug, terms, open, onToggle }: HistorialEntryProps) {
   const [year, month, day] = item.date.split('-');
   const bodyId = `${item.id}-texto`;
   const extra = item.participantes.length - MAX_CHIPS;
@@ -74,8 +76,12 @@ export function HistorialEntry({ item, slug, terms, open, onToggle }: HistorialE
 
       {open && (
         <div id={bodyId} className={styles.entryBody}>
-          {item.bodyMarkdown ? (
-            <MarkdownBody markdown={item.bodyMarkdown} highlight={terms} />
+          {!text ? (
+            <p className={styles.noText} aria-busy="true">
+              Cargando…
+            </p>
+          ) : text.bodyMarkdown ? (
+            <MarkdownBody markdown={text.bodyMarkdown} highlight={terms} />
           ) : (
             <p className={styles.noText}>Esta entrada no tiene más texto.</p>
           )}

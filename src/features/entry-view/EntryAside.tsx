@@ -2,11 +2,11 @@ import { useId, type ReactNode } from 'react';
 import { Link } from 'react-router';
 import type { EntryContext } from '@/content/content-queries';
 import { TYPE_LABELS } from '@/content/type-labels';
-import type { Entry } from '@/content/types';
+import type { EntryMeta } from '@/content/types';
 import { formatDate } from '@/features/entry-list/entry-meta';
 import styles from './EntryAside.module.css';
 
-const entryPath = (entry: Entry) => `/${entry.type}/${entry.slug}`;
+const entryPath = (entry: EntryMeta) => `/${entry.type}/${entry.slug}`;
 
 interface EntryAsideProps {
   context: EntryContext;
@@ -77,7 +77,7 @@ export function AsideBox({ title, children }: { title: string; children: ReactNo
 }
 
 /** Links like '→ NPC: Tobías', as in the mockup. */
-function TypedList({ entries }: { entries: readonly Entry[] }) {
+function TypedList({ entries }: { entries: readonly EntryMeta[] }) {
   return (
     <ul className={styles.list}>
       {entries.map((entry) => (
@@ -93,7 +93,7 @@ function TypedList({ entries }: { entries: readonly Entry[] }) {
 }
 
 /** '14 mar 2026 · Title', the date in the muted style of the mockup. */
-function SessionList({ sessions }: { sessions: readonly Entry[] }) {
+function SessionList({ sessions }: { sessions: readonly EntryMeta[] }) {
   return (
     <ul className={styles.list}>
       {sessions.map((entry) => (

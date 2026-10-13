@@ -1,6 +1,7 @@
-import { useMemo, type ReactNode } from 'react';
+import { useEffect, useMemo, type ReactNode } from 'react';
 import type { Content } from './build-content';
 import { loadContentFromGlob } from './load-from-glob';
+import { preloadSearchIndexWhenIdle } from './search-data';
 import { ContentContext } from './use-content';
 
 // Module-level so StrictMode's double render doesn't build twice.
@@ -13,7 +14,7 @@ function loadOnce(): Content {
     loaded = loadContentFromGlob();
     if (import.meta.env.DEV) {
       const elapsed = (performance.now() - start).toFixed(1);
-      console.info(`buildContent: ${elapsed} ms (${loaded.entries.length} fichas)`);
+      console.info(`loadContent: ${elapsed} ms (${loaded.entries.length} fichas)`);
     }
   }
   return loaded;
@@ -27,5 +28,6 @@ interface ContentProviderProps {
 
 export function ContentProvider({ content, children }: ContentProviderProps) {
   const value = useMemo(() => content ?? loadOnce(), [content]);
+  useEffect(preloadSearchIndexWhenIdle, []);
   return <ContentContext.Provider value={value}>{children}</ContentContext.Provider>;
 }

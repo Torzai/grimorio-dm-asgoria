@@ -2,7 +2,7 @@ import { useEffect, useEffectEvent, useMemo, useRef, type RefObject } from 'reac
 import { Link, createSearchParams, useNavigationType, useParams } from 'react-router';
 import { getEntry, getEntryContext, isEntryType } from '@/content/content-queries';
 import { TYPE_LABELS } from '@/content/type-labels';
-import type { Entry } from '@/content/types';
+import type { EntryMeta } from '@/content/types';
 import { useContent } from '@/content/use-content';
 import { NotFoundPage } from '@/features/not-found/NotFoundPage';
 import { useDocumentTitle } from '@/hooks/use-document-title';
@@ -21,7 +21,7 @@ export function EntryPage() {
   return <EntryView entry={entry} />;
 }
 
-function EntryView({ entry }: { entry: Entry }) {
+function EntryView({ entry }: { entry: EntryMeta }) {
   const content = useContent();
   const context = useMemo(() => getEntryContext(entry, content), [entry, content]);
   const titleRef = useRef<HTMLHeadingElement>(null);
@@ -33,7 +33,7 @@ function EntryView({ entry }: { entry: Entry }) {
       <PjView
         // A fresh view per PJ, so the history's search and open entries don't carry over.
         key={entry.slug}
-        entry={entry as Entry<'pj'>}
+        entry={entry as EntryMeta<'pj'>}
         context={context}
         title={
           <h1 ref={titleRef} tabIndex={-1} className={styles.title}>
@@ -111,7 +111,7 @@ function EntryView({ entry }: { entry: Entry }) {
  * When the DM moves to another entry, the focus goes to its title and the page scrolls to the
  * top, as a full page load would. The first load and back/forward (POP) are left to the browser.
  */
-function useFocusTitleOnChange(entry: Entry, titleRef: RefObject<HTMLHeadingElement | null>) {
+function useFocusTitleOnChange(entry: EntryMeta, titleRef: RefObject<HTMLHeadingElement | null>) {
   const navigationType = useNavigationType();
   const focusTitle = useEffectEvent(() => {
     // A link to a part of the page (#h-… in a PJ's history) scrolls there instead.

@@ -1,13 +1,15 @@
 import { useEffect, useEffectEvent, useId, useMemo, useState } from 'react';
 import { useLocation, useSearchParams } from 'react-router';
-import type { HistorialItem, PjHistorialData, PjSummary } from '@/content/pj-historial';
-import type { Entry } from '@/content/types';
+import type { PjBody } from '@/content/pj-data';
+import { previewSearchText, type HistorialItemMeta, type PjSummary } from '@/content/pj-historial';
+import type { EntryMeta } from '@/content/types';
 import { HistorialEntry } from './HistorialEntry';
 import {
   groupHistorial,
   hasFilters,
   participantOptions,
   type HistorialFilters,
+  type SearchTextOf,
 } from './historial-filter';
 import { queryTerms } from './highlight';
 import styles from './HistorialPanel.module.css';
@@ -20,13 +22,20 @@ const AUTO_EXPAND_LIMIT = 25;
 type HistorialParam = 'q' | 'dm' | 'con' | 'anio';
 
 interface HistorialPanelProps {
-  entry: Entry<'pj'>;
-  data: PjHistorialData;
+  entry: EntryMeta<'pj'>;
+  /** The history without its text, newest first. */
+  items: readonly HistorialItemMeta[];
   summary: PjSummary;
+  /** The text of the entries; undefined while the PJ's body loads. */
+  body: PjBody | undefined;
 }
 
-/** Search, filters and the history grouped by year. Filters live in the URL. */
-export function HistorialPanel({ entry, data, summary }: HistorialPanelProps) {
+/**
+ * Search, filters and the history grouped by year. Filters live in the URL. Everything but
+ * the text of an open entry shows at once; until the body loads, the search looks into the
+ * previews.
+ */
+export function HistorialPanel({ entry, items, summary, body }: HistorialPanelProps) {
   const [params, setParams] = useSearchParams();
   const { hash } = useLocation();
   const urlQuery = params.get('q') ?? '';
@@ -70,20 +79,24 @@ export function HistorialPanel({ entry, data, summary }: HistorialPanelProps) {
     [terms, dm, con, year],
   );
   const ownNames = useMemo(() => [entry.data.title, ...(entry.data.aliases ?? [])], [entry.data]);
-  const companions = useMemo(
-    () => participantOptions(data.items, ownNames),
-    [data.items, ownNames],
+  const companions = useMemo(() => participantOptions(items, ownNames), [items, ownNames]);
+  const searchTextOf = useMemo<SearchTextOf>(
+    () =>
+      body
+        ? (item) => body.textOf(item.id)?.searchText ?? previewSearchText(item)
+        : previewSearchText,
+    [body],
   );
 
   // The entry a link points to (#h-…), when it exists.
   const target = useMemo(() => {
     const id = decodeURIComponent(hash.slice(1));
-    return data.items.some((item) => item.id === id) ? id : undefined;
-  }, [hash, data.items]);
+    return items.some((item) => item.id === id) ? id : undefined;
+  }, [hash, items]);
 
   const groups = useMemo(
-    () => groupHistorial(data.items, filters, target),
-    [data.items, filters, target],
+    () => groupHistorial(items, filters, searchTextOf, target),
+    [items, filters, searchTextOf, target],
   );
   const visible = useMemo(() => groups.flatMap((group) => group.items), [groups]);
   const filtering = hasFilters(filters);
@@ -96,7 +109,7 @@ export function HistorialPanel({ entry, data, summary }: HistorialPanelProps) {
     open: new Map(),
   });
   const openByHand = toggled.query === urlQuery ? toggled.open : undefined;
-  const isOpen = (item: HistorialItem) =>
+  const isOpen = (item: HistorialItemMeta) =>
     openByHand?.get(item.id) ?? (item.id === target || autoExpand);
 
   function setOpen(ids: readonly string[], open: boolean) {
@@ -217,7 +230,7 @@ export function HistorialPanel({ entry, data, summary }: HistorialPanelProps) {
 
       {groups.length === 0 ? (
         <p className={styles.empty}>
-          {data.items.length === 0
+          {items.length === 0
             ? 'Este PJ todavía no tiene historial.'
             : 'Ninguna entrada coincide con la búsqueda y los filtros.'}
         </p>
@@ -236,6 +249,7 @@ export function HistorialPanel({ entry, data, summary }: HistorialPanelProps) {
               <HistorialEntry
                 key={item.id}
                 item={item}
+                text={isOpen(item) ? body?.textOf(item.id) : undefined}
                 slug={entry.slug}
                 terms={terms}
                 open={isOpen(item)}

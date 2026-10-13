@@ -1,7 +1,7 @@
-import { splitFrontmatter } from './frontmatter';
-import { slugify } from './normalize';
-import { SLUG_PATTERN, entryFrontmatterSchema, entrySchemas } from './schemas';
-import { ENTRY_TYPES, type ContentIssue, type Entry, type EntryType } from './types';
+import { splitFrontmatter } from './frontmatter.ts';
+import { slugify } from './normalize.ts';
+import { SLUG_PATTERN, entryFrontmatterSchema, entrySchemas } from './schemas.ts';
+import { ENTRY_TYPES, type ContentIssue, type Entry, type EntryType } from './types.ts';
 
 export interface LoadResult {
   entries: Entry[];

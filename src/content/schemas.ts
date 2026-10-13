@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { ENTRY_TYPES, type EntryType } from './types';
+import { ENTRY_TYPES, type EntryType } from './types.ts';
 
 export const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 

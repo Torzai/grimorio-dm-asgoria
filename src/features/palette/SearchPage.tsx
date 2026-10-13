@@ -1,8 +1,8 @@
 import { useMemo } from 'react';
 import { Link, createSearchParams, useSearchParams, type To } from 'react-router';
+import { useSearchIndex } from '@/content/search-data';
 import { search, type SearchResult } from '@/content/search-index';
 import { TYPE_LABELS } from '@/content/type-labels';
-import { useContent } from '@/content/use-content';
 import { Page } from '@/ui/Page';
 import styles from './SearchPage.module.css';
 
@@ -12,8 +12,12 @@ const LIMIT = 50;
 export function SearchPage() {
   const [params] = useSearchParams();
   const query = params.get('q')?.trim() ?? '';
-  const { index } = useContent();
-  const results = useMemo(() => search(index, query, { limit: LIMIT }), [index, query]);
+  // Usually loaded already; until it is, the results are left out rather than shown empty.
+  const index = useSearchIndex();
+  const results = useMemo(
+    () => (index ? search(index, query, { limit: LIMIT }) : undefined),
+    [index, query],
+  );
 
   return (
     <Page
@@ -24,6 +28,7 @@ export function SearchPage() {
       documentTitle={query ? `${query} · Buscar` : 'Buscar'}
     >
       {query &&
+        results &&
         (results.length > 0 ? (
           <ol className={styles.results}>
             {results.map((result) => (

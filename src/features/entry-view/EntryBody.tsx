@@ -3,8 +3,9 @@ import Markdown, { type Components, type ExtraProps, type Options } from 'react-
 import { Link } from 'react-router';
 import remarkGfm from 'remark-gfm';
 import { remarkWikilinks } from '@/content/remark-wikilinks';
-import type { Entry } from '@/content/types';
+import type { EntryMeta } from '@/content/types';
 import { useContent } from '@/content/use-content';
+import { useEntryBody } from '@/content/use-entry-body';
 import { rehypeMark } from './pj/highlight';
 import styles from './EntryBody.module.css';
 
@@ -82,15 +83,23 @@ const components: Components = {
 };
 
 interface EntryBodyProps {
-  entry: Entry;
+  entry: EntryMeta;
 }
 
-/** The body of an entry; a placeholder when it has no text yet. */
+/** The body of an entry, loaded when it opens; a placeholder when it has no text yet. */
 export function EntryBody({ entry }: EntryBodyProps) {
-  if (!entry.body.trim()) {
+  const body = useEntryBody(entry.path);
+  if (body === undefined) {
+    return (
+      <p className={styles.empty} aria-busy="true">
+        Cargando…
+      </p>
+    );
+  }
+  if (!body.trim()) {
     return <p className={styles.empty}>Esta ficha todavía no tiene texto.</p>;
   }
-  return <MarkdownBody markdown={entry.body} />;
+  return <MarkdownBody markdown={body} />;
 }
 
 interface MarkdownBodyProps {

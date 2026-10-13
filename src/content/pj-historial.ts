@@ -2,19 +2,20 @@ import type { Nodes, Root, RootContent } from 'mdast';
 import remarkGfm from 'remark-gfm';
 import remarkParse from 'remark-parse';
 import { unified } from 'unified';
-import { normalize } from './normalize';
-import { parseHistorial, type HistorialEntry } from './pj';
-import type { Entry } from './types';
-import { parseWikilinks } from './wikilinks';
+import { normalize } from './normalize.ts';
+import { parseHistorial, type HistorialEntry } from './pj.ts';
+import type { Entry, EntryMeta } from './types.ts';
+import { parseWikilinks } from './wikilinks.ts';
 
 /*
- * What the PJ view needs from a PJ's history, computed at build time by the content plugin
- * (vite-plugin-content.ts), never in the browser: a long history is hundreds of KB of Markdown.
- * The browser only imports the types of this module.
+ * What the PJ view needs from a PJ's history. The content plugin (vite-plugin-content.ts)
+ * splits every history at build time and hands the browser everything but the text of the
+ * entries. The browser splits the body of a PJ with these same functions once it is loaded,
+ * one entry at a time, to show the text of an entry or search the whole history.
  */
 
-/** One history entry, ready to show. */
-export interface HistorialItem {
+/** One history entry without its text: what the browser loads up front for every PJ. */
+export interface HistorialItemMeta {
   /** Stable anchor: 'h-2023-09-12-li-zakien'. */
   id: string;
   /** 'AAAA-MM-DD' */
@@ -27,11 +28,18 @@ export interface HistorialItem {
   recompensa?: string;
   /** About the first 220 letters of the body, as plain text. */
   preview: string;
+}
+
+/** The text of a history entry, which comes with the PJ's body. */
+export interface HistorialItemText {
   /** The Markdown shown when the entry is open: without the participants and the reward. */
   bodyMarkdown: string;
   /** Everything the in-history search looks into, normalized (lowercase, no accents). */
   searchText: string;
 }
+
+/** One history entry, ready to show. */
+export interface HistorialItem extends HistorialItemMeta, HistorialItemText {}
 
 export interface NameCount {
   name: string;
@@ -57,7 +65,6 @@ export interface PjSummary {
   years: YearCount[];
 }
 
-/** Loaded on demand when a PJ is opened. */
 export interface PjHistorialData {
   /** Newest first. */
   items: HistorialItem[];
@@ -77,18 +84,24 @@ const parser = unified().use(remarkParse).use(remarkGfm);
 /** History, summary and ficha body of a PJ entry. */
 export function buildPjHistorial(entry: Entry): PjBuild {
   const { entries, fichaBody } = parseHistorial(entry.body);
-  const items = entries.map(toItem);
+  const ownNames = ownNamesOf(entry);
+  const items = entries.map((historialEntry) => historialItem(historialEntry, ownNames));
   // Newest first, whatever the order they are written in; stable for the same day.
   items.sort((a, b) => (a.date === b.date ? 0 : a.date < b.date ? 1 : -1));
-  const ownNames = [entry.data.title, ...(entry.data.aliases ?? [])];
   return { summary: summarize(items, ownNames), data: { items, fichaBody } };
 }
 
-function toItem(entry: HistorialEntry): HistorialItem {
+/** The title and aliases of a PJ: the names that are the PJ itself in its history. */
+export function ownNamesOf(entry: EntryMeta): string[] {
+  return [entry.data.title, ...(entry.data.aliases ?? [])];
+}
+
+/** The item of one entry of parseHistorial(), with its text; ownNames from ownNamesOf(). */
+export function historialItem(entry: HistorialEntry, ownNames: readonly string[]): HistorialItem {
   const root = parser.parse(entry.body);
   const removed: RootContent[] = [];
 
-  const participantes = findParticipants(root.children);
+  const participantes = findParticipants(root.children, ownNames);
   if (participantes) removed.push(...participantes.nodes);
 
   const reward = findReward(root.children, removed);
@@ -108,10 +121,25 @@ function toItem(entry: HistorialEntry): HistorialItem {
     ...(reward ? { recompensa: reward.text } : {}),
     preview: truncate(text, PREVIEW_LENGTH),
     bodyMarkdown,
-    searchText: normalize(
-      [entry.authorName, names.join(' '), text, reward?.text ?? ''].join('\n'),
-    ),
+    searchText: searchTextOf(entry.authorName, names, text, reward?.text),
   };
+}
+
+/**
+ * What the in-history search looks into while the text of the entry isn't loaded: the same
+ * as searchText, with the preview in place of the whole text.
+ */
+export function previewSearchText(item: HistorialItemMeta): string {
+  return searchTextOf(item.authorName, item.participantes, item.preview, item.recompensa);
+}
+
+function searchTextOf(
+  authorName: string,
+  names: readonly string[],
+  text: string,
+  reward = '',
+): string {
+  return normalize([authorName, names.join(' '), text, reward].join('\n'));
 }
 
 // --- Participants ------------------------------------------------------------------------
@@ -126,30 +154,74 @@ const NAME_WORD = /^[\p{L}][\p{L}'’.-]*$/u;
 const PARTICLES = new Set(['de', 'del', 'la', 'van', 'von']);
 const MIN_NAMES = 3;
 const MAX_NAME_WORDS = 3;
+/** A last item longer than this is a sentence that follows the names, not a name. */
+const MAX_TAIL_WORDS = 4;
+const MAX_TITLE_LENGTH = 80;
+/** A title may hold ' - ' or ' y ' ('Cementerio profano XII - …'), but not these. */
+const TITLE_LIST_SEPARATOR = /[,;/\n]/;
 
 interface Participants {
   names: string[];
+  /** The paragraphs that are only the list, which the open entry doesn't show again. */
   nodes: RootContent[];
+}
+
+interface NameList {
+  names: string[];
+  /** False when a sentence after the names was left out: the paragraph stays in the body. */
+  onlyNames: boolean;
 }
 
 /**
  * The names of the paragraph that opens an entry, when it is a list of at least 3 names of
- * 1 to 3 capitalized words. A second list right after it (jousts: spectators, then
- * contenders) is added to the first.
+ * 1 to 3 capitalized words, or of 2 when one of them is the PJ ('Einar - Aen'). When the
+ * entry opens with a short title ('Capítulo XXII…', 'Título: …'), the list is the paragraph
+ * after it. A second list right after the first (jousts: spectators, then contenders) is
+ * added to it.
  */
-function findParticipants(nodes: readonly RootContent[]): Participants | undefined {
-  const first = namesOf(nodes[0]);
-  if (!first) return undefined;
-  const second = namesOf(nodes[1]);
-  const names = [...first];
-  if (second) {
-    const seen = new Set(first.map(normalize));
-    names.push(...second.filter((name) => !seen.has(normalize(name))));
-  }
-  return { names, nodes: second ? nodes.slice(0, 2) : nodes.slice(0, 1) };
+function findParticipants(
+  nodes: readonly RootContent[],
+  ownNames: readonly string[],
+): Participants | undefined {
+  const own = ownNameKeys(ownNames);
+  const from = (start: number): Participants | undefined => {
+    const first = namesOf(nodes[start], own);
+    if (!first) return undefined;
+    const second = namesOf(nodes[start + 1], own);
+    const names = [...first.names];
+    if (second) {
+      const seen = new Set(first.names.map(normalize));
+      names.push(...second.names.filter((name) => !seen.has(normalize(name))));
+    }
+    const lists = second ? [first, second] : [first];
+    return {
+      names,
+      nodes: lists.flatMap((list, index) => (list.onlyNames ? [nodes[start + index]] : [])),
+    };
+  };
+  return from(0) ?? (isTitle(nodes[0]) ? from(1) : undefined);
 }
 
-function namesOf(node: RootContent | undefined): string[] | undefined {
+/** A short line that names the entry, which stays in the body. */
+function isTitle(node: RootContent | undefined): boolean {
+  if (node?.type !== 'paragraph') return false;
+  const text = plainText(node).trim();
+  return text !== '' && text.length <= MAX_TITLE_LENGTH && !TITLE_LIST_SEPARATOR.test(text);
+}
+
+/** Normalized title and aliases of the PJ, and the first word of each ('einar'). */
+function ownNameKeys(ownNames: readonly string[]): Set<string> {
+  const keys = new Set<string>();
+  for (const name of ownNames) {
+    const key = normalize(name).trim();
+    if (key === '') continue;
+    keys.add(key);
+    keys.add(key.split(/\s+/)[0]);
+  }
+  return keys;
+}
+
+function namesOf(node: RootContent | undefined, own: ReadonlySet<string>): NameList | undefined {
   // '> Mirna - William - …' is still the list, quoted by mistake.
   const paragraph =
     node?.type === 'blockquote' && node.children.length === 1 ? node.children[0] : node;
@@ -160,7 +232,11 @@ function namesOf(node: RootContent | undefined): string[] | undefined {
     .split(NAME_SEPARATOR)
     .map((item) => item.replace(/[.:;]+$/, '').trim())
     .filter((item) => item !== '');
-  if (items.length < MIN_NAMES) return undefined;
+  // 'Einar - Aen - Thyra - y se les unió un guardia': the sentence after the names is no name.
+  const onlyNames = (items.at(-1)?.split(/\s+/).length ?? 0) <= MAX_TAIL_WORDS;
+  if (!onlyNames) items.pop();
+  const isOwn = (item: string) => own.has(normalize(item));
+  if (items.length < MIN_NAMES && !(items.length === 2 && items.some(isOwn))) return undefined;
 
   const words = items.map((item) => item.split(/\s+/));
   const isName = (itemWords: string[]) => {
@@ -181,7 +257,7 @@ function namesOf(node: RootContent | undefined): string[] | undefined {
     const name = item.charAt(0).toUpperCase() + item.slice(1);
     if (!unique.has(normalize(name))) unique.set(normalize(name), name);
   }
-  return [...unique.values()];
+  return { names: [...unique.values()], onlyNames };
 }
 
 // --- Reward ------------------------------------------------------------------------------

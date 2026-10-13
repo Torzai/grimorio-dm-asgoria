@@ -1,7 +1,7 @@
 import MiniSearch, { type AsPlainObject, type Options } from 'minisearch';
-import { normalize } from './normalize';
-import type { HistorialItem } from './pj-historial';
-import type { Entry, EntryType } from './types';
+import { normalize } from './normalize.ts';
+import type { HistorialItem } from './pj-historial.ts';
+import type { Entry, EntryType } from './types.ts';
 
 /** A result that is one entry of a PJ's history, not the whole entry. */
 export interface HistorialHit {

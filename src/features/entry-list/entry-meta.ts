@@ -1,6 +1,6 @@
 import { pjSummaryOf } from '@/content/pj-data';
 import { LORE_CATEGORY_LABELS, PJ_ESTADO_LABELS } from '@/content/type-labels';
-import type { Entry } from '@/content/types';
+import type { EntryMeta } from '@/content/types';
 
 const dateFormat = new Intl.DateTimeFormat('es', {
   day: 'numeric',
@@ -26,7 +26,7 @@ export function formatNumericDate(isoDate: string): string {
  * zona title, then faction (NPC), category (lore) or date (session).
  * A PJ shows its estado and the day of its latest history entry instead.
  */
-export function getEntryMeta(entry: Entry, zoneTitles: ReadonlyMap<string, string>): string[] {
+export function getEntryMeta(entry: EntryMeta, zoneTitles: ReadonlyMap<string, string>): string[] {
   if (entry.data.type === 'pj') {
     const newest = pjSummaryOf(entry.slug)?.last;
     return [

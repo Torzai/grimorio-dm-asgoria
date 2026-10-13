@@ -12,7 +12,7 @@ import {
   type FilterValue,
 } from '@/content/content-queries';
 import { TYPE_LABELS } from '@/content/type-labels';
-import type { Entry, EntryType } from '@/content/types';
+import type { EntryMeta, EntryType } from '@/content/types';
 import { useContent } from '@/content/use-content';
 import { getEntryMeta } from './entry-meta';
 import styles from './EntryListColumn.module.css';
@@ -193,7 +193,7 @@ function FilterSelect({ filterKey, values, selected, onChange }: FilterSelectPro
 }
 
 interface EntryCardProps {
-  entry: Entry;
+  entry: EntryMeta;
   /** Query string of the current URL, kept so opening an entry doesn't drop the filters. */
   search: string;
   active: boolean;

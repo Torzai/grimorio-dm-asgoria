@@ -1,8 +1,8 @@
 import type { Link, PhrasingContent, Root, Text } from 'mdast';
 import type { Plugin } from 'unified';
 import { visit } from 'unist-util-visit';
-import type { Resolver } from './links';
-import { parseWikilinks, type Wikilink } from './wikilinks';
+import type { Resolver } from './links.ts';
+import { parseWikilinks, type Wikilink } from './wikilinks.ts';
 
 /** What mdast-util-to-hast reads from node.data to choose the HTML element. */
 interface HastData {

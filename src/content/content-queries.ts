@@ -1,16 +1,16 @@
-import type { Content } from './build-content';
-import { PJ_ESTADO_LABELS, TYPE_NAV_ORDER } from './type-labels';
-import { ENTRY_TYPES, type Entry, type EntryType } from './types';
+import type { Content } from './build-content.ts';
+import { PJ_ESTADO_LABELS, TYPE_NAV_ORDER } from './type-labels.ts';
+import { ENTRY_TYPES, type EntryMeta, type EntryType } from './types.ts';
 
 export function isEntryType(value: string | undefined): value is EntryType {
   return ENTRY_TYPES.some((type) => type === value);
 }
 
 export function getEntry(
-  entries: readonly Entry[],
+  entries: readonly EntryMeta[],
   type: EntryType,
   slug: string,
-): Entry | undefined {
+): EntryMeta | undefined {
   return entries.find((entry) => entry.type === type && entry.slug === slug);
 }
 
@@ -50,7 +50,7 @@ export function filterKeysFor(type: EntryType): FilterKey[] {
   });
 }
 
-function filterValuesOf(entry: Entry, key: FilterKey): string[] {
+function filterValuesOf(entry: EntryMeta, key: FilterKey): string[] {
   switch (key) {
     case 'zona':
       return entry.data.zona ? [entry.data.zona] : [];
@@ -71,11 +71,11 @@ function filterLabel(key: FilterKey, value: string, zoneTitles: ReadonlyMap<stri
   return value;
 }
 
-function compareByTitle(a: Entry, b: Entry): number {
+function compareByTitle(a: EntryMeta, b: EntryMeta): number {
   return collator.compare(a.data.title, b.data.title) || collator.compare(a.slug, b.slug);
 }
 
-function compareByDateDesc(a: Entry, b: Entry): number {
+function compareByDateDesc(a: EntryMeta, b: EntryMeta): number {
   if (a.data.type !== 'sesion' || b.data.type !== 'sesion') return 0;
   // ISO dates (AAAA-MM-DD) sort chronologically as plain text.
   if (a.data.fecha !== b.data.fecha) return a.data.fecha < b.data.fecha ? 1 : -1;
@@ -88,10 +88,10 @@ function compareByDateDesc(a: Entry, b: Entry): number {
  * Filters that don't apply to the type are ignored.
  */
 export function listEntries(
-  entries: readonly Entry[],
+  entries: readonly EntryMeta[],
   type: EntryType,
   filters: EntryFilters = {},
-): Entry[] {
+): EntryMeta[] {
   const active = filterKeysFor(type).flatMap((key) => {
     const wanted = filters[key];
     return wanted ? [{ key, wanted }] : [];
@@ -106,7 +106,7 @@ export function listEntries(
 }
 
 /** Title of every zona entry by slug, to show a zona's name instead of its slug. */
-export function getZoneTitles(entries: readonly Entry[]): Map<string, string> {
+export function getZoneTitles(entries: readonly EntryMeta[]): Map<string, string> {
   const titles = new Map<string, string>();
   for (const entry of entries) {
     if (entry.type === 'zona') titles.set(entry.slug, entry.data.title);
@@ -118,7 +118,7 @@ export function getZoneTitles(entries: readonly Entry[]): Map<string, string> {
  * The values each applicable filter can take in a type, with how many entries carry each.
  * Filters without any value are left out; values are sorted alphabetically by label.
  */
-export function getFilterOptions(entries: readonly Entry[], type: EntryType): FilterGroup[] {
+export function getFilterOptions(entries: readonly EntryMeta[], type: EntryType): FilterGroup[] {
   const ofType = entries.filter((entry) => entry.type === type);
   const zoneTitles = getZoneTitles(entries);
   return filterKeysFor(type).flatMap((key) => {
@@ -140,7 +140,7 @@ export function getFilterOptions(entries: readonly Entry[], type: EntryType): Fi
 }
 
 /** Number of entries of each type; types without entries count 0. */
-export function countByType(entries: readonly Entry[]): Record<EntryType, number> {
+export function countByType(entries: readonly EntryMeta[]): Record<EntryType, number> {
   const counts = Object.fromEntries(ENTRY_TYPES.map((type) => [type, 0])) as Record<
     EntryType,
     number
@@ -151,19 +151,19 @@ export function countByType(entries: readonly Entry[]): Record<EntryType, number
 
 export interface EntryGroup {
   type: EntryType;
-  entries: Entry[];
+  entries: EntryMeta[];
 }
 
 /** What the side panel of an entry shows; every list is empty when there is nothing to show. */
 export interface EntryContext {
   /** The zona the entry belongs to, shown in the page's kicker. Undefined when there is none. */
-  zona: Entry | undefined;
+  zona: EntryMeta | undefined;
   /** The 'relacionados' that exist, in frontmatter order, plus a 'zona' that is not a zona. */
-  related: Entry[];
+  related: EntryMeta[];
   /** Entries that link here, except sessions, sorted by title. */
-  mentionedIn: Entry[];
+  mentionedIn: EntryMeta[];
   /** Sessions that link here, newest first. */
-  sessions: Entry[];
+  sessions: EntryMeta[];
   /** For a zona: the entries that belong to it, grouped by type. */
   inZone: EntryGroup[];
 }
@@ -173,11 +173,11 @@ export interface EntryContext {
  * Broken references ('zona' or 'relacionados' pointing nowhere) are left out: validate reports them.
  */
 export function getEntryContext(
-  entry: Entry,
+  entry: EntryMeta,
   content: Pick<Content, 'entries' | 'links'>,
 ): EntryContext {
   const bySlug = new Map(content.entries.map((other) => [other.slug, other]));
-  const find = (slugs: readonly string[] = []): Entry[] =>
+  const find = (slugs: readonly string[] = []): EntryMeta[] =>
     slugs.flatMap((slug) => {
       const found = bySlug.get(slug);
       return found ? [found] : [];
@@ -204,7 +204,7 @@ export function getEntryContext(
 }
 
 /** Entries grouped by type in sidebar order, each group sorted as its list is. */
-function groupByType(entries: readonly Entry[], except: Entry): EntryGroup[] {
+function groupByType(entries: readonly EntryMeta[], except: EntryMeta): EntryGroup[] {
   return TYPE_NAV_ORDER.flatMap((type) => {
     const ofType = entries.filter((entry) => entry.type === type && entry !== except);
     ofType.sort(type === 'sesion' ? compareByDateDesc : compareByTitle);

@@ -1,5 +1,5 @@
 import { normalize } from '@/content/normalize';
-import type { HistorialItem, NameCount } from '@/content/pj-historial';
+import type { HistorialItemMeta, NameCount } from '@/content/pj-historial';
 import { matchesAll } from './highlight';
 
 /** The history filters, as read from the URL (?q=&dm=&con=&anio=). */
@@ -17,7 +17,7 @@ export interface HistorialFilters {
 export interface YearGroup {
   year: string;
   /** Entries of the year that pass the filters, newest first. */
-  items: HistorialItem[];
+  items: HistorialItemMeta[];
   /** Entries of the year, filtered or not. */
   total: number;
 }
@@ -28,13 +28,17 @@ export function hasFilters({ terms, dm, con }: HistorialFilters): boolean {
   return terms.length > 0 || dm !== undefined || con !== undefined;
 }
 
+/** What the search terms are looked for in: the whole text, or the preview while it loads. */
+export type SearchTextOf = (item: HistorialItemMeta) => string;
+
 /**
  * The entries that pass every filter, grouped by year, newest first. `keep` is shown even
  * when it doesn't pass them: it is the entry a link points to.
  */
 export function groupHistorial(
-  items: readonly HistorialItem[],
+  items: readonly HistorialItemMeta[],
   filters: HistorialFilters,
+  searchTextOf: SearchTextOf,
   keep?: string,
 ): YearGroup[] {
   const groups = new Map<string, YearGroup>();
@@ -43,7 +47,7 @@ export function groupHistorial(
     const group = groups.get(year) ?? { year, items: [], total: 0 };
     groups.set(year, group);
     group.total += 1;
-    if (item.id === keep || passes(item, filters)) group.items.push(item);
+    if (item.id === keep || passes(item, filters, searchTextOf)) group.items.push(item);
   }
   return [...groups.values()]
     .filter(
@@ -56,15 +60,19 @@ export function groupHistorial(
     .sort((a, b) => (a.year < b.year ? 1 : -1));
 }
 
-function passes(item: HistorialItem, { terms, dm, con }: HistorialFilters): boolean {
+function passes(
+  item: HistorialItemMeta,
+  { terms, dm, con }: HistorialFilters,
+  searchTextOf: SearchTextOf,
+): boolean {
   if (dm && !sameName(item.authorName, dm)) return false;
   if (con && !item.participantes.some((name) => sameName(name, con))) return false;
-  return matchesAll(item.searchText, terms);
+  return terms.length === 0 || matchesAll(searchTextOf(item), terms);
 }
 
 /** Every participant with how many entries they appear in, alphabetically, for the 'Con:' chip. */
 export function participantOptions(
-  items: readonly HistorialItem[],
+  items: readonly HistorialItemMeta[],
   ownNames: readonly string[],
 ): NameCount[] {
   const own = new Set(ownNames.map(normalize));

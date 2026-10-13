@@ -1,5 +1,5 @@
-import { normalize, slugify } from './normalize';
-import type { ContentIssue, Entry } from './types';
+import { normalize, slugify } from './normalize.ts';
+import type { ContentIssue, Entry } from './types.ts';
 
 /** One entry of a PJ's history, from a heading like '### 2026-08-31 · She Wolf (@she-wolf)'. */
 export interface HistorialEntry {

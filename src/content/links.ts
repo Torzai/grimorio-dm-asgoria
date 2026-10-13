@@ -2,15 +2,15 @@ import remarkGfm from 'remark-gfm';
 import remarkParse from 'remark-parse';
 import { unified } from 'unified';
 import { visit } from 'unist-util-visit';
-import { normalize } from './normalize';
-import type { ContentIssue, Entry } from './types';
-import { parseWikilinks } from './wikilinks';
+import { normalize } from './normalize.ts';
+import type { ContentIssue, Entry, EntryMeta } from './types.ts';
+import { parseWikilinks } from './wikilinks.ts';
 
 /** Finds the entry a wikilink target points to, or null when the link is broken. */
-export type Resolver = (target: string) => Entry | null;
+export type Resolver = (target: string) => EntryMeta | null;
 
-export interface LinkGraph {
-  resolve: Resolver;
+/** The link graph without the resolver, as the content plugin hands it to the browser. */
+export interface LinkMaps {
   /** Slugs each entry links to (body, 'relacionados' and 'participantes'), without duplicates. */
   outgoing: Map<string, string[]>;
   /** Slugs of the entries that link to each entry, without self-links. */
@@ -19,13 +19,17 @@ export interface LinkGraph {
   byZona: Map<string, string[]>;
 }
 
+export interface LinkGraph extends LinkMaps {
+  resolve: Resolver;
+}
+
 export interface LinkAnalysis extends LinkGraph {
   issues: ContentIssue[];
 }
 
 /** One way an entry can be named, ranked by priority: slug, then title, then alias. */
 interface NameClaim {
-  entry: Entry;
+  entry: EntryMeta;
   rank: number;
   field?: 'title' | 'aliases';
   written: string;
@@ -34,7 +38,7 @@ interface NameClaim {
 const markdown = unified().use(remarkParse).use(remarkGfm).freeze();
 
 /** Resolves by slug, title or alias, ignoring case and accents. */
-export function createResolver(entries: readonly Entry[]): Resolver {
+export function createResolver(entries: readonly EntryMeta[]): Resolver {
   return resolverFrom(claimNames(entries));
 }
 
@@ -143,7 +147,7 @@ export function analyzeLinks(entries: readonly Entry[]): LinkAnalysis {
 }
 
 /** Normalized name → every entry using it, winner first (rank, then path). */
-function claimNames(entries: readonly Entry[]): Map<string, NameClaim[]> {
+function claimNames(entries: readonly EntryMeta[]): Map<string, NameClaim[]> {
   const claims = new Map<string, NameClaim[]>();
   for (const entry of entries) {
     // An entry may repeat a name (title also listed as alias); keep its best rank.
@@ -168,7 +172,7 @@ function claimNames(entries: readonly Entry[]): Map<string, NameClaim[]> {
 }
 
 function resolverFrom(claims: Map<string, NameClaim[]>): Resolver {
-  const winners = new Map<string, Entry>();
+  const winners = new Map<string, EntryMeta>();
   for (const [name, [winner]] of claims) winners.set(name, winner.entry);
   return (target) => winners.get(normalize(target)) ?? null;
 }
