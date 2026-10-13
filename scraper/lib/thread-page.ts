@@ -15,6 +15,8 @@ export const forumPostSchema = z.object({
   authorName: z.string(),
   /** Without the '@'. */
   authorHandle: z.string(),
+  /** Forum groups of the author ("Staff", "DM"). Missing in posts.json extracted before them. */
+  authorGroups: z.array(z.string()).optional(),
   /** Local 'YYYY-MM-DDTHH:mm'; null when the date line could not be read. */
   postedAt: z.string().nullable(),
   editedAt: z.string().optional(),
@@ -103,12 +105,16 @@ export function extractPosts(doc: Document, page: number): PageExtraction {
     const postedAt = parseForumDate(textOf(element.querySelector(SELECTORS.postDate))) ?? null;
     const authorName = textOf(element.querySelector(SELECTORS.authorName));
     const authorHandle = textOf(element.querySelector(SELECTORS.authorHandle)).replace(/^@/, '');
+    const authorGroups = [...element.querySelectorAll(SELECTORS.authorGroups)]
+      .map((tag) => textOf(tag))
+      .filter((group) => group !== '');
     const body = element.querySelector(SELECTORS.body);
 
     const post: ForumPost = {
       number,
       authorName,
       authorHandle,
+      authorGroups,
       postedAt,
       html: body ? contentOf(body) : '',
       page,

@@ -24,6 +24,11 @@ export interface HistorialItemMeta {
   authorHandle?: string;
   /** Names from the list that opens the entry; empty when it doesn't open with one. */
   participantes: string[];
+  /**
+   * The PJ slug each participant resolves to, in the same order; null when none does. Filled
+   * in by the content plugin (pj-names.ts), so it is missing while a body is split.
+   */
+  participantesPj?: (string | null)[];
   /** The reward line as plain text, without the leading 'Recompensa:'. */
   recompensa?: string;
   /** About the first 220 letters of the body, as plain text. */
@@ -46,6 +51,14 @@ export interface NameCount {
   count: number;
 }
 
+/** A companion of 'Suele jugar con', with the PJ its name resolves to. */
+export interface CompanionCount extends NameCount {
+  /** Slug of the PJ; null when no PJ has the name or several do. Set by the content plugin. */
+  pj?: string | null;
+  /** Several PJs share the name and the dates didn't settle which one it is. */
+  ambiguous?: true;
+}
+
 export interface YearCount {
   year: string;
   count: number;
@@ -60,7 +73,7 @@ export interface PjSummary {
   /** Narrators with how many entries each, most first. */
   dms: NameCount[];
   /** The 8 names that most often share an entry with the PJ, most first. */
-  companions: NameCount[];
+  companions: CompanionCount[];
   /** Entries per year, newest year first. */
   years: YearCount[];
 }

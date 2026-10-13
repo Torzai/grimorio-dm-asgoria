@@ -6,17 +6,22 @@ import { PJ_CRAWL_LOG, PJ_INDEX_FILE, RAW_DIR } from './config';
 import { extractThreadDir } from './extract-thread';
 import { crawlThread } from './lib/crawl';
 import { CrawlStop, ForumClient } from './lib/forum-client';
-import { parseHtml } from './lib/html';
 import { pjIndexSchema, type PjIndexEntry } from './lib/pj-index';
-import { isAuthorizationForm } from './lib/pj-sheet';
-import { extractPosts, pageFileName, pageNumberOf } from './lib/thread-page';
+import {
+  classifyPjThread,
+  errorMessage,
+  pjThreadSummary,
+  type PjThreadOutcome,
+} from './lib/pj-thread';
+import { pageNumberOf, threadDumpSchema } from './lib/thread-page';
 
 // npm run scrape:pjs -- [--limit N] [--only <slug>]… [--refresh]
 // Downloads, one after another, the PJ threads listed in scraper/raw/pj/_index.json (made by
 // scrape:discover-pjs) with the same crawl as scrape:thread: 1500 ms between requests, and pages
 // already on disk are not downloaded again, so a stopped run resumes where it was.
-// Page 1 comes first: a thread whose post #1 is not an authorization form (rules, templates,
-// pinned notices) is skipped without downloading the rest.
+// Every thread is downloaded whole, whatever its post #1 holds, and lands in one group: with
+// form, ficha-libre, excluded (clearly no PJ: rules, templates, staff notices) or failed. The run
+// ends with the same summary as scrape:convert-all, which is the one that writes the entries.
 // --refresh downloads again the last page of every thread (to catch new posts) and any missing.
 
 const { values } = parseArgs({
@@ -27,30 +32,28 @@ const { values } = parseArgs({
   },
 });
 
-interface ThreadOutcome {
-  entry: PjIndexEntry;
-  status: 'importable' | 'saltado';
+interface CrawlOutcome extends PjThreadOutcome {
   pages: number;
   posts: number;
   downloaded: number;
 }
 
 const client = new ForumClient();
-const outcomes: ThreadOutcome[] = [];
+const outcomes: CrawlOutcome[] = [];
 try {
-  const threads = await selectThreads();
+  const { threads, listed } = await selectThreads();
   await log(`--- ${new Date().toISOString()} · ${threads.length} hilos${refreshNote()}`);
   for (const [index, entry] of threads.entries()) {
     const outcome = await crawlPj(entry);
     outcomes.push(outcome);
     const line =
       `${index + 1}/${threads.length} ${entry.slug} páginas=${outcome.pages} ` +
-      `posts=${outcome.posts} descargadas=${outcome.downloaded}` +
-      (outcome.status === 'saltado' ? ' SALTADO (el post #1 no es una ficha)' : '');
+      `posts=${outcome.posts} descargadas=${outcome.downloaded} → ${outcome.group}` +
+      (outcome.reason ? ` (${outcome.reason})` : '');
     console.log(line);
     await log(line);
   }
-  printSummary();
+  await printSummary(listed);
 } catch (error) {
   if (!(error instanceof CrawlStop)) throw error;
   console.error(`✖ ${error.message}`);
@@ -61,7 +64,7 @@ try {
   await client.close();
 }
 
-async function selectThreads(): Promise<PjIndexEntry[]> {
+async function selectThreads(): Promise<{ threads: PjIndexEntry[]; listed: number }> {
   if (!existsSync(PJ_INDEX_FILE)) {
     throw new CrawlStop('No existe _index.json: ejecuta antes npm run scrape:discover-pjs');
   }
@@ -81,39 +84,49 @@ async function selectThreads(): Promise<PjIndexEntry[]> {
       throw new CrawlStop('--limit debe ser un entero ≥ 1');
     selected = selected.slice(0, limit);
   }
-  return selected;
+  return { threads: selected, listed: threads.length };
 }
 
-async function crawlPj(entry: PjIndexEntry): Promise<ThreadOutcome> {
+async function crawlPj(entry: PjIndexEntry): Promise<CrawlOutcome> {
   const dir = join(RAW_DIR, 'pj', entry.slug);
   await mkdir(dir, { recursive: true });
-  // Decided once: the second walk must not download again a page the first one just refreshed.
   const refreshPage = values.refresh ? await lastPageOnDisk(dir) : undefined;
-
-  const first = await crawlThread(client, entry.url, dir, {
-    maxPage: 1,
-    redownloadPage: refreshPage,
-  });
-  const page1 = parseHtml(await readFile(join(dir, pageFileName(1)), 'utf8'));
-  const opening = extractPosts(page1, 1).posts.find((post) => post.number === 1);
-  if (!opening || !isAuthorizationForm(opening.html)) {
-    return { entry, status: 'saltado', pages: 1, posts: 0, downloaded: first.downloaded };
+  let downloaded = 0;
+  try {
+    const crawl = await crawlThread(client, entry.url, dir, { redownloadPage: refreshPage });
+    downloaded = crawl.downloaded;
+    const summary = await extractThreadDir(dir);
+    for (const problem of summary.problems) console.warn(`  ⚠ ${entry.slug}: ${problem}`);
+    const dump = threadDumpSchema.parse(
+      JSON.parse(await readFile(summary.file, 'utf8')) as unknown,
+    );
+    const opening = dump.posts.find((post) => post.number === 1);
+    const counts = { pages: summary.pages, posts: summary.posts, downloaded };
+    if (!opening) {
+      return {
+        thread: entry.slug,
+        group: 'fallido',
+        reason: 'no se encuentra el post #1',
+        ...counts,
+      };
+    }
+    return {
+      thread: entry.slug,
+      ...classifyPjThread(dump.title || entry.title, opening),
+      ...counts,
+    };
+  } catch (error) {
+    // A lost session or a changed forum stops the whole run; anything else, only this thread.
+    if (error instanceof CrawlStop) throw error;
+    return {
+      thread: entry.slug,
+      group: 'fallido',
+      reason: errorMessage(error),
+      pages: 0,
+      posts: 0,
+      downloaded,
+    };
   }
-
-  const rest = first.partial
-    ? await crawlThread(client, entry.url, dir, {
-        redownloadPage: refreshPage === 1 ? undefined : refreshPage,
-      })
-    : first;
-  const summary = await extractThreadDir(dir);
-  for (const problem of summary.problems) console.warn(`  ⚠ ${entry.slug}: ${problem}`);
-  return {
-    entry,
-    status: 'importable',
-    pages: summary.pages,
-    posts: summary.posts,
-    downloaded: first.downloaded + (rest === first ? 0 : rest.downloaded),
-  };
 }
 
 async function lastPageOnDisk(dir: string): Promise<number | undefined> {
@@ -121,17 +134,15 @@ async function lastPageOnDisk(dir: string): Promise<number | undefined> {
   return numbers.length > 0 ? Math.max(...numbers) : undefined;
 }
 
-function printSummary(): void {
-  const importable = outcomes.filter((outcome) => outcome.status === 'importable');
-  const skipped = outcomes.filter((outcome) => outcome.status === 'saltado');
+async function printSummary(listed: number): Promise<void> {
   const downloaded = outcomes.reduce((sum, outcome) => sum + outcome.downloaded, 0);
-  console.log(
-    `✔ ${importable.length} hilos con ficha, ${skipped.length} saltados, ` +
-      `${downloaded} páginas descargadas. Log: ${relative(process.cwd(), PJ_CRAWL_LOG)}`,
-  );
-  for (const { entry } of skipped) {
-    console.log(`  Saltado (sin ficha): ${entry.slug} [${entry.subforum}]`);
-  }
+  const lines = [
+    `✔ ${outcomes.length} hilos recorridos, ${downloaded} páginas descargadas. ` +
+      `Log: ${relative(process.cwd(), PJ_CRAWL_LOG)}`,
+    ...pjThreadSummary(outcomes, listed),
+  ];
+  console.log(lines.join('\n'));
+  for (const line of lines) await log(line);
 }
 
 function refreshNote(): string {

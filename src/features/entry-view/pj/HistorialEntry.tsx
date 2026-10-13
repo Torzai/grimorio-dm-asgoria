@@ -1,4 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react';
+import { Link } from 'react-router';
 import { findRanges } from '@/content/highlight';
 import type { HistorialItemMeta, HistorialItemText } from '@/content/pj-historial';
 import { PinIconButton } from '@/features/pins/PinButton';
@@ -22,8 +23,8 @@ interface HistorialEntryProps {
 }
 
 /**
- * One history entry: a button with date, narrator, participants and preview that opens the
- * whole text. Folded entries don't render their body.
+ * One history entry: a head with date, narrator, participants and preview that opens the
+ * whole text when clicked; the participants that are a PJ link to it. Folded entries don't render their body.
  */
 export function HistorialEntry({ item, text, slug, terms, open, onToggle }: HistorialEntryProps) {
   const [year, month, day] = item.date.split('-');
@@ -33,28 +34,46 @@ export function HistorialEntry({ item, text, slug, terms, open, onToggle }: Hist
   return (
     <article id={item.id} className={styles.entry} data-open={open ? '' : undefined}>
       <div className={styles.entryTop}>
-        <button
-          type="button"
-          className={styles.entryHead}
-          aria-expanded={open}
-          aria-controls={open ? bodyId : undefined}
-          onClick={onToggle}
-        >
-          <time className={styles.date} dateTime={item.date}>
+        {/* The button covers the whole head; the participant links sit above it. */}
+        <div className={styles.entryHead}>
+          <button
+            type="button"
+            className={styles.toggle}
+            aria-expanded={open}
+            aria-controls={open ? bodyId : undefined}
+            onClick={onToggle}
+          >
+            <span className="visually-hidden">
+              {`${Number(day)} ${MONTHS[Number(month) - 1]} ${year}, narró ${item.authorName}`}
+            </span>
+          </button>
+          <time className={styles.date} dateTime={item.date} aria-hidden="true">
             <span className={styles.day}>{day}</span>
             <span className={styles.monthYear}>{`${MONTHS[Number(month) - 1]} ${year}`}</span>
           </time>
           <span className={styles.summary}>
-            <span className={styles.narrator}>
+            <span className={styles.narrator} aria-hidden="true">
               Narró <span className={styles.narratorName}>{item.authorName}</span>
             </span>
             {item.participantes.length > 0 && (
               <span className={styles.participants}>
-                {item.participantes.slice(0, MAX_CHIPS).map((name) => (
-                  <span key={name} className={styles.participant}>
-                    <Highlighted text={name} terms={terms} />
-                  </span>
-                ))}
+                {item.participantes.slice(0, MAX_CHIPS).map((name, index) => {
+                  const pj = item.participantesPj?.[index];
+                  const label = <Highlighted text={name} terms={terms} />;
+                  return pj ? (
+                    <Link
+                      key={name}
+                      className={`${styles.participant} ${styles.participantLink}`}
+                      to={`/pj/${pj}`}
+                    >
+                      {label}
+                    </Link>
+                  ) : (
+                    <span key={name} className={styles.participant}>
+                      {label}
+                    </span>
+                  );
+                })}
                 {extra > 0 && (
                   <span
                     className={styles.more}
@@ -75,7 +94,7 @@ export function HistorialEntry({ item, text, slug, terms, open, onToggle }: Hist
           <span className={styles.caret} aria-hidden="true">
             {open ? '▴' : '▾'}
           </span>
-        </button>
+        </div>
         {open && (
           <div className={styles.entryPin}>
             <PinIconButton item={historialItem(slug, item.id)} />

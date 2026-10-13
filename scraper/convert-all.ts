@@ -23,12 +23,20 @@ import {
   YAML_OPTIONS,
   type PjDraft,
 } from './lib/pj-draft';
-import { isAuthorizationForm } from './lib/pj-sheet';
+import {
+  classifyPjThread,
+  errorMessage,
+  pjThreadSummary,
+  type PjThreadOutcome,
+} from './lib/pj-thread';
 import { threadDumpSchema, type ThreadDump } from './lib/thread-page';
 
 // npm run scrape:convert-all -- [--only <hilo>]…
-// Turns every PJ thread downloaded by scrape:pjs (scraper/raw/pj/<hilo>/posts.json) into a real
-// entry in content/pj/<personaje>.md. An entry that already exists for the same thread (found
+// Turns every PJ thread of _index.json, downloaded by scrape:pjs (scraper/raw/pj/<hilo>/
+// posts.json), into a real entry in content/pj/<personaje>.md. Nothing is left out in silence:
+// each thread is imported with its form, imported as 'ficha-libre' (post #1 has no form: its
+// whole text goes under "Trasfondo"), excluded with its reason (clearly no PJ) or failed with
+// its error, and the report ends with the totals of the four groups. An entry that already exists for the same thread (found
 // by its `hilo`) keeps its whole frontmatter: only `hilo` and `importado` change, and the body
 // (form + history) is generated again. Two fixes reach the frontmatter of an existing entry:
 // an alignment that needed fixing (comment, typo or empty template) is written again, and in
@@ -44,6 +52,7 @@ type Action =
 
 interface Converted {
   thread: string;
+  group: 'formulario' | 'ficha-libre';
   file: string;
   action: Action;
   draft: PjDraft;
@@ -87,32 +96,66 @@ const index = await readIndex();
 const existingEntries = await readExistingEntries();
 const { byThread, slugs } = existingEntries;
 const converted: Converted[] = [];
-const skipped: { thread: string; reason: string }[] = [];
+/** Threads that are not imported: excluded (no PJ) or failed. */
+const notImported: PjThreadOutcome[] = [];
 const fixes: { file: string; fixes: FrontmatterFixes }[] = [];
+const fail = (thread: string, reason: string) => {
+  notImported.push({ thread, group: 'fallido', reason });
+};
 
 // First the name of every PJ, so a first name only becomes an alias when it is unique.
 const downloaded: Downloaded[] = [];
-for (const thread of await downloadedThreads()) {
-  const dump = threadDumpSchema.parse(
-    JSON.parse(await readFile(join(PJ_RAW_DIR, thread, 'posts.json'), 'utf8')) as unknown,
-  );
-  const opening = dump.posts.find((post) => post.number === 1);
-  if (!opening || !isAuthorizationForm(opening.html)) {
-    skipped.push({ thread, reason: 'el post #1 no es una ficha de autorización' });
+for (const thread of await threadsToConvert()) {
+  const postsFile = join(PJ_RAW_DIR, thread, 'posts.json');
+  if (!existsSync(postsFile)) {
+    fail(thread, 'no está descargado (falta posts.json): npm run scrape:pjs');
+    continue;
+  }
+  let dump: ThreadDump;
+  try {
+    dump = threadDumpSchema.parse(JSON.parse(await readFile(postsFile, 'utf8')) as unknown);
+  } catch (error) {
+    fail(thread, `posts.json ilegible: ${errorMessage(error)}`);
     continue;
   }
   const listed = index.get(thread);
+  const threadTitle = dump.title || listed?.title || '';
+  const opening = dump.posts.find((post) => post.number === 1);
+  if (!opening) {
+    fail(thread, 'no se encuentra el post #1');
+    continue;
+  }
+  const verdict = classifyPjThread(threadTitle, opening);
+  if (verdict.group === 'excluido') {
+    notImported.push({ thread, ...verdict });
+    continue;
+  }
   downloaded.push({
     thread,
     dump,
     listed,
     threadUrl: listed?.url ?? dump.url.replace(/\/$/, ''),
-    title: pjTitle(opening.html, dump.title || listed?.title),
+    title: pjTitle(opening.html, threadTitle),
   });
 }
 const isUniqueFirstName = firstNameCounter(downloaded, existingEntries.all);
 
-for (const { thread, dump, listed, threadUrl, title } of downloaded) {
+for (const thread of downloaded) {
+  try {
+    await convertThread(thread);
+  } catch (error) {
+    fail(thread.thread, errorMessage(error));
+  }
+}
+
+const report = buildReport();
+await writeFile(PJ_CONVERT_REPORT, `${report.join('\n')}\n`);
+console.log(report.join('\n'));
+console.log(`\nInforme guardado en ${relative(process.cwd(), PJ_CONVERT_REPORT)}`);
+
+// ---------------------------------------------------------------------------------------------
+
+async function convertThread({ thread, dump, listed, threadUrl, title }: Downloaded) {
   const draft = renderPjDraft({
     threadUrl,
     threadTitle: dump.title || listed?.title,
@@ -130,34 +173,22 @@ for (const { thread, dump, listed, threadUrl, title } of downloaded) {
   const result = existing
     ? await updateEntry(file, threadUrl, draft, isUniqueFirstName)
     : createEntry(draft);
-  const entry = {
+  if (result.markdown !== undefined) {
+    const leak = personalDataIn(result.markdown);
+    if (leak) throw new Error(`no se escribe: el resultado contiene ${leak}`);
+    await writeFile(file, result.markdown);
+    if (result.fixes) fixes.push({ file, fixes: result.fixes });
+  }
+  converted.push({
     thread,
+    group: draft.report.ficha,
     file,
     action: result.action,
     draft,
     posts: dump.posts.length,
     subforum: listed?.subforum,
-  };
-  if (result.markdown === undefined) {
-    converted.push(entry);
-    continue;
-  }
-  const leak = personalDataIn(result.markdown);
-  if (leak) {
-    skipped.push({ thread, reason: `no se escribe: el resultado contiene ${leak}` });
-    continue;
-  }
-  await writeFile(file, result.markdown);
-  converted.push(entry);
-  if (result.fixes) fixes.push({ file, fixes: result.fixes });
+  });
 }
-
-const report = buildReport();
-await writeFile(PJ_CONVERT_REPORT, `${report.join('\n')}\n`);
-console.log(report.join('\n'));
-console.log(`\nInforme guardado en ${relative(process.cwd(), PJ_CONVERT_REPORT)}`);
-
-// ---------------------------------------------------------------------------------------------
 
 async function readIndex(): Promise<Map<string, PjIndexEntry>> {
   if (!existsSync(PJ_INDEX_FILE)) return new Map();
@@ -167,16 +198,19 @@ async function readIndex(): Promise<Map<string, PjIndexEntry>> {
   return new Map(threads.map((entry) => [entry.slug, entry]));
 }
 
-/** Thread folders with a posts.json, in alphabetical order; --only narrows them. */
-async function downloadedThreads(): Promise<string[]> {
-  const names = (await readdir(PJ_RAW_DIR, { withFileTypes: true }))
+/**
+ * Every thread of _index.json and every thread folder in raw/pj, in alphabetical order, so a
+ * listed thread that was never downloaded is reported too; --only narrows them.
+ */
+async function threadsToConvert(): Promise<string[]> {
+  const folders = (await readdir(PJ_RAW_DIR, { withFileTypes: true }))
     .filter((dirent) => dirent.isDirectory() && !dirent.name.startsWith('_'))
-    .map((dirent) => dirent.name)
-    .filter((name) => existsSync(join(PJ_RAW_DIR, name, 'posts.json')))
-    .sort();
+    .map((dirent) => dirent.name);
+  const names = [...new Set([...index.keys(), ...folders])].sort();
   if (!values.only) return names;
-  const missing = values.only.filter((name) => !names.includes(name));
-  for (const name of missing) skipped.push({ thread: name, reason: 'no está descargado' });
+  for (const name of values.only) {
+    if (!names.includes(name)) fail(name, 'no está en _index.json ni en scraper/raw/pj');
+  }
   return names.filter((name) => values.only?.includes(name));
 }
 
@@ -340,34 +374,56 @@ function normalizeNewlines(text: string): string {
 }
 
 function buildReport(): string[] {
-  const lines = [`Conversión de PJ · ${today}`, ''];
+  const lines = [`Conversión de PJ · ${today}`];
   const shown = (file: string) => relative(process.cwd(), file);
+  const list = (title: string, items: string[]) => {
+    if (items.length > 0)
+      lines.push('', `${title} (${items.length}):`, ...items.map((i) => `  ${i}`));
+  };
 
-  for (const { thread, file, action, draft, posts } of converted) {
-    const { report } = draft;
-    lines.push(
-      `${action.padEnd(12)} ${shown(file)} ← ${thread}`,
-      `  posts=${posts} entradas=${report.entries} último post=${report.lastPost ?? '?'}` +
-        ` estado(nueva)=${report.estado} sexo=${report.sexoFrom} cuenta=${report.cuentaFrom}`,
+  const imported = [
+    { group: 'formulario', title: 'Importados con formulario' },
+    { group: 'ficha-libre', title: 'Importados como ficha-libre (post #1 sin formulario)' },
+  ] as const;
+  for (const { group, title } of imported) {
+    list(
+      title,
+      converted
+        .filter((item) => item.group === group)
+        // One item per thread, so the heading counts threads; its details go indented below.
+        .map(({ thread, file, action, draft: { report }, posts }) =>
+          [
+            `${action.padEnd(12)} ${shown(file)} ← ${thread}`,
+            `posts=${posts} entradas=${report.entries} último post=${report.lastPost ?? '?'}` +
+              ` estado(nueva)=${report.estado} sexo=${report.sexoFrom} cuenta=${report.cuentaFrom}`,
+            ...(report.missingFields.length > 0
+              ? [`campos sin valor: ${report.missingFields.join(', ')}`]
+              : []),
+            ...report.oddPosts.map((odd) => `⚠ ${odd}`),
+          ].join('\n    '),
+        ),
     );
-    if (report.missingFields.length > 0) {
-      lines.push(`  campos sin valor: ${report.missingFields.join(', ')}`);
-    }
-    for (const odd of report.oddPosts) lines.push(`  ⚠ ${odd}`);
+  }
+  const notImportedGroups = [
+    { group: 'excluido', title: 'Excluidos (no son un PJ), con su motivo' },
+    { group: 'fallido', title: 'Fallidos, con su error' },
+  ] as const;
+  for (const { group, title } of notImportedGroups) {
+    list(
+      title,
+      notImported
+        .filter((item) => item.group === group)
+        .map(({ thread, reason }) => `${thread}: ${reason ?? '?'}`),
+    );
   }
 
   const count = (action: Action) => converted.filter((item) => item.action === action).length;
   lines.push(
     '',
-    `Creadas: ${count('creada')} · actualizadas: ${count('actualizada')} · ` +
-      `solo frontmatter: ${count('frontmatter')} · sin cambios: ${count('sin cambios')} · ` +
-      `protegidas: ${count('protegida (importar: false)')} · saltadas: ${skipped.length}`,
+    `Fichas: creadas ${count('creada')} · actualizadas ${count('actualizada')} · ` +
+      `solo frontmatter ${count('frontmatter')} · sin cambios ${count('sin cambios')} · ` +
+      `protegidas ${count('protegida (importar: false)')}`,
   );
-
-  const list = (title: string, items: string[]) => {
-    if (items.length > 0)
-      lines.push('', `${title} (${items.length}):`, ...items.map((i) => `  ${i}`));
-  };
   const created = converted.filter((item) => item.action === 'creada');
   list(
     'Cuenta desconocida (ni en la ficha ni en el título)',
@@ -416,9 +472,11 @@ function buildReport(): string[] {
     'Etiquetas no reconocidas, en "Otros datos" (etiqueta: fichas)',
     [...labels].sort((a, b) => b[1] - a[1]).map(([label, n]) => `${label}: ${n}`),
   );
-  list(
-    'Saltados',
-    skipped.map(({ thread, reason }) => `${thread}: ${reason}`),
-  );
+  // Last, the totals: the same summary scrape:pjs prints.
+  const outcomes: PjThreadOutcome[] = [
+    ...converted.map(({ thread, group }) => ({ thread, group })),
+    ...notImported,
+  ];
+  lines.push('', ...pjThreadSummary(outcomes, index.size));
   return lines;
 }

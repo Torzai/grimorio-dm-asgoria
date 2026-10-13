@@ -11,6 +11,16 @@ importado: 2026-10-13
 tags: [importado]
 ---
 
+## Descripción Física
+
+Sir William Belmont  
+De apariencia imponente, Sir William mide 1.83 m y posee una complexión fornida, sólida, con el tipo de musculatura funcional del luchador que ha entrenado más en el campo que en el espejo. Sus hombros son amplios, su pecho definido y sus brazos fuertes, con venas y marcas que hablan de años empuñando armas pesadas, escalando murallas y enfrentando bestias que otros solo conocen en leyendas.Su cabellera negra cae larga hasta los hombros, espesa y bien cuidada, normalmente suelta o recogida con una cinta de cuero cuando va a la batalla. Lleva barba recortada, firme, moldeada con disciplina, lo justo para darle presencia sin volverse salvaje.El rasgo que más impresiona en él no es su físico, sino su mirada:  
+serena, estoica, como templada al fuego de demasiadas noches enfrentándose a lo que otros temen nombrar. Ojos profundos, casi melancólicos, que parecen medir cada cosa que observan, como si detrás de ellos siempre hubiera un análisis, una historia y una decisión en silencio.
+
+No sonríe con facilidad; su rostro parece tallado para la determinación, pero cuando aprieta la mandíbula o contrae ligeramente los ojos, cualquiera entiende que está preparado para actuar… y que en su vida ya ha cumplido decisiones mucho más difíciles que blandir un látigo.
+
+Una figura que no pretende intimidar… pero lo hace simplemente por existir.
+
 ## Origen
 
 Nacido en el Templo de Tyr de Karak Norn, Sir William Belmont creció en una ciudad donde la disciplina, el orden y la responsabilidad podían significar la diferencia entre la vida y la muerte. Allí, en templos endurecidos por crisis y reconstrucciones, encontró a Tyr, el Dios de la Valentía, la Devoción y el Deber.  

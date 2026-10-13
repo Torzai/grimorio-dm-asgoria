@@ -1,7 +1,6 @@
 ---
 type: pj
 title: Ulf Haraldsson
-aliases: [Ulf]
 cuenta_nwn: lKousen
 sexo: Masculino
 raza: Humano

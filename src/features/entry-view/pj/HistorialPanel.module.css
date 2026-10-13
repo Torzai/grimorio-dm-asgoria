@@ -183,7 +183,7 @@
   }
 }
 
-/* The head button and, while open, the pin button at its right. */
+/* The head and, while open, the pin button at its right. */
 .entryTop {
   display: flex;
   align-items: flex-start;
@@ -194,6 +194,7 @@
 }
 
 .entryHead {
+  position: relative;
   flex: 1;
   min-width: 0;
   display: grid;
@@ -201,11 +202,16 @@
   align-items: start;
   gap: var(--space-18);
   padding: var(--space-14) var(--space-18);
+}
+
+/* Covers the whole head, so a click anywhere but on a participant link opens the entry. */
+.toggle {
+  position: absolute;
+  inset: 0;
   border: 0;
   border-radius: var(--radius-md);
   background: transparent;
-  color: inherit;
-  text-align: left;
+  cursor: pointer;
 }
 
 .entry[data-open] .entryHead {
@@ -271,7 +277,18 @@
   color: var(--color-text-muted);
 }
 
+.participantLink {
+  position: relative;
+  text-decoration: none;
+}
+
+.participantLink:hover {
+  border-color: var(--color-gold);
+  color: var(--color-gold-hover);
+}
+
 .more {
+  position: relative;
   padding: var(--border-width) var(--space-8);
   font-size: var(--font-size-2xs-plus);
   color: var(--color-text-subtle);

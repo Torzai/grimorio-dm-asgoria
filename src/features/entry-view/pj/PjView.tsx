@@ -7,14 +7,12 @@ import {
   type KeyboardEvent,
   type ReactNode,
 } from 'react';
-import { Link, createSearchParams, useSearchParams } from 'react-router';
+import { Link, createSearchParams, useSearchParams, type To } from 'react-router';
 import type { EntryContext } from '@/content/content-queries';
-import { normalize } from '@/content/normalize';
 import { pjHistorialOf, pjSummaryOf, splitPjBody, type PjBody } from '@/content/pj-data';
 import { ownNamesOf, type NameCount, type PjSummary } from '@/content/pj-historial';
 import { PJ_ESTADO_LABELS } from '@/content/type-labels';
 import type { EntryMeta } from '@/content/types';
-import { useContent } from '@/content/use-content';
 import { useEntryBody } from '@/content/use-entry-body';
 import { formatNumericDate } from '@/features/entry-list/entry-meta';
 import { PinButton } from '@/features/pins/PinButton';
@@ -162,7 +160,7 @@ export function PjView({ entry, context, title }: PjViewProps) {
         </div>
         <EntryAside
           context={context}
-          before={summary.total > 0 && <PjAsideBoxes entry={entry} summary={summary} />}
+          before={summary.total > 0 && <PjAsideBoxes summary={summary} />}
         />
       </div>
     </div>
@@ -298,21 +296,8 @@ function Tabs({ tabs, selected, onSelect }: TabsProps) {
 }
 
 /** "Narrado por" and "Suele jugar con", before the boxes every entry has. */
-function PjAsideBoxes({ entry, summary }: { entry: EntryMeta<'pj'>; summary: PjSummary }) {
+function PjAsideBoxes({ summary }: { summary: PjSummary }) {
   const [showAllDms, setShowAllDms] = useState(false);
-  const { entries } = useContent();
-  // A companion is a link when a PJ has that name as its title or one of its aliases.
-  const pjByName = useMemo(() => {
-    const map = new Map<string, EntryMeta>();
-    for (const other of entries) {
-      if (other.type !== 'pj' || other === entry) continue;
-      for (const name of [other.data.title, ...(other.data.aliases ?? [])]) {
-        if (!map.has(normalize(name))) map.set(normalize(name), other);
-      }
-    }
-    return map;
-  }, [entries, entry]);
-
   const dms = showAllDms ? summary.dms : summary.dms.slice(0, TOP_DMS);
   const listId = useId();
 
@@ -337,10 +322,19 @@ function PjAsideBoxes({ entry, summary }: { entry: EntryMeta<'pj'>; summary: PjS
         <AsideBox title="Suele jugar con">
           <NameCountList
             items={summary.companions}
-            linkFor={(name) => {
-              const pj = pjByName.get(normalize(name));
-              return pj ? `/pj/${pj.slug}` : undefined;
-            }}
+            linkFor={({ name, pj, ambiguous }) =>
+              pj
+                ? { to: `/pj/${pj}` }
+                : ambiguous
+                  ? {
+                      to: {
+                        pathname: '/buscar',
+                        search: `?${createSearchParams({ q: name, type: 'pj' })}`,
+                      },
+                      title: 'Varios PJ se llaman así',
+                    }
+                  : undefined
+            }
           />
         </AsideBox>
       )}
@@ -348,29 +342,34 @@ function PjAsideBoxes({ entry, summary }: { entry: EntryMeta<'pj'>; summary: PjS
   );
 }
 
-function NameCountList({
+interface CountLink {
+  to: To;
+  title?: string;
+}
+
+function NameCountList<T extends NameCount>({
   id,
   items,
   linkFor,
 }: {
   id?: string;
-  items: readonly NameCount[];
-  linkFor?: (name: string) => string | undefined;
+  items: readonly T[];
+  linkFor?: (item: T) => CountLink | undefined;
 }) {
   return (
     <ul id={id} className={styles.counts}>
-      {items.map(({ name, count }) => {
-        const to = linkFor?.(name);
+      {items.map((item) => {
+        const link = linkFor?.(item);
         return (
-          <li key={name} className={styles.countRow}>
-            {to ? (
-              <Link className={styles.countLink} to={to}>
-                {name}
+          <li key={item.name} className={styles.countRow}>
+            {link ? (
+              <Link className={styles.countLink} to={link.to} title={link.title}>
+                {item.name}
               </Link>
             ) : (
-              <span>{name}</span>
+              <span>{item.name}</span>
             )}
-            <span className={styles.countValue}>{count}</span>
+            <span className={styles.countValue}>{item.count}</span>
           </li>
         );
       })}

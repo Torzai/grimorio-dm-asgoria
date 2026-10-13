@@ -8,6 +8,7 @@ import {
   type PjHistorialData,
   type PjSummary,
 } from './pj-historial.ts';
+import { nameKey, resolvePjNames, type NameResolution } from './pj-names.ts';
 import { buildIndex, serializeIndex } from './search-index.ts';
 import type { EntryMeta } from './types.ts';
 
@@ -34,19 +35,41 @@ async function compute(rootDir: string): Promise<Computed> {
 
   const historiales = new Map<string, PjHistorialData>();
   const summaries: Record<string, PjSummary> = {};
-  const items: Record<string, HistorialItemMeta[]> = {};
-  for (const pj of entries.filter((entry) => entry.type === 'pj')) {
+  const pjs = entries.filter((entry) => entry.type === 'pj');
+  for (const pj of pjs) {
     const { summary, data } = buildPjHistorial(pj);
     historiales.set(pj.slug, data);
     summaries[pj.slug] = summary;
+  }
+
+  // Which PJ each companion and participant is, so the browser only reads the slug.
+  const resolutions = resolvePjNames(
+    pjs.map((entry) => ({ entry, items: historiales.get(entry.slug)?.items ?? [] })),
+  );
+  const items: Record<string, HistorialItemMeta[]> = {};
+  for (const pj of pjs) {
+    const resolved = resolutions.get(pj.slug) ?? new Map<string, NameResolution>();
+    const resolve = (name: string) => resolved.get(nameKey(name)) ?? { kind: 'none' };
+    const slugOf = (name: string) => {
+      const resolution = resolve(name);
+      return resolution.kind === 'pj' ? resolution.slug : null;
+    };
+
+    const summary = summaries[pj.slug];
+    summary.companions = summary.companions.map((companion) => ({
+      ...companion,
+      pj: slugOf(companion.name),
+      ...(resolve(companion.name).kind === 'ambiguous' ? { ambiguous: true } : {}),
+    }));
     // Without bodyMarkdown and searchText; JSON leaves out the fields that are undefined.
-    items[pj.slug] = data.items.map(
+    items[pj.slug] = (historiales.get(pj.slug)?.items ?? []).map(
       ({ id, date, authorName, authorHandle, participantes, recompensa, preview }) => ({
         id,
         date,
         authorName,
         authorHandle,
         participantes,
+        participantesPj: participantes.map(slugOf),
         recompensa,
         preview,
       }),

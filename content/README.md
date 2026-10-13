@@ -24,6 +24,12 @@ Al reimportar una ficha que ya existe:
   del frontmatter se pierde.
 - `estado` solo se calcula al crear la ficha (activo si el último post tiene menos de 180 días).
 
+Ningún hilo de los subforos se queda fuera en silencio. Si el post #1 no tiene un formulario
+legible, la ficha se crea igual con el tag `ficha-libre`: nombre y cuenta salen del título del
+hilo, el sexo del subforo y el post entero va en `## Trasfondo` (el resto de campos, a mano).
+Solo se excluyen normas, plantillas y avisos del staff, y el informe
+(`scraper/raw/pj/_convert-report.txt`) dice por qué.
+
 Para que el importador no vuelva a tocar una ficha, añade a su frontmatter:
 
 ```yaml

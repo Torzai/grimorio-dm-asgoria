@@ -11,6 +11,10 @@ importado: 2026-10-13
 tags: [importado]
 ---
 
+## Descripción Física
+
+Fuerte.. y Músculos Muy Marcados Viste Pieles de Animales.. Representando en si o Aparentando ser uno.., Posee Múltiples Cicatrices en su cuerpo, Cabello Castaño oscuro.. Mide al menos 2 metros.. 2,20 metros de Altura Y Tatuajes Tradicionales Nórdicos Entre Ellos El Oso... Como símbolo de su Fuerza
+
 ## Origen
 
 Mraganur aunque Decide Viajar hacia a Gaélica en busca de nuevos Retos Con los que bañar.. la sangré de sus Enemigos en Nombré de sus Dioses Como cualquier Tradicional Norteño

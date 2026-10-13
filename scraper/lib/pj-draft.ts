@@ -3,6 +3,8 @@ import { normalize, slugify } from '../../src/content/normalize';
 import { ALIGNMENT_LABELS, readAlignment } from '../../src/content/pj';
 import {
   ACTIVE_DAYS,
+  FREE_SHEET_HEADING,
+  FREE_SHEET_TAG,
   PJ_SUBFORUMS,
   SEXO_PATTERNS,
   THREAD_TITLE_PATTERN,
@@ -12,10 +14,19 @@ import type { ImageNote } from './clean-post';
 import { daysBetween, isoDay, spanishDay } from './dates';
 import { escapeMarkdown, postToMarkdown, redactPersonalData } from './markdown';
 import type { PjSubforum } from './pj-index';
-import { parseSheet, type PjSheet, type SheetField } from './pj-sheet';
+import {
+  emptySheet,
+  freeSheetMarkdown,
+  isForm,
+  parseSheet,
+  type PjSheet,
+  type SheetField,
+} from './pj-sheet';
 import { threadSlug, type ForumPost } from './thread-page';
 
 export interface DraftReport {
+  /** Post #1 is a form, or free text that goes whole under "Trasfondo" ('ficha-libre'). */
+  ficha: 'formulario' | 'ficha-libre';
   /** History entries written: posts #2…N. */
   entries: number;
   /** Day of the first entry of the history (the newest) and of the last one (the oldest). */
@@ -92,13 +103,17 @@ const REQUIRED_FIELDS: SheetField[] = [
 
 /**
  * Draft of a PJ: post #1 (the authorization form) becomes frontmatter and sections, and every
- * reply becomes a history entry, newest first.
+ * reply becomes a history entry, newest first. A post #1 with no form is a 'ficha-libre': name
+ * and account come from the thread title, sexo from the subforum, and the whole post goes under
+ * "Trasfondo".
  */
 export function renderPjDraft(input: PjDraftInput): PjDraft {
   const [form, ...replies] = [...input.posts].sort((a, b) => a.number - b.number);
   if (form?.number !== 1) throw new Error('falta el post #1, que es la ficha del personaje');
 
-  const sheet = parseSheet(form.html);
+  const formSheet = parseSheet(form.html);
+  const free = isForm(formSheet) ? undefined : freeSheetMarkdown(form.html);
+  const sheet = free ? emptySheet() : formSheet;
   const titleAccount = THREAD_TITLE_PATTERN.exec(input.threadTitle ?? '')?.[2].trim() ?? '';
 
   const lastPost = input.posts
@@ -120,21 +135,33 @@ export function renderPjDraft(input: PjDraftInput): PjDraft {
       ? undefined
       : formAlineamiento;
 
+  const title = sheet.fields.title ?? threadName(input.threadTitle);
+  const cuenta =
+    sheet.fields.cuenta_nwn ?? (titleAccount ? redactPersonalData(titleAccount) : UNKNOWN_ACCOUNT);
+  // What the entry ends up with, wherever it came from: the form, the thread title or the subforum.
+  const entryValues: Partial<Record<SheetField, string>> = {
+    ...sheet.fields,
+    title,
+    cuenta_nwn: cuenta === UNKNOWN_ACCOUNT ? undefined : cuenta,
+    sexo,
+    alineamiento,
+  };
+  const postNotes = [...sheet.notes, ...(free ? [free] : [])];
+
   const report: DraftReport = {
+    ficha: free ? 'ficha-libre' : 'formulario',
     entries: 0,
     edited: [],
     discordPastes: [],
     quotes: [],
-    images: sheet.notes.flatMap(({ images }) => images.map((image) => ({ post: 1, image }))),
-    droppedLinks: sheet.notes.flatMap(({ droppedLinks }) =>
+    images: postNotes.flatMap(({ images }) => images.map((image) => ({ post: 1, image }))),
+    droppedLinks: postNotes.flatMap(({ droppedLinks }) =>
       droppedLinks.map((kind) => ({ post: 1, kind })),
     ),
     unknownLabels: sheet.others.map(({ label }) => label),
     discardedLabels: sheet.discarded,
     missingFields: [
-      ...REQUIRED_FIELDS.filter((field) =>
-        field === 'alineamiento' ? !alineamiento : !sheet.fields[field],
-      ),
+      ...REQUIRED_FIELDS.filter((field) => !entryValues[field]),
       ...(sheet.clases.length === 0 ? ['clases'] : []),
     ],
     oddPosts: [],
@@ -159,10 +186,9 @@ export function renderPjDraft(input: PjDraftInput): PjDraft {
             : 'ficha',
   };
 
-  const title = sheet.fields.title ?? threadName(input.threadTitle);
-  const cuenta =
-    sheet.fields.cuenta_nwn ?? (titleAccount ? redactPersonalData(titleAccount) : UNKNOWN_ACCOUNT);
-  if (!sheet.fields.title && title) report.oddPosts.push('nombre tomado del título del hilo');
+  if (!free && !sheet.fields.title && title) {
+    report.oddPosts.push('nombre tomado del título del hilo');
+  }
 
   // The comment of a fixed alignment ('// pasaría a NA') is kept in "Otros datos".
   const others = [...sheet.others];
@@ -170,6 +196,7 @@ export function renderPjDraft(input: PjDraftInput): PjDraft {
     others.push({ label: ALIGNMENT_NOTE, markdown: escapeMarkdown(reading.comment) });
   }
   const blocks: string[] = [];
+  if (free?.markdown) blocks.push(`## ${FREE_SHEET_HEADING}`, free.markdown);
   for (const { heading, markdown } of sheet.sections) blocks.push(`## ${heading}`, markdown);
   if (others.length > 0) {
     blocks.push('## Otros datos');
@@ -193,6 +220,7 @@ export function renderPjDraft(input: PjDraftInput): PjDraft {
       estado,
       lastPost,
       firstNameAlias: input.firstNameAlias ?? true,
+      free: free !== undefined,
       threadUrl: input.threadUrl,
       today: input.today,
     }),
@@ -203,7 +231,8 @@ export function renderPjDraft(input: PjDraftInput): PjDraft {
 
 /** The PJ's name as renderPjDraft finds it: in the form (post #1), or in the thread title. */
 export function pjTitle(formHtml: string, threadTitle: string | undefined): string | undefined {
-  return parseSheet(formHtml).fields.title ?? threadName(threadTitle);
+  const sheet = parseSheet(formHtml);
+  return (isForm(sheet) ? sheet.fields.title : undefined) ?? threadName(threadTitle);
 }
 
 /** 'Einar Eriksson' of the thread title 'Einar Eriksson ( cuenta )'. */
@@ -233,6 +262,7 @@ function frontmatter(values: {
   estado: DraftReport['estado'];
   lastPost: string | undefined;
   firstNameAlias: boolean;
+  free: boolean;
   threadUrl: string;
   today: string;
 }): string {
@@ -252,7 +282,7 @@ function frontmatter(values: {
     estado: values.estado,
     hilo: values.threadUrl,
     importado: values.today,
-    tags: ['importado'],
+    tags: values.free ? ['importado', FREE_SHEET_TAG] : ['importado'],
   });
   visit(doc, {
     Seq: (_key, seq) => {

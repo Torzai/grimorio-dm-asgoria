@@ -167,7 +167,7 @@
 
 **Estado:** ✅ hecha para PJ (los dos subforos `personajes` y `personajes-femeninos`, tratados como una sola lista). Falta generalizar a otras secciones del foro.
 - `npm run scrape:discover-pjs` → `scraper/raw/pj/_index.json` (url, título, subforo, respuestas, último post relativo).
-- `npm run scrape:pjs -- [--limit N] [--only <slug>]… [--refresh]` → `scraper/raw/pj/<hilo>/page-NN.html` + `posts.json`, log en `scraper/raw/pj/_crawl.log`. Salta los hilos cuyo post #1 no es una ficha de autorización.
+- `npm run scrape:pjs -- [--limit N] [--only <slug>]… [--refresh]` → `scraper/raw/pj/<hilo>/page-NN.html` + `posts.json`, log en `scraper/raw/pj/_crawl.log`. Baja todos los hilos completos, sin saltar ninguno, y termina con el mismo resumen que `scrape:convert-all`.
 
 ## T14 · Importador: conversión a borradores
 > Ya existe un spike para hilos de PJ en `/scraper/` (`convert-pj.ts` → `content/_inbox/pj/`): T14 lo generaliza a otros tipos de hilo.
@@ -180,5 +180,6 @@
 
 **Estado:** ✅ hecha para PJ, que se escriben directamente como fichas reales en `content/pj/` (no en `_inbox/`).
 - `npm run scrape:convert-all -- [--only <hilo>]…` → `content/pj/<personaje>.md`; informe en `scraper/raw/pj/_convert-report.txt`.
+- Ningún hilo de `_index.json` se pierde: cada uno acaba importado con formulario, importado como `ficha-libre` (post #1 sin formulario: nombre y cuenta del título, sexo del subforo y el post entero en "## Trasfondo"), excluido con su motivo (normas, plantillas o avisos del staff cuyo título no sigue "Nombre ( Cuenta )") o fallido con su error. El informe acaba con los totales de los cuatro grupos.
 - Ficha nueva: `estado` según el último post del hilo (< 180 días → `activo`). Ficha existente: conserva su frontmatter, actualiza `hilo` e `importado` y regenera el cuerpo; con `importar: false` no se toca.
 - Reimportar: `npm run scrape:pjs -- --refresh` y después `npm run scrape:convert-all`. Ver `content/README.md`.

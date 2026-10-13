@@ -101,7 +101,7 @@ export const MAX_LISTING_PAGES = 100;
 // Pagination reuses SELECTORS.pageCounter and SELECTORS.nextPageIcon.
 
 export const LISTING_SELECTORS = {
-  /** One row per thread (sticky ones included; they are skipped later if post #1 is no form). */
+  /** One row per thread (sticky ones included; convert-all excludes the ones of no PJ). */
   topic: '#af-wrapper .topic',
   /** Link to the thread, with its title as text. */
   topicLink: '.topic-name a[href*="/foro/topic/"]',
@@ -179,6 +179,8 @@ export const SELECTORS = {
   authorName: ':scope > .forum-post-header-container .post-author-block-name .profile-link',
   /** "@she-wolf", next to the name. */
   authorHandle: ':scope > .forum-post-header-container .post-author-block-name .mention-nice-name',
+  /** Forum groups of the author ("Staff", "DM"), as tags under the name. */
+  authorGroups: ':scope > .forum-post-header-container .post-author-block-group .af-usergroup-tag',
   /** "Last edited on 26/12/2022, 2:08 am by She Wolf". Only on edited posts. */
   editNote: ':scope > .post-wrapper > .post-footer .post-meta .post-edit-date',
   /**
@@ -327,36 +329,56 @@ export const DISCORD_TAG_PLACEHOLDER = '[usuario eliminado]';
 //
 // Labels are written here as the form shows them; they are compared ignoring case, accents,
 // "(opcional)" and a trailing colon, so a reworded or reordered form still matches.
+//
+// Variants found in the forum:
+// - The form pasted from the confirmation email (Elae, Avvar and 18 more): the field tables
+//   are nested inside the email's layout tables, sometimes under a header image.
+// - Fields wrapped in a <div> (Korhran, Sir William): only some tables are direct children.
+// - Label and answer in one cell (Soirfrir's deity): <td><strong>Deidad Predilecta</strong>
+//   <p>Aegir.</p></td>.
+// - "Nombre: …" / "Raza: …" written as text, one label per line, with no tables at all.
 
 export const SHEET_SELECTORS = {
-  /** One field of the form (only direct children of the post body count). */
+  /** One field of the form: any table with no table inside, however deep the layout puts it. */
   field: 'table',
   /** The label: first row of the field. */
   label: 'tr:first-child',
   /** The answer: cells of the remaining rows. */
   value: 'tr:not(:first-child) > td',
+  /** In a one-row field, the label written in bold before the answer, in the same cell. */
+  inlineLabel: ':scope > strong:first-child, :scope > b:first-child',
 } as const;
 
-/** Short answers that go to the frontmatter. */
+/**
+ * "Raza: Humano" in a form written as text: a short label, a colon and the answer. Lines that
+ * follow without a label of their own belong to the same answer.
+ */
+export const SHEET_TEXT_LABEL = /^\s*([^:\n]{2,40}?)\s*:\s*(.*)$/;
+
+/** Short answers that go to the frontmatter. The short labels are for forms written as text. */
 export const SHEET_FIELDS = {
-  title: ['Nombre y apellido del personaje'],
-  cuenta_nwn: ['Cuenta de Neverwinter Nights'],
-  sexo: ['Sexo del Personaje'],
-  raza: ['Raza del Personaje'],
-  alineamiento: ['Alineamiento del Personaje'],
-  deidad: ['Deidad Predilecta'],
+  title: ['Nombre y apellido del personaje', 'Nombre del personaje', 'Nombre'],
+  cuenta_nwn: ['Cuenta de Neverwinter Nights', 'Cuenta de NWN', 'Cuenta'],
+  sexo: ['Sexo del Personaje', 'Sexo'],
+  raza: ['Raza del Personaje', 'Raza'],
+  alineamiento: ['Alineamiento del Personaje', 'Alineamiento'],
+  deidad: ['Deidad Predilecta', 'Deidad'],
 } as const;
 
-/** Class answers, in this order, collected into `clases`. */
-export const SHEET_CLASS_LABELS = ['Clase Principal', 'Clase Secundaria', 'Clase Terciaria'];
+/** Class answers, in this order, collected into `clases`; each with the labels it may have. */
+export const SHEET_CLASS_LABELS = [
+  ['Clase Principal', 'Clase'],
+  ['Clase Secundaria'],
+  ['Clase Terciaria'],
+] as const;
 
 /** Class answers that mean "none" (compared normalized and without trailing dots). */
 export const NO_CLASS_ANSWER = /^(no se|ningun[oa]?|nada|n\/a|-+)?$/;
 
 /** Long answers that become sections of the body, in this order and with these headings. */
 export const SHEET_SECTIONS = [
-  { heading: 'Descripción Física', labels: ['Descripción Física'] },
-  { heading: 'Origen', labels: ['Origen'] },
+  { heading: 'Descripción Física', labels: ['Descripción Física', 'Descripción', 'Apariencia'] },
+  { heading: 'Origen', labels: ['Origen', 'Historia', 'Trasfondo'] },
   { heading: 'Objetivos', labels: ['Objetivos'] },
   { heading: 'Otras Notas', labels: ['Otras Notas'] },
 ] as const;
@@ -369,6 +391,30 @@ export const SHEET_DISCARDED_LABEL = /correo|e-?mail|discord|foro|usuario/;
 
 /** Post #1 is an authorization form when at least this many known labels have an answer. */
 export const MIN_FORM_LABELS = 3;
+
+// ---------------------------------------------------------------------------------------------
+// Threads of the PJ subforums: none is lost
+// ---------------------------------------------------------------------------------------------
+//
+// Every thread of _index.json is downloaded whole and ends in one group of the report: imported
+// with its form, imported as 'ficha-libre' (post #1 has no form that can be read), excluded
+// (clearly no PJ) or failed.
+
+/** Tag of a PJ whose post #1 has no form: its whole text goes under FREE_SHEET_HEADING. */
+export const FREE_SHEET_TAG = 'ficha-libre';
+
+export const FREE_SHEET_HEADING = 'Trasfondo';
+
+/** Forum groups (af-usergroup-tag) whose members are staff. */
+export const STAFF_GROUPS = ['Staff', 'DM'];
+
+/**
+ * Words of a thread title that announce rules, templates or notices, compared normalized.
+ * A thread is excluded only when its title does not follow "Nombre ( Cuenta )" and either its
+ * post #1 is by staff or its title has one of these words.
+ */
+export const NOTICE_TITLE_PATTERN =
+  /\b(normas?|reglas?|reglamento|plantillas?|formulario|avisos?|anuncios?|importante|leer|lee esto|leeme|fijado|como (crear|pedir|solicitar))\b/;
 
 /** "Einar Eriksson ( Fernando10100 )": name and account, when the form lacks them. */
 export const THREAD_TITLE_PATTERN = /^(.*?)\s*\(\s*([^()]*?)\s*\)\s*$/;
