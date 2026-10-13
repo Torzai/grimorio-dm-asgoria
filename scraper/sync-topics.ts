@@ -7,9 +7,12 @@ import { parseSituacion } from '../src/content/cronica';
 import {
   CONTENT_DIR,
   GENERAL_REGION,
+  NPC_LINKS,
+  NPC_TEMPLATE,
   RAW_DIR,
   TRACKED_TOPICS,
   type CronicaTopic,
+  type NpcBlock,
   type TopicSplit,
   type TrackedTopic,
 } from './config';
@@ -27,6 +30,7 @@ import {
 import { CrawlStop, ForumClient } from './lib/forum-client';
 import { errorMessage } from './lib/pj-thread';
 import { splitByRegion, type RegionPart } from './lib/region-split';
+import { linkNpcs, npcDrafts, npcSecrets } from './lib/thread-npcs';
 import { threadDumpSchema, threadSlug, type ForumPost, type ThreadDump } from './lib/thread-page';
 
 // npm run scrape:topics -- [--refresh]
@@ -41,7 +45,11 @@ import { threadDumpSchema, threadSlug, type ForumPost, type ThreadDump } from '.
 // a general one for the posts without a region when there are any (content/README.md).
 // An entry that exists keeps its whole frontmatter: only `hilo` and `importado` change, and the
 // body is generated again. With `importar: false` it is not touched. A topic's zona entry is
-// created, minimal, when it does not exist. Prints a report without post texts.
+// created, minimal, when it does not exist.
+// A lore entry with NPCs in NPC_LINKS gets the first mention of each one in its block linked to
+// the NPC's ficha; the fichas that no entry is called like yet are created, with the blue text
+// of their block as secrets, and an existing one is never touched.
+// Prints a report without post texts.
 
 const { values } = parseArgs({ options: { refresh: { type: 'boolean', default: false } } });
 
@@ -57,11 +65,27 @@ interface EntryPlan {
   zona?: { slug: string; title?: string };
 }
 
+/** What NPC_LINKS did to a lore entry and its NPCs. */
+interface NpcOutcome {
+  linked: number;
+  mentions: number;
+  missing: string[];
+  created: string[];
+  existing: string[];
+  /** Secrets copied into the fichas created. */
+  secrets: number;
+  withoutNpc: string[];
+  unplaced: number;
+}
+
+type NpcFichas = Pick<NpcOutcome, 'created' | 'existing' | 'secrets'>;
+
 interface EntryOutcome {
   file: string;
   action: Action;
   draft: CronicaDraft;
   zonaCreated?: string;
+  npcs?: NpcOutcome;
 }
 
 interface Outcome {
@@ -121,7 +145,12 @@ async function syncTopic(topic: TrackedTopic): Promise<Outcome> {
     }
 
     const entries: EntryOutcome[] = [];
-    for (const plan of plans) entries.push(await writePlan(topic, plan));
+    for (const plan of plans) {
+      const blocks = topic.type === 'lore' ? NPC_LINKS[plan.slug] : undefined;
+      entries.push(
+        blocks ? await writeWithNpcs(topic, plan, blocks, dump) : await writePlan(topic, plan),
+      );
+    }
     return {
       topic,
       entries,
@@ -226,6 +255,62 @@ async function writePlan(topic: TrackedTopic, plan: EntryPlan): Promise<EntryOut
   };
 }
 
+/**
+ * A lore entry with NPCs: the first mention of each one in its block becomes a link to its
+ * ficha, and the fichas missing are created with the secrets of their block.
+ */
+async function writeWithNpcs(
+  topic: TrackedTopic,
+  plan: EntryPlan,
+  blocks: readonly NpcBlock[],
+  dump: ThreadDump,
+): Promise<EntryOutcome> {
+  const type = topic.type;
+  // On the body as the thread wrote it, before the links.
+  const secrets = npcSecrets(dump.posts, plan.draft.body, blocks, type);
+  const linking = linkNpcs(plan.draft.body, blocks, type);
+  const outcome = await writePlan(topic, { ...plan, draft: { ...plan.draft, body: linking.body } });
+  return {
+    ...outcome,
+    npcs: {
+      linked: linking.linked,
+      mentions: blocks.reduce((sum, block) => sum + block.npcs.length, 0),
+      missing: linking.missing,
+      ...(await writeNpcs(plan.slug, blocks, secrets.bySlug)),
+      withoutNpc: secrets.withoutNpc,
+      unplaced: secrets.unplaced,
+    },
+  };
+}
+
+/**
+ * Creates content/npc/<slug>.md for each NPC of the blocks that no entry is called like yet;
+ * an existing entry is never touched.
+ */
+async function writeNpcs(
+  loreSlug: string,
+  blocks: readonly NpcBlock[],
+  secrets: ReadonlyMap<string, readonly string[]>,
+): Promise<NpcFichas> {
+  const template = normalizeNewlines(await readFile(NPC_TEMPLATE, 'utf8'));
+  const templateBody = template.replace(FRONTMATTER_BLOCK, '');
+  const folder = join(CONTENT_DIR, 'npc');
+  await mkdir(folder, { recursive: true });
+  const outcome: NpcFichas = { created: [], existing: [], secrets: 0 };
+  for (const draft of npcDrafts(loreSlug, blocks, secrets, templateBody)) {
+    if (await entryExists(draft.slug)) {
+      outcome.existing.push(draft.slug);
+      continue;
+    }
+    const leak = personalDataIn(draft.markdown);
+    if (leak) throw new Error(`no se escribe npc/${draft.slug}: el resultado contiene ${leak}`);
+    await writeFile(join(folder, `${draft.slug}.md`), draft.markdown);
+    outcome.created.push(draft.slug);
+    outcome.secrets += draft.secrets;
+  }
+  return outcome;
+}
+
 function createEntry(draft: CronicaDraft): { action: Action; markdown: string } {
   return { action: 'creada', markdown: `---\n${draft.frontmatter}---\n\n${draft.body}` };
 }
@@ -260,12 +345,7 @@ async function updateEntry(
  * Returns the file created, if any.
  */
 async function ensureZona(slug: string, title: string | undefined): Promise<string | undefined> {
-  const folders = (await readdir(CONTENT_DIR, { withFileTypes: true })).filter(
-    (dirent) => dirent.isDirectory() && !dirent.name.startsWith('_'),
-  );
-  if (folders.some(({ name }) => existsSync(join(CONTENT_DIR, name, `${slug}.md`)))) {
-    return undefined;
-  }
+  if (await entryExists(slug)) return undefined;
   const doc = new YamlDocument({
     type: 'zona',
     title: title ?? slug.charAt(0).toUpperCase() + slug.slice(1).replace(/-/g, ' '),
@@ -277,6 +357,14 @@ async function ensureZona(slug: string, title: string | undefined): Promise<stri
   const file = join(folder, `${slug}.md`);
   await writeFile(file, `---\n${doc.toString(YAML_OPTIONS)}---\n`);
   return file;
+}
+
+/** Whether an entry of any type already has that slug. */
+async function entryExists(slug: string): Promise<boolean> {
+  const folders = (await readdir(CONTENT_DIR, { withFileTypes: true })).filter(
+    (dirent) => dirent.isDirectory() && !dirent.name.startsWith('_'),
+  );
+  return folders.some(({ name }) => existsSync(join(CONTENT_DIR, name, `${slug}.md`)));
 }
 
 /** '#3 · Li Zakien · 2023-06-10 → mraganur (auto, alta)', one line per post. */
@@ -311,7 +399,7 @@ function printReport(): void {
       `    páginas=${outcome.pages} descargadas=${outcome.downloaded} posts=${outcome.posts}`,
       ...(outcome.parts ? ['  Regiones:', ...assignmentLines(outcome.parts)] : []),
     );
-    for (const { file, action, draft, zonaCreated } of outcome.entries) {
+    for (const { file, action, draft, zonaCreated, npcs } of outcome.entries) {
       const { report } = draft;
       const { blocks } = parseSituacion(draft.body, topic.type);
       lines.push(
@@ -330,6 +418,7 @@ function printReport(): void {
           : []),
         ...report.oddPosts.map((odd) => `    ⚠ ${odd}`),
         ...(zonaCreated ? [`    zona creada: ${shown(zonaCreated)}`] : []),
+        ...(npcs ? npcLines(npcs) : []),
       );
     }
   }
@@ -340,4 +429,22 @@ function printReport(): void {
       (failed > 0 ? ` · ${failed} con error` : ''),
   );
   console.log(lines.join('\n'));
+}
+
+function npcLines(npcs: NpcOutcome): string[] {
+  return [
+    `    PNJ: menciones enlazadas=${npcs.linked}/${npcs.mentions} ` +
+      `fichas creadas=${npcs.created.length} ya existían=${npcs.existing.length} ` +
+      `secretos copiados=${npcs.secrets}`,
+    ...(npcs.created.length > 0 ? [`    creadas: ${npcs.created.join(', ')}`] : []),
+    ...npcs.missing.map((missing) => `    ⚠ mención no encontrada: ${missing}`),
+    ...(npcs.withoutNpc.length > 0
+      ? [
+          `    secretos de bloques sin PNJ (solo en la ficha de lore): ${npcs.withoutNpc.join(', ')}`,
+        ]
+      : []),
+    ...(npcs.unplaced > 0
+      ? [`    ⚠ secretos que no se encuentran en el texto: ${npcs.unplaced}`]
+      : []),
+  ];
 }

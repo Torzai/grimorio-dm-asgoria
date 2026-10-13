@@ -11,7 +11,8 @@ interface HastData {
 }
 
 /**
- * Turns '[[target]]' and '[[target|label]]' in text nodes into links to '/<type>/<slug>'.
+ * Turns '[[target]]' and '[[target|label]]' in text nodes into links to '/<type>/<slug>', and
+ * '[[target#anchor]]' into links to '/<type>/<slug>#anchor'.
  * Broken links become a '<span data-broken="true">' with the text as written.
  * Code and inline code are left alone because they are not text nodes.
  */
@@ -35,14 +36,14 @@ export const remarkWikilinks: Plugin<[Resolver], Root> = (resolve) => {
   };
 };
 
-function toNode({ target, label }: Wikilink, resolve: Resolver): PhrasingContent {
+function toNode({ target, anchor, label }: Wikilink, resolve: Resolver): PhrasingContent {
   const entry = resolve(target);
   if (!entry) {
     return { ...text(label ?? target), data: hastData({ 'data-broken': 'true' }, 'span') };
   }
   const link: Link = {
     type: 'link',
-    url: `/${entry.type}/${entry.slug}`,
+    url: `/${entry.type}/${entry.slug}${anchor ? `#${encodeURIComponent(anchor)}` : ''}`,
     children: [text(label ?? entry.data.title)],
     data: hastData({ 'data-wikilink': 'true' }),
   };

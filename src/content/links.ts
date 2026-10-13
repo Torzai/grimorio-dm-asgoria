@@ -4,7 +4,7 @@ import { unified } from 'unified';
 import { visit } from 'unist-util-visit';
 import { normalize } from './normalize.ts';
 import type { ContentIssue, Entry, EntryMeta } from './types.ts';
-import { parseWikilinks } from './wikilinks.ts';
+import { parseWikilinks, type Wikilink } from './wikilinks.ts';
 
 /** Finds the entry a wikilink target points to, or null when the link is broken. */
 export type Resolver = (target: string) => EntryMeta | null;
@@ -17,7 +17,17 @@ export interface LinkMaps {
   backlinks: Map<string, string[]>;
   /** Slugs of the entries whose 'zona' field points to each zona. */
   byZona: Map<string, string[]>;
+  /**
+   * For each entry whose body links to a part of another ('[[slug#anchor]]'): the first anchor
+   * it uses for each entry it links to, by that entry's slug.
+   */
+  anchors: Map<string, Record<string, string>>;
 }
+
+/** LinkMaps as the content plugin writes them for the browser: each map as [key, value] pairs. */
+export type SerializedLinkMaps = {
+  [K in keyof LinkMaps]: LinkMaps[K] extends Map<string, infer V> ? [string, V][] : never;
+};
 
 export interface LinkGraph extends LinkMaps {
   resolve: Resolver;
@@ -43,21 +53,21 @@ export function createResolver(entries: readonly EntryMeta[]): Resolver {
 }
 
 /**
- * Wikilink targets in a Markdown body, in order and with repeats.
+ * Wikilinks in a Markdown body, in order and with repeats.
  * Code blocks and inline code are skipped because they are not text nodes.
  */
-export function extractWikilinks(body: string): string[] {
-  const targets: string[] = [];
-  if (!body.includes('[[')) return targets;
+export function extractWikilinks(body: string): Wikilink[] {
+  const links: Wikilink[] = [];
+  if (!body.includes('[[')) return links;
 
   visit(markdown.parse(body), 'text', (node, _index, parent) => {
     // Link text can't hold another link; remark-wikilinks skips it too.
     if (parent?.type === 'link' || parent?.type === 'linkReference') return;
     for (const segment of parseWikilinks(node.value)) {
-      if (typeof segment !== 'string') targets.push(segment.target);
+      if (typeof segment !== 'string') links.push(segment);
     }
   });
-  return targets;
+  return links;
 }
 
 /** Builds the link graph and reports broken links and references as warnings. */
@@ -74,6 +84,7 @@ export function analyzeLinks(entries: readonly Entry[]): LinkAnalysis {
       .filter((entry) => entry.type === 'zona')
       .map((entry): [string, string[]] => [entry.slug, []]),
   );
+  const anchors = new Map<string, Record<string, string>>();
 
   for (const entry of entries) {
     const warn = (message: string, field?: string) =>
@@ -81,10 +92,12 @@ export function analyzeLinks(entries: readonly Entry[]): LinkAnalysis {
 
     const targets = new Set<string>();
     const broken = new Set<string>();
-    for (const target of extractWikilinks(entry.body)) {
+    const ownAnchors: Record<string, string> = {};
+    for (const { target, anchor } of extractWikilinks(entry.body)) {
       const found = resolve(target);
       if (found) {
         targets.add(found.slug);
+        if (anchor && !Object.hasOwn(ownAnchors, found.slug)) ownAnchors[found.slug] = anchor;
       } else if (!broken.has(target)) {
         broken.add(target);
         warn(
@@ -138,12 +151,13 @@ export function analyzeLinks(entries: readonly Entry[]): LinkAnalysis {
     }
 
     outgoing.set(entry.slug, [...targets]);
+    if (Object.keys(ownAnchors).length > 0) anchors.set(entry.slug, ownAnchors);
     for (const slug of targets) {
       if (slug !== entry.slug) backlinks.get(slug)?.push(entry.slug);
     }
   }
 
-  return { resolve, outgoing, backlinks, byZona, issues };
+  return { resolve, outgoing, backlinks, byZona, anchors, issues };
 }
 
 /** Normalized name → every entry using it, winner first (rank, then path). */

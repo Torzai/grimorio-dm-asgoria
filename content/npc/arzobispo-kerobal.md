@@ -1,0 +1,17 @@
+---
+type: npc
+title: Arzobispo Kerobal De Zúrban Margaleón XI
+aliases: [Kerobal De Zúrban Margaleón XI]
+tags: [importado]
+zona: gadelica
+faccion: Iglesia de Gadélica
+relacionados: [casas-nobles-instituciones]
+---
+
+Aparece en [[casas-nobles-instituciones#s-justicia-y-jueces|Juzgado]] e [[casas-nobles-instituciones#h-2023-08-07-she-wolf|Iglesia de Gadélica]].
+
+## Cómo interpretarlo
+
+## Qué sabe
+
+## Ganchos

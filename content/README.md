@@ -185,3 +185,54 @@ npm run validate
 Al reimportar: se conserva todo el frontmatter (`categoria`, `tags`, `relacionados`…; solo cambian
 `hilo` e `importado`), el cuerpo se regenera desde el foro y una ficha con `importar: false` no se
 toca.
+
+### PNJ de un hilo de lore (`NPC_LINKS`)
+
+Un hilo de lore que describe PNJ (por ejemplo `lore/casas-nobles-instituciones`, "Casas nobles e
+instituciones") puede tener una ficha `npc/` por PNJ, enlazadas en los dos sentidos. Se declaran en
+`NPC_LINKS` (`scraper/config.ts`), por slug de la ficha de lore y bloque a bloque:
+
+```ts
+'casas-nobles-instituciones': [
+  {
+    bloque: 's-casa-lancet',          // anchor del bloque (ver abajo)
+    nombre: 'Casa Lancet',            // texto del enlace en la ficha del PNJ y su `faccion`
+    zona: 'gadelica',                 // opcional: `zona` de sus PNJ
+    npcs: [
+      {
+        slug: 'lady-edith-lancet',    // content/npc/lady-edith-lancet.md
+        mention: 'Ledy Edith',        // tal como lo escribe el hilo en ese bloque
+        title: 'Lady Edith Lancet',   // opcional: por defecto, la mención
+        aliases: ['Edith Lancet'],    // opcional
+        // faccion: 'Otra',           // opcional: otra facción; null para ninguna (igual con zona)
+      },
+      { slug: 'nerya', mention: 'Nerya' },
+    ],
+  },
+],
+```
+
+- **Anchor del bloque**: el del índice de "Contenido" (`s-casa-lancet`), el de un anexo
+  (`h-2023-08-07-she-wolf`) o el de un bloque dentro de un anexo
+  (`h-2023-04-26-she-wolf--el-auditor`). Es lo que queda tras `#` en la dirección al pulsar el bloque
+  en el índice o "Enlace a esta entrada" en un anexo.
+- En cada `npm run scrape:topics`, la **primera mención** de cada PNJ en su bloque pasa a ser un
+  enlace a su ficha (`[[lady-edith-lancet|Ledy Edith]]`), así que se mantiene al reimportar.
+- La ficha del PNJ se **crea solo si no existe** ninguna ficha con ese nombre y después nunca se
+  vuelve a tocar: lo que escribáis en ella se conserva. Lleva `faccion`, `zona`, `tags: [importado]`,
+  `relacionados: [<ficha de lore>]`, la línea "Aparece en …" con el enlace a su bloque (a todos, si
+  aparece en varios) y las secciones vacías de la plantilla de NPC.
+- Un PNJ que aparece en varios bloques se repite en cada uno con el mismo `slug`; los datos de la
+  ficha salen del primero.
+
+**Colores del foro.** En los hilos de información para DMs el color tiene significado: el texto
+normal lo sabe todo el mundo y el **azul lo sabe muy poca gente**. Al crear la ficha de un PNJ, el
+texto azul de su bloque se copia en ella como un párrafo que empieza por "Secreto poco conocido: ".
+Va al PNJ que nombre ese texto o, si no nombra a ninguno, al primero del bloque. La ficha de lore
+no cambia: el azul se queda como texto normal. El rojo ("info solo para DM") y los demás colores
+no se tratan, y en los hilos de PJ los colores son el color personal de cada DM. Los azules
+reconocidos están en `SECRET_COLORS`.
+
+**Enlaces a un bloque.** Cualquier ficha puede enlazar a una parte de otra con
+`[[slug#anchor]]` o `[[slug#anchor|texto]]`: abre la ficha en ese bloque o anexo. En el panel
+lateral, "Relacionado" lleva al bloque que la ficha enlaza en su texto.

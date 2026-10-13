@@ -25,6 +25,7 @@
 | T15 | Tipo crónica e importador de hilos seguidos | T06d, T14 | 🎭 Sí |
 | T15b | Situación por regiones: hilos multi-región | T15 | 🎭 Sí |
 | T15c | Lore importado de un hilo (cosmología) | T15b | 🎭 Sí |
+| T16 | Casas nobles: PNJ enlazados y secretos | T15c | 🎭 Sí |
 
 ---
 
@@ -218,5 +219,17 @@
 - Hilo importado: `lore/cosmos` ("El cosmos de Asgoria", `cosmologia`). Documentado en `content/README.md`.
 
 **Aceptación (comprobación manual en el navegador):** `validate`, `lint` y `build` en verde; `/lore/cosmos` (sin anexos) se ve como una ficha de Situación sin barra de pestañas, con su índice y el kicker "Lore · Cosmología"; una Situación con anexos conserva sus pestañas; la lista "Lore y facciones" filtra por categoría "Cosmología"; buscar en la palette un término de un bloque abre `/lore/cosmos` en ese bloque; `/cronica/situacion-gadelica` y los PJ siguen igual.
+
+**Estado:** ✅ hecha.
+
+## T16 · Casas nobles: PNJ enlazados y secretos 🎭
+- Hilo "Casas nobles más importantes / instituciones" en `TRACKED_TOPICS`: `lore/casas-nobles-instituciones` ("Casas nobles e instituciones", `faccion`).
+- `NPC_LINKS` en `scraper/config.ts` (por ficha de lore, bloque → PNJ con `slug`, `mention` y datos opcionales). Lógica en `scraper/lib/thread-npcs.ts`, llamada desde `sync-topics.ts`: localiza cada bloque por su anchor con las funciones de la app (`parseSituacion`, `parseHistorial`, `historialItem`), enlaza la primera mención de cada PNJ (`[[slug|mención]]`) y crea `content/npc/<slug>.md` solo si no existe ninguna ficha con ese nombre (nunca se sobrescribe).
+- Colores: decisión de los DMs (13/10/2026). Solo el azul tiene tratamiento, y solo en las fichas de PNJ: el texto azul del bloque se copia en la ficha como "Secreto poco conocido: …" (al PNJ que nombra o al primero del bloque). La ficha de lore, las crónicas y los PJ no cambian; el rojo y los demás colores se ignoran. Sin directivas, tokens ni interruptor. Azules en `SECRET_COLORS`.
+- Wikilinks con anchor: `[[slug#anchor]]` y `[[slug#anchor|texto]]` (`wikilinks.ts`, `remark-wikilinks.ts`); el grafo de enlaces guarda el primer anchor de cada enlace (`LinkMaps.anchors`) y "Relacionado" en el aside abre la ficha de lore en ese bloque.
+- 27 PNJ: los que el hilo describe, por nombre o por cargo (casas, Escuela de Arte, Juzgado, Hospital y, en los anexos, Consejo Arcano e Iglesia). Los que solo se mencionan (el Rey, la princesa, el Vinter, Mogul Khan, la Druida del Bosque Real…) no tienen ficha; se añaden con una línea en `NPC_LINKS`.
+- Documentado en `content/README.md` ("PNJ de un hilo de lore") y en `spec.md` (HU-04, HU-12).
+
+**Aceptación (comprobación manual en el navegador):** `validate`, `lint` y `build` en verde; en `/lore/casas-nobles-instituciones` los nombres de los PNJ enlazan a sus fichas; `/npc/sir-wellington` enlaza al bloque de Casa MacQuoid (cuerpo y aside) y el bloque abre resaltado; una ficha con secreto lo muestra como "Secreto poco conocido: …"; buscar "Wellington" en la palette encuentra su ficha; las demás fichas de lore, las crónicas y los PJ no cambian.
 
 **Estado:** ✅ hecha.

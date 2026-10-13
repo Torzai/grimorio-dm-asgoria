@@ -35,6 +35,7 @@ Como DM, quiero ver cada ficha con un formato adecuado a su tipo.
 Como DM, quiero escribir `[[Nombre]]` en una ficha y que sea un enlace a otra.
 - Resuelve por slug, título o alias, sin distinguir mayúsculas ni tildes.
 - Admite `[[slug|texto visible]]`.
+- Admite `[[slug#anchor]]` y `[[slug#anchor|texto]]`: abre la ficha en ese bloque o anexo.
 - Un enlace roto se ve distinto (no navegable) y `validate` lo reporta como **warning**.
 
 **HU-05 · Fijados y recientes**
@@ -82,6 +83,13 @@ Como DM narrando, quiero ver de un vistazo cómo está una región (o una trama)
 - Panel: "Narrado por" (autores con su nº de posts) y relacionados. La ficha de su zona las lista en "Crónicas de esta zona"; la home, en la caja "Crónicas".
 - Búsqueda global: la crónica (sin su situación ni sus anexos), cada bloque de la situación ("Situación de Gadélica · Magia", abre su anchor) y cada anexo (grupo "Historial", "<crónica> · <título>").
 - "Última actualización" es la fecha más reciente entre publicaciones y ediciones del hilo; derivada, no se guarda.
+
+**HU-12 · PNJ de un hilo de lore**
+Como DM, quiero que cada PNJ que describe un hilo de información (casas nobles, instituciones) tenga su ficha y que el hilo y la ficha se enlacen entre sí, con lo que es secreto bien señalado.
+- Los PNJ se declaran en `NPC_LINKS` (`scraper/config.ts`), bloque a bloque; al importar, la primera mención de cada uno en su bloque enlaza a su ficha.
+- Su ficha `npc/` se crea si no existe y nunca se sobrescribe: `faccion` (casa o institución), `zona`, `relacionados` (la ficha de lore), "Aparece en …" con enlace a su bloque y las secciones de la plantilla de NPC.
+- El texto azul del foro (lo sabe muy poca gente) se copia en la ficha del PNJ con el prefijo "Secreto poco conocido: ". La ficha de lore, las crónicas y los PJ no cambian.
+- En el panel de la ficha, "Relacionado" abre la ficha de lore en el bloque del PNJ.
 
 ## 3. Modelo de contenido
 

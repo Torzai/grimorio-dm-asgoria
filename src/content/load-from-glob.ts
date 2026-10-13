@@ -24,6 +24,7 @@ export function loadContentFromGlob(): Content {
       outgoing: new Map(links.outgoing),
       backlinks: new Map(links.backlinks),
       byZona: new Map(links.byZona),
+      anchors: new Map(links.anchors),
     },
   };
 }

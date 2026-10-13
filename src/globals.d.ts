@@ -6,7 +6,7 @@ declare module 'virtual:grimorio/content' {
   export const entries: import('./content/types').EntryMeta[];
   export const issues: import('./content/types').ContentIssue[];
   /** The maps of the link graph as [key, value] pairs. */
-  export const links: Record<keyof import('./content/links').LinkMaps, [string, string[]][]>;
+  export const links: import('./content/links').SerializedLinkMaps;
   /** Totals of each history (PJ, crónica), by slug. */
   export const historialSummaries: Record<
     string,

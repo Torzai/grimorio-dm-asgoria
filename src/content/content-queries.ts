@@ -192,6 +192,11 @@ export interface EntryContext {
   zona: EntryMeta | undefined;
   /** The 'relacionados' that exist, in frontmatter order, plus a 'zona' that is not a zona. */
   related: EntryMeta[];
+  /**
+   * The part of another entry the body links to first ('[[slug#anchor]]'), by its slug: a
+   * related lore thread links to the block that tells about this entry.
+   */
+  anchors: Readonly<Record<string, string>>;
   /** Entries that link here, except sessions, sorted by title. */
   mentionedIn: EntryMeta[];
   /** Sessions that link here, newest first. */
@@ -238,8 +243,12 @@ export function getEntryContext(
   );
   const cronicas = ofZone.filter((other) => other.type === 'cronica').sort(compareByTitle);
 
-  return { zona, related, mentionedIn, sessions, inZone, cronicas };
+  const anchors = content.links.anchors.get(entry.slug) ?? NO_ANCHORS;
+
+  return { zona, related, anchors, mentionedIn, sessions, inZone, cronicas };
 }
+
+const NO_ANCHORS: Readonly<Record<string, string>> = {};
 
 /** Entries grouped by type in sidebar order, each group sorted as its list is. */
 function groupByType(entries: readonly EntryMeta[], except: EntryMeta): EntryGroup[] {

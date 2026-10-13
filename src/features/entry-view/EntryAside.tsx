@@ -17,7 +17,7 @@ interface EntryAsideProps {
 
 /** Side boxes of an entry; each one only when it has something to show. */
 export function EntryAside({ context, before }: EntryAsideProps) {
-  const { related, mentionedIn, sessions, inZone, cronicas } = context;
+  const { related, anchors, mentionedIn, sessions, inZone, cronicas } = context;
   const count =
     related.length + mentionedIn.length + sessions.length + inZone.length + cronicas.length;
   if (count === 0 && !before) return null;
@@ -32,7 +32,7 @@ export function EntryAside({ context, before }: EntryAsideProps) {
       )}
       {related.length > 0 && (
         <AsideBox title="Relacionado">
-          <TypedList entries={related} />
+          <TypedList entries={related} anchors={anchors} />
         </AsideBox>
       )}
       {mentionedIn.length > 0 && (
@@ -83,13 +83,22 @@ export function AsideBox({ title, children }: { title: string; children: ReactNo
   );
 }
 
+interface TypedListProps {
+  entries: readonly EntryMeta[];
+  /** Part of each entry to open, by slug: the block of a lore thread ('s-casa-macquoid'). */
+  anchors?: Readonly<Record<string, string>>;
+}
+
 /** Links like '→ NPC: Tobías', as in the mockup. */
-function TypedList({ entries }: { entries: readonly EntryMeta[] }) {
+function TypedList({ entries, anchors }: TypedListProps) {
   return (
     <ul className={styles.list}>
       {entries.map((entry) => (
         <li key={entry.slug}>
-          <Link className={styles.link} to={entryPath(entry)}>
+          <Link
+            className={styles.link}
+            to={{ pathname: entryPath(entry), hash: anchors?.[entry.slug] ?? '' }}
+          >
             <span aria-hidden="true">→ </span>
             {`${TYPE_LABELS[entry.type].singular}: ${entry.data.title}`}
           </Link>

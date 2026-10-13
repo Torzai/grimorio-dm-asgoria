@@ -544,7 +544,233 @@ export const TRACKED_TOPICS: readonly TrackedTopic[] = [
     slug: 'reglas-dm',
     title: 'Ampliación de reglas para DMs',
   },
+  {
+    url: 'https://asgoria.com.ar/foro/topic/casas-nobles-mas-importantes-instituciones',
+    type: 'lore',
+    categoria: 'faccion',
+    slug: 'casas-nobles-instituciones',
+    title: 'Casas nobles e instituciones',
+  },
 ];
 
 /** The content folder: real entries, which `scrape:topics` writes to content/<type>/. */
 export const CONTENT_DIR = fileURLToPath(new URL('../content/', import.meta.url));
+
+// ---------------------------------------------------------------------------------------------
+// NPCs of a lore thread: one ficha each, linked both ways with their block (scrape:topics)
+// ---------------------------------------------------------------------------------------------
+//
+// In the DMs' threads, text written in blue is what very few people know. The lore entry keeps
+// it as plain text; the NPC ficha gets it as a paragraph that opens with SECRET_LABEL.
+
+/** The blues of the forum's editor, lowercase: '#0000ff' is the one the DMs use. */
+export const SECRET_COLORS: readonly string[] = ['#0000ff', '#333399', '#3366ff'];
+
+/** Opens each secret copied into an NPC ficha. */
+export const SECRET_LABEL = 'Secreto poco conocido: ';
+
+/** The NPC template: a ficha created from NPC_LINKS gets its empty sections. */
+export const NPC_TEMPLATE = fileURLToPath(new URL('../content/_templates/npc.md', import.meta.url));
+
+/** An NPC of a block. */
+export interface BlockNpc {
+  /** content/npc/<slug>.md: created when no entry has that name, never touched again. */
+  slug: string;
+  /** Its first appearance in the block, as the thread writes it: it becomes [[slug|mention]]. */
+  mention: string;
+  /** Title of the ficha; by default the mention. Read from the NPC's first block. */
+  title?: string;
+  aliases?: readonly string[];
+  /** `faccion` of the ficha; by default the block's `nombre`; null for none. */
+  faccion?: string | null;
+  /** `zona` of the ficha; by default the block's; null for none. */
+  zona?: string | null;
+}
+
+/** A block of a lore thread and the NPCs it describes. */
+export interface NpcBlock {
+  /**
+   * Its anchor in the lore entry: a block of '## Contenido' ('s-casa-macquoid'), an annex
+   * ('h-2023-08-07-she-wolf') or a block inside an annex ('h-2023-04-26-she-wolf--el-auditor').
+   */
+  bloque: string;
+  /** The house or institution: the text of the link in the NPC ficha and its `faccion`. */
+  nombre: string;
+  zona?: string;
+  /** A secret found in the block goes to the NPCs it names, or to the first one. */
+  npcs: readonly BlockNpc[];
+}
+
+/**
+ * NPCs of each lore entry of TRACKED_TOPICS, by the entry's slug. On every `scrape:topics` the
+ * first mention of each NPC in its block becomes a wikilink to its ficha, and the fichas that
+ * do not exist are created with the blue text of their block. Add a line and run it again.
+ */
+export const NPC_LINKS: Readonly<Record<string, readonly NpcBlock[]>> = {
+  'casas-nobles-instituciones': [
+    {
+      bloque: 's-casa-macquoid',
+      nombre: 'Casa MacQuoid',
+      zona: 'gadelica',
+      npcs: [{ slug: 'sir-wellington', mention: 'Sir Wellington' }],
+    },
+    {
+      bloque: 's-casa-tuktan',
+      nombre: 'Casa Tuktan',
+      zona: 'gadelica',
+      npcs: [{ slug: 'sir-derian', mention: 'Sir Derian' }],
+    },
+    {
+      bloque: 's-casa-lancet',
+      nombre: 'Casa Lancet',
+      zona: 'gadelica',
+      npcs: [
+        {
+          slug: 'lady-edith-lancet',
+          mention: 'Ledy Edith',
+          title: 'Lady Edith Lancet',
+          aliases: ['Ledy Edith', 'Edith Lancet'],
+        },
+        { slug: 'nerya', mention: 'Nerya' },
+      ],
+    },
+    {
+      bloque: 's-casa-sondergaard',
+      nombre: 'Casa Söndergaard',
+      zona: 'gadelica',
+      // The thread never gives his name.
+      npcs: [{ slug: 'sir-sondergaard', mention: 'el Sir', title: 'Sir Söndergaard' }],
+    },
+    {
+      bloque: 's-casa-das-larsen',
+      nombre: 'Casa Das Larsen',
+      zona: 'gadelica',
+      npcs: [
+        { slug: 'sir-russell', mention: 'Sir Russell' },
+        { slug: 'hellen', mention: 'Hellen' },
+      ],
+    },
+    {
+      bloque: 's-casa-von-kleist',
+      nombre: 'Casa Von Kleist',
+      zona: 'gadelica',
+      npcs: [
+        { slug: 'sir-aethelbald', mention: 'Sir Aethelbald' },
+        { slug: 'artair', mention: 'Artair' },
+      ],
+    },
+    {
+      bloque: 's-casa-dankworth',
+      nombre: 'Casa Dankworth',
+      zona: 'gadelica',
+      npcs: [{ slug: 'sir-cedrik', mention: 'Sir Cedrik' }],
+    },
+    {
+      bloque: 's-casa-edevane',
+      nombre: 'Casa Edevane',
+      zona: 'gadelica',
+      npcs: [{ slug: 'sir-jackson-louis-edevane', mention: 'Sir Jackson Louis Edevane' }],
+    },
+    {
+      bloque: 's-casa-ahjax',
+      nombre: 'Casa Ahjax',
+      zona: 'gadelica',
+      npcs: [
+        { slug: 'sir-desmond', mention: 'Sir Desmond', aliases: ['Ahjax'] },
+        { slug: 'alexia', mention: 'Alexia' },
+      ],
+    },
+    {
+      bloque: 's-poesia',
+      nombre: 'Escuela de Arte',
+      zona: 'gadelica',
+      npcs: [{ slug: 'maestro-de-poesia', mention: 'Poesía', title: 'Maestro de Poesía' }],
+    },
+    {
+      bloque: 's-maestro-de-musica-y-baile',
+      nombre: 'Escuela de Arte',
+      zona: 'gadelica',
+      npcs: [{ slug: 'maestro-de-musica-y-baile', mention: 'Maestro de Música y Baile' }],
+    },
+    {
+      bloque: 's-maestro-de-escultura-y-pintura',
+      nombre: 'Escuela de Arte',
+      zona: 'gadelica',
+      npcs: [{ slug: 'maestro-de-escultura-y-pintura', mention: 'Maestro de Escultura y Pintura' }],
+    },
+    {
+      bloque: 's-maestra-de-actuacion-y-canto',
+      nombre: 'Escuela de Arte',
+      zona: 'gadelica',
+      npcs: [{ slug: 'maestra-de-actuacion-y-canto', mention: 'Maestra de actuación y canto' }],
+    },
+    {
+      bloque: 's-justicia-y-jueces',
+      nombre: 'Juzgado',
+      zona: 'gadelica',
+      npcs: [
+        { slug: 'juez-lindon-rettferdig', mention: 'Juez Lindon Rettferdig' },
+        { slug: 'juez-samael-de-grusom', mention: 'Juez Samael de Grusom' },
+        {
+          slug: 'arzobispo-kerobal',
+          mention: 'Kerobal De Zúrban Margaleón XI',
+          title: 'Arzobispo Kerobal De Zúrban Margaleón XI',
+          aliases: ['Kerobal De Zúrban Margaleón XI'],
+          faccion: 'Iglesia de Gadélica',
+        },
+      ],
+    },
+    {
+      bloque: 's-hospital',
+      nombre: 'Hospital',
+      zona: 'gadelica',
+      npcs: [{ slug: 'reina-de-gadelica', mention: 'la Reina', title: 'La Reina', faccion: null }],
+    },
+    {
+      bloque: 'h-2023-04-26-she-wolf--su-lider-david-blackstone',
+      nombre: 'Consejo Arcano de Gadélica',
+      zona: 'gadelica',
+      npcs: [
+        { slug: 'david-blackstone', mention: 'David Blackstone' },
+        {
+          slug: 'margaleon-del-circulo-divino',
+          mention: 'Margaleón del Círculo de Caballeros',
+          title: 'Margaleón del Círculo Divino',
+          aliases: ['Margaleón del Círculo de Caballeros'],
+          faccion: 'Círculo Divino',
+          // Banished from Gadélica.
+          zona: null,
+        },
+      ],
+    },
+    {
+      bloque: 'h-2023-04-26-she-wolf--el-auditor',
+      nombre: 'Consejo Arcano de Gadélica',
+      zona: 'gadelica',
+      npcs: [{ slug: 'auditor-del-consejo-arcano', mention: 'El Auditor', title: 'El Auditor' }],
+    },
+    {
+      bloque: 'h-2023-04-26-she-wolf--el-recepcionista',
+      nombre: 'Consejo Arcano de Gadélica',
+      zona: 'gadelica',
+      npcs: [
+        {
+          slug: 'recepcionista-del-consejo-arcano',
+          mention: 'El Recepcionista',
+          title: 'El Recepcionista',
+        },
+      ],
+    },
+    {
+      bloque: 'h-2023-08-07-she-wolf',
+      nombre: 'Iglesia de Gadélica',
+      zona: 'gadelica',
+      npcs: [
+        { slug: 'siversix', mention: 'Siversix' },
+        { slug: 'padre-pierling', mention: 'padre Pierling', title: 'Padre Pierling' },
+        { slug: 'margaleon-del-circulo-divino', mention: 'Margaleón del Círculo Divino' },
+        { slug: 'arzobispo-kerobal', mention: 'Arzobispo' },
+      ],
+    },
+  ],
+};

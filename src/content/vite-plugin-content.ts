@@ -159,6 +159,7 @@ async function compute(rootDir: string): Promise<Computed> {
       outgoing: [...links.outgoing],
       backlinks: [...links.backlinks],
       byZona: [...links.byZona],
+      anchors: [...links.anchors],
     })};`,
     `export const historialSummaries = ${jsonModuleValue(summaries)};`,
     `export const historialItems = ${jsonModuleValue(items)};`,
