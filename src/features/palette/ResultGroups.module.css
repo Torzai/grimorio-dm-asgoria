@@ -1,0 +1,98 @@
+/* Result list of sdd/design/maqueta-palette.html, shared by the palette and /buscar. */
+
+.list,
+.group,
+.links {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.links {
+  list-style: none;
+}
+
+.heading {
+  padding: var(--space-6) var(--space-12);
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-regular);
+  font-size: var(--font-size-3xs);
+  line-height: var(--line-height-base);
+  letter-spacing: var(--tracking-label);
+  color: var(--color-text-subtle);
+}
+
+.group + .group .heading {
+  padding-top: var(--space-12);
+}
+
+.row {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-12);
+  padding: var(--space-10) var(--space-12);
+  /* Transparent so the selected row's border doesn't make it taller. */
+  border: var(--border-width) solid transparent;
+  border-radius: var(--radius-md);
+  color: var(--color-text);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+a.row:hover {
+  background: var(--color-surface-3);
+  color: var(--color-text);
+}
+
+.row[aria-selected='true'] {
+  border-color: var(--color-gold);
+  background: var(--color-gold-tint);
+  color: var(--color-gold-bright);
+}
+
+.title {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-8);
+  min-width: 0;
+}
+
+.titleText {
+  overflow-wrap: anywhere;
+}
+
+.dot {
+  flex-shrink: 0;
+  align-self: center;
+  width: var(--status-dot-size);
+  height: var(--status-dot-size);
+  border-radius: var(--radius-pill);
+  background: var(--color-status-inactive);
+}
+
+.dot[data-estado='activo'] {
+  background: var(--color-status-active);
+}
+
+.dot[data-estado='retirado'] {
+  background: var(--color-status-retired);
+}
+
+.dot[data-estado='muerto'] {
+  background: var(--color-status-dead);
+}
+
+.more {
+  color: var(--color-gold-bright);
+}
+
+.tag {
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-size: var(--font-size-2xs);
+  color: var(--color-text-subtle);
+}
+
+.row[aria-selected='true'] .tag {
+  color: var(--color-text-muted);
+}

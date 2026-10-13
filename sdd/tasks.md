@@ -15,7 +15,7 @@
 | T06c | Contenido a escala ✅ | T06b | No |
 | T06d | Historial de PJ navegable | T06c | 🎭 Sí |
 | T07 | Cards por tipo | T06 | No |
-| T08 | Command palette Ctrl+K | T06 | No |
+| T08 | Command palette Ctrl+K ✅ | T06 | No |
 | T09 | Fijados y recientes + home | T08 | No |
 | T10 | Imágenes y visor de mapas | T06 | No |
 | T11 | README, plantillas y pre-commit | T02 | No |
@@ -116,7 +116,7 @@
 
 **Aceptación (comprobación manual en el navegador):** cada tipo de ejemplo muestra sus campos; Copiar pone la sintaxis en el portapapeles.
 
-## T08 · Command palette Ctrl+K
+## T08 · Command palette Ctrl+K ✅
 - `Ctrl+K` / `Cmd+K` abre desde cualquier ruta; también el campo del header. `Esc` cierra y devuelve el foco.
 - Input con resultados agrupados por tipo, chips para filtrar por tipo, vista previa a la derecha.
 - `↑/↓`, `Enter` abre, `Ctrl+Enter` fija (por ahora solo un stub hasta T09).

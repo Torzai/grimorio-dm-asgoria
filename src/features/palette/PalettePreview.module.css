@@ -1,0 +1,133 @@
+/* Right panel of sdd/design/maqueta-palette.html. */
+
+.preview {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+  padding: var(--space-24) var(--space-26);
+  background: var(--color-surface-2);
+}
+
+.eyebrow {
+  font-family: var(--font-display);
+  font-size: var(--font-size-3xs);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--color-gold);
+}
+
+.estado {
+  color: var(--color-status-inactive);
+}
+
+.estado[data-estado='activo'] {
+  color: var(--color-status-active);
+}
+
+.estado[data-estado='retirado'] {
+  color: var(--color-status-retired);
+}
+
+.estado[data-estado='muerto'] {
+  color: var(--color-status-dead);
+}
+
+.title {
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-palette-title);
+  line-height: var(--line-height-heading);
+  color: var(--color-gold-bright);
+  overflow-wrap: anywhere;
+}
+
+.identity {
+  margin-top: calc(-1 * var(--space-8));
+  color: var(--color-text-muted);
+}
+
+/* Cells split by 1px lines: the gap shows the border color behind them. */
+.facts {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: var(--border-width);
+  margin: 0;
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-border);
+  overflow: hidden;
+}
+
+.fact {
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-10) var(--space-14);
+  background: var(--color-surface);
+}
+
+.factLabel {
+  font-family: var(--font-display);
+  font-size: var(--font-size-4xs);
+  letter-spacing: var(--tracking-field);
+  color: var(--color-text-subtle);
+}
+
+.factValue {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.mono {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
+}
+
+.text {
+  color: var(--color-text);
+}
+
+.hint {
+  font-style: italic;
+  color: var(--color-text-muted);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.fieldLabel {
+  font-family: var(--font-display);
+  font-size: var(--font-size-3xs);
+  letter-spacing: var(--tracking-field);
+  color: var(--color-text-subtle);
+}
+
+.code {
+  display: block;
+  padding: var(--space-12) var(--space-14);
+  border: var(--border-width) solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
+  color: var(--color-gold-bright);
+  overflow-x: auto;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-6);
+  list-style: none;
+}
+
+.chip {
+  padding: var(--border-width) var(--space-8);
+  border: var(--border-width) solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-2xs-plus);
+  color: var(--color-text-muted);
+}

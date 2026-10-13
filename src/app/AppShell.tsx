@@ -1,9 +1,10 @@
-import { useMemo, type FormEvent } from 'react';
-import { Link, NavLink, Outlet, createSearchParams, useNavigate } from 'react-router';
+import { useMemo } from 'react';
+import { Link, NavLink, Outlet } from 'react-router';
 import { countByType } from '@/content/content-queries';
 import { TYPE_LABELS, TYPE_NAV_ORDER } from '@/content/type-labels';
 import { useContent } from '@/content/use-content';
 import { ContentIssuesBanner } from '@/features/content-issues/ContentIssuesBanner';
+import { PaletteLauncher } from '@/features/palette/CommandPalette';
 import styles from './AppShell.module.css';
 
 const MAIN_ID = 'contenido';
@@ -20,7 +21,7 @@ export function AppShell() {
           <span className={styles.brandName}>Asgoria</span>
           <span className={styles.brandTagline}>Grimorio del DM</span>
         </Link>
-        <SearchForm />
+        <PaletteLauncher />
       </header>
       <div className={styles.body}>
         <CategoryNav />
@@ -29,47 +30,6 @@ export function AppShell() {
         </main>
       </div>
     </div>
-  );
-}
-
-function SearchForm() {
-  const navigate = useNavigate();
-
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const query = new FormData(event.currentTarget).get('q');
-    const q = typeof query === 'string' ? query.trim() : '';
-    navigate({ pathname: '/buscar', search: `?${createSearchParams({ q })}` });
-  }
-
-  return (
-    <form role="search" className={styles.search} onSubmit={handleSubmit}>
-      <svg
-        className={styles.searchIcon}
-        aria-hidden="true"
-        viewBox="0 0 24 24"
-        fill="none"
-        strokeLinecap="round"
-      >
-        <circle cx="11" cy="11" r="7" />
-        <path d="M20 20l-4-4" />
-      </svg>
-      <label htmlFor="busqueda" className="visually-hidden">
-        Buscar en el grimorio
-      </label>
-      <input
-        id="busqueda"
-        name="q"
-        type="search"
-        className={styles.searchInput}
-        placeholder="Busca un NPC, comando, varita, zona…"
-        autoComplete="off"
-      />
-      {/* Visual hint only until the palette exists (T08). */}
-      <kbd className={styles.shortcut} aria-hidden="true">
-        Ctrl K
-      </kbd>
-    </form>
   );
 }
 

@@ -65,6 +65,11 @@ const BOOST = { title: 4, aliases: 3, tags: 2, resumen: 1.5, body: 1 };
 const STOPWORDS = new Set(['de', 'del', 'la', 'el', 'los', 'las', 'y', 'en', 'a', 'un', 'una']);
 // Also splits on symbols such as '|', so '[[slug|texto]]' indexes 'texto' on its own.
 const SEPARATORS = /[\n\r\p{Z}\p{P}\p{S}]+/u;
+/**
+ * A history entry's title starts with its PJ's name and its text often repeats it, so without
+ * this the entries of a PJ outrank the PJ itself when searching for its name.
+ */
+const HISTORIAL_BOOST = 0.5;
 
 /** Apostrophes join instead of split: "Drak'Nar" is one word, 'draknar'. */
 function tokenize(text: string): string[] {
@@ -164,9 +169,10 @@ export function search(
   const filter = type
     ? (result: { id: unknown }) => index.stored.get(String(result.id))?.type === type
     : undefined;
-  let matches = index.engine.search(query, { combineWith: 'AND', filter });
+  const boostDocument = (id: unknown) => (String(id).includes('#') ? HISTORIAL_BOOST : 1);
+  let matches = index.engine.search(query, { combineWith: 'AND', filter, boostDocument });
   if (matches.length === 0) {
-    matches = index.engine.search(query, { combineWith: 'OR', filter });
+    matches = index.engine.search(query, { combineWith: 'OR', filter, boostDocument });
   }
 
   const results: SearchResult[] = [];

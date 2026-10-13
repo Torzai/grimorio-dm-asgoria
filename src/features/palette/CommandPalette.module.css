@@ -1,0 +1,220 @@
+/* Header search box: looks like the mockup's input, opens the palette. */
+
+.trigger {
+  flex: 1 1 var(--search-basis);
+  display: flex;
+  align-items: center;
+  gap: var(--space-10);
+  min-width: 0;
+  height: var(--search-height);
+  padding: 0 var(--space-14);
+  border: var(--border-width) solid var(--color-border-accent);
+  border-radius: var(--radius-md);
+  background: var(--color-input);
+  font-family: var(--font-body);
+  font-size: var(--font-size-base);
+  line-height: normal;
+  text-align: left;
+  cursor: text;
+}
+
+.triggerIcon {
+  flex-shrink: 0;
+  width: var(--icon-size);
+  height: var(--icon-size);
+  stroke: var(--color-gold);
+  stroke-width: var(--icon-stroke);
+}
+
+.triggerPlaceholder,
+.triggerQuery {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.triggerPlaceholder {
+  color: var(--color-text-placeholder);
+}
+
+.triggerQuery {
+  color: var(--color-text);
+}
+
+.shortcut {
+  flex-shrink: 0;
+  padding: var(--space-2) var(--space-6);
+  border: var(--border-width) solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-3xs);
+  line-height: var(--line-height-base);
+  color: var(--color-text-subtle);
+}
+
+/* Palette (sdd/design/maqueta-palette.html) */
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: var(--space-96) var(--space-16) var(--space-48);
+  background: var(--color-backdrop);
+}
+
+.dialog {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: var(--palette-width);
+  max-height: 100%;
+  border: var(--border-width) solid var(--color-border-accent);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-dialog);
+  overflow: hidden;
+}
+
+.inputRow {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-14);
+  height: var(--palette-input-height);
+  padding: 0 var(--space-22);
+  border-bottom: var(--border-width) solid var(--color-border-strong);
+}
+
+.inputIcon {
+  flex-shrink: 0;
+  width: var(--palette-icon-size);
+  height: var(--palette-icon-size);
+  stroke: var(--color-gold);
+  stroke-width: var(--icon-stroke);
+}
+
+.input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: var(--font-size-palette-input);
+}
+
+/* The palette itself is the focused element; the ring would only frame the input line. */
+.input:focus-visible {
+  outline: none;
+}
+
+/* Not in the mockup, and Esc closes the palette instead of clearing. */
+.input::-webkit-search-cancel-button {
+  appearance: none;
+}
+
+.input::placeholder {
+  color: var(--color-text-placeholder);
+  opacity: 1;
+}
+
+.esc {
+  flex-shrink: 0;
+  padding: var(--space-2) var(--space-6);
+  border: var(--border-width) solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-3xs);
+  line-height: var(--line-height-base);
+  color: var(--color-text-subtle);
+}
+
+.chips {
+  flex-shrink: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-8);
+  padding: var(--space-12) var(--space-22);
+  border-bottom: var(--border-width) solid var(--color-border);
+}
+
+.chip {
+  min-height: var(--palette-chip-height);
+  padding: 0 var(--space-14);
+  border: var(--border-width) solid var(--color-border-strong);
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--color-text-muted);
+  font-family: var(--font-body);
+  font-size: var(--font-size-xs);
+}
+
+.chip:hover {
+  border-color: var(--color-border-accent);
+  color: var(--color-text);
+}
+
+.chip[aria-pressed='true'] {
+  border-color: var(--color-gold);
+  background: var(--color-gold-tint);
+  color: var(--color-gold-bright);
+}
+
+.body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+
+.results,
+.previewColumn {
+  flex: 1 1 var(--palette-column-basis);
+  min-width: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.results {
+  padding: var(--space-14) var(--space-12);
+}
+
+.previewColumn {
+  display: flex;
+  flex-direction: column;
+  border-left: var(--border-width) solid var(--color-border);
+  background: var(--color-surface-2);
+}
+
+.status {
+  padding: var(--space-6) var(--space-12);
+  font-style: italic;
+  color: var(--color-text-subtle);
+}
+
+.footer {
+  flex-shrink: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-20);
+  padding: var(--space-12) var(--space-22);
+  border-top: var(--border-width) solid var(--color-border);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-2xs);
+  color: var(--color-text-subtle);
+}
+
+/* On a narrow screen the preview would push the results out of view. */
+@media (max-width: 719px) {
+  .backdrop {
+    padding-top: var(--space-16);
+  }
+
+  .previewColumn {
+    display: none;
+  }
+}
