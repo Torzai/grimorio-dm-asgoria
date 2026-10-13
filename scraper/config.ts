@@ -1,4 +1,5 @@
 import { fileURLToPath } from 'node:url';
+import type { FrontmatterOf } from '../src/content/types';
 
 // Everything the importer knows about the forum lives here, so a change in its URLs or HTML
 // is fixed in one place. Asgoria's forum runs on WordPress + Asgaros Forum.
@@ -435,8 +436,8 @@ export const ACTIVE_DAYS = 180;
 // Tracked topics: single threads kept up to date by `scrape:topics`
 // ---------------------------------------------------------------------------------------------
 
-/** Entry types a tracked topic can become; each is written to content/<type>/<slug>.md. */
-export type TopicType = 'cronica';
+/** A value of lore's `categoria`. */
+export type LoreCategory = FrontmatterOf<'lore'>['categoria'];
 
 /** Region of a post that `split` could not place: it goes to the topic's general entry. */
 export const GENERAL_REGION = 'general';
@@ -459,10 +460,9 @@ export interface TopicSplit {
   regions: readonly TopicRegion[];
 }
 
-export interface TrackedTopic {
+interface TopicBase {
   /** https://asgoria.com.ar/foro/topic/<slug> */
   url: string;
-  type: TopicType;
   /** Name of the entry file, content/<type>/<slug>.md; by default the thread's slug. */
   slug?: string;
   /** Slug of the zona the topic is about; a minimal zona entry is created when it is missing. */
@@ -474,6 +474,11 @@ export interface TrackedTopic {
    * `split`, the title of the general entry, the one for posts without a region.
    */
   title?: string;
+}
+
+/** A thread on a region or a plot: content/cronica/<slug>.md, its post #1 the '## Situación'. */
+export interface CronicaTopic extends TopicBase {
+  type: 'cronica';
   /** A thread on several regions: one entry per region (content/README.md). */
   split?: TopicSplit;
   /**
@@ -483,7 +488,20 @@ export interface TrackedTopic {
   assign?: Readonly<Record<number, string>>;
 }
 
-/** Threads that describe a region or a plot. Add one and run `npm run scrape:topics`. */
+/** A thread of lore: content/lore/<slug>.md, its post #1 the '## Contenido'. */
+export interface LoreTopic extends TopicBase {
+  type: 'lore';
+  /** Its `categoria` when the entry is created; kept on reimport. */
+  categoria: LoreCategory;
+}
+
+/**
+ * A tracked topic becomes an entry of its `type`, written to content/<type>/<slug>.md. The types
+ * are the app's THREAD_TYPES: post #1 under the type's main heading, the replies as annexes.
+ */
+export type TrackedTopic = CronicaTopic | LoreTopic;
+
+/** Threads that describe a region, a plot or a piece of lore. Add one and run `npm run scrape:topics`. */
 export const TRACKED_TOPICS: readonly TrackedTopic[] = [
   {
     url: 'https://asgoria.com.ar/foro/topic/topico-situacion-actual-gadelica',
@@ -512,10 +530,14 @@ export const TRACKED_TOPICS: readonly TrackedTopic[] = [
     // circle of Loren (#4) and the role tips for the Arboleda (#5).
     assign: { 2: 'mraganur', 4: 'loren', 5: 'loren', 6: 'mraganur' },
   },
+  {
+    url: 'https://asgoria.com.ar/foro/topic/sobre-el-cosmos-informacion-para-dms',
+    type: 'lore',
+    categoria: 'cosmologia',
+    slug: 'cosmos',
+    title: 'El cosmos de Asgoria',
+  },
 ];
 
 /** The content folder: real entries, which `scrape:topics` writes to content/<type>/. */
 export const CONTENT_DIR = fileURLToPath(new URL('../content/', import.meta.url));
-
-/** Heading of post #1 in a crónica: the situation as it stands. */
-export const SITUACION_HEADING = 'Situación';

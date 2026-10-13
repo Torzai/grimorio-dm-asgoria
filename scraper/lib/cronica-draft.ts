@@ -1,5 +1,6 @@
 import { Document as YamlDocument } from 'yaml';
-import { SITUACION_HEADING } from '../config';
+import { THREAD_PROFILES } from '../../src/content/cronica';
+import type { LoreCategory } from '../config';
 import { isoDay, spanishDay } from './dates';
 import { editNote, historyEntry } from './history-entry';
 import { flowLists, YAML_OPTIONS } from './entry-file';
@@ -22,10 +23,16 @@ export interface CronicaReport {
 export interface CronicaDraft {
   /** YAML of a new entry, without the '---' lines. */
   frontmatter: string;
-  /** Everything after the frontmatter: "## Situación" and "## Historial". */
+  /** Everything after the frontmatter: "## Situación" (or "## Contenido") and "## Historial". */
   body: string;
   report: CronicaReport;
 }
+
+/**
+ * What the draft becomes: a crónica, whose post #1 goes under "## Situación", or a lore entry
+ * of the given category, under "## Contenido". Both write the replies the same way.
+ */
+export type DraftTarget = { type: 'cronica' } | { type: 'lore'; categoria: LoreCategory };
 
 /** A post of the crónica, or the part of it that belongs to the crónica's region. */
 export interface DraftPart {
@@ -34,33 +41,34 @@ export interface DraftPart {
 }
 
 export interface CronicaDraftInput {
-  /** What goes in `hilo`: the thread, or the anchor of the crónica's first post in it. */
+  target: DraftTarget;
+  /** What goes in `hilo`: the thread, or the anchor of the entry's first post in it. */
   threadUrl: string;
   /** Title of a new entry. */
   title: string;
   zona?: string;
-  /** The situation first, then its annexes in thread order. */
+  /** The situation (or content) first, then its annexes in thread order. */
   parts: readonly DraftPart[];
   /** 'YYYY-MM-DD' */
   today: string;
 }
 
-/** The parts of a thread on one subject: every post whole, post #1 (the situation) first. */
+/** The parts of a thread on one subject: every post whole, post #1 (the main one) first. */
 export function wholeThread(posts: readonly ForumPost[]): DraftPart[] {
   const sorted = [...posts].sort((a, b) => a.number - b.number);
-  if (sorted[0]?.number !== 1) throw new Error('falta el post #1, que es la situación');
+  if (sorted[0]?.number !== 1) throw new Error('falta el post #1, que es el principal del hilo');
   return sorted.map((post) => ({ post, converted: postToMarkdown(post.html) }));
 }
 
 /**
- * Draft of a crónica: the first part, the summary its author keeps editing (post #1 of a thread
- * on one subject), goes under "## Situación"; every other part becomes an entry of
- * "## Historial" in the order of the thread (they are annexes on a subject, not dated reports),
- * written as the PJ importer writes its history.
+ * Draft of a crónica or of a lore entry: the first part, the summary its author keeps editing
+ * (post #1 of a thread on one subject), goes under "## Situación" ("## Contenido" for lore);
+ * every other part becomes an entry of "## Historial" in the order of the thread (they are
+ * annexes on a subject, not dated reports), written as the PJ importer writes its history.
  */
 export function renderCronicaDraft(input: CronicaDraftInput): CronicaDraft {
   const [first, ...replies] = input.parts;
-  if (!first) throw new Error('no hay ningún post para la situación');
+  if (!first) throw new Error('no hay ningún post principal para el hilo');
   const { post: opening, converted: situacion } = first;
 
   const report: CronicaReport = {
@@ -74,7 +82,10 @@ export function renderCronicaDraft(input: CronicaDraftInput): CronicaDraft {
   if (situacion.discordPaste) report.discordPastes.push(opening.number);
   if (opening.editedAt) report.edited.push(opening.number);
 
-  const blocks = [`## ${SITUACION_HEADING}`, situacion.markdown || '_(sin texto)_'];
+  const blocks = [
+    `## ${THREAD_PROFILES[input.target.type].heading}`,
+    situacion.markdown || '_(sin texto)_',
+  ];
   const published = publishedNote(opening);
   if (published) blocks.push(published);
   const edited = editNote(opening);
@@ -113,10 +124,11 @@ function publishedNote(post: ForumPost): string | undefined {
   return `_Publicado el ${spanishDay(post.postedAt)} por ${author}_`;
 }
 
-function frontmatter({ title, zona, threadUrl, today }: CronicaDraftInput): string {
+function frontmatter({ target, title, zona, threadUrl, today }: CronicaDraftInput): string {
   const doc = new YamlDocument({
-    type: 'cronica',
+    type: target.type,
     title: redactPersonalData(title),
+    ...(target.type === 'lore' ? { categoria: target.categoria } : {}),
     zona,
     hilo: threadUrl,
     importado: today,

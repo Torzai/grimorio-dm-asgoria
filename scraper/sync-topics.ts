@@ -9,6 +9,7 @@ import {
   GENERAL_REGION,
   RAW_DIR,
   TRACKED_TOPICS,
+  type CronicaTopic,
   type TopicSplit,
   type TrackedTopic,
 } from './config';
@@ -34,6 +35,8 @@ import { threadDumpSchema, threadSlug, type ForumPost, type ThreadDump } from '.
 // run resumes) to scraper/raw/<type>/<thread-slug>/, and writes content/<type>/<slug>.md with
 // the same cleanup as the PJ importer. --refresh downloads again the last page of each thread,
 // to catch new posts and edits.
+// A topic of type 'cronica' has post #1 under "## Situación"; one of type 'lore', under
+// "## Contenido"; in both the replies are the annexes of "## Historial".
 // A topic with `split` becomes one entry per region, content/<type>/situacion-<region>.md, plus
 // a general one for the posts without a region when there are any (content/README.md).
 // An entry that exists keeps its whole frontmatter: only `hilo` and `importado` change, and the
@@ -109,10 +112,11 @@ async function syncTopic(topic: TrackedTopic): Promise<Outcome> {
       JSON.parse(await readFile(summary.file, 'utf8')) as unknown,
     );
 
-    const { plans, parts } = topic.split
-      ? planRegions(topic, topic.split, url, dump)
-      : { plans: [planWhole(topic, url, slug, dump)], parts: undefined };
-    if (!topic.split && topic.assign) {
+    const { plans, parts } =
+      topic.type === 'cronica' && topic.split
+        ? planRegions(topic, topic.split, url, dump)
+        : { plans: [planWhole(topic, url, slug, dump)], parts: undefined };
+    if (topic.type === 'cronica' && !topic.split && topic.assign) {
       console.warn(`  ⚠ ${slug}: 'assign' solo se usa con 'split'; se ignora`);
     }
 
@@ -133,12 +137,13 @@ async function syncTopic(topic: TrackedTopic): Promise<Outcome> {
   }
 }
 
-/** A thread on one subject: one entry, post #1 its situation. */
+/** A thread on one subject: one entry, post #1 its situation (or its content, in lore). */
 function planWhole(topic: TrackedTopic, url: string, slug: string, dump: ThreadDump): EntryPlan {
   return {
     slug: topic.slug ?? slug,
     hilo: url,
     draft: renderCronicaDraft({
+      target: topic,
       threadUrl: url,
       title: topic.title ?? dump.title,
       zona: topic.zona,
@@ -154,7 +159,7 @@ function planWhole(topic: TrackedTopic, url: string, slug: string, dump: ThreadD
  * and a general one, named as the thread, only when some post has no region.
  */
 function planRegions(
-  topic: TrackedTopic,
+  topic: CronicaTopic,
   split: TopicSplit,
   url: string,
   dump: ThreadDump,
@@ -166,7 +171,14 @@ function planRegions(
     plans.push({
       slug,
       hilo,
-      draft: renderCronicaDraft({ threadUrl: hilo, title, zona: zona?.slug, parts: of, today }),
+      draft: renderCronicaDraft({
+        target: topic,
+        threadUrl: hilo,
+        title,
+        zona: zona?.slug,
+        parts: of,
+        today,
+      }),
       ...(zona ? { zona } : {}),
     });
   };
@@ -301,7 +313,7 @@ function printReport(): void {
     );
     for (const { file, action, draft, zonaCreated } of outcome.entries) {
       const { report } = draft;
-      const { blocks } = parseSituacion(draft.body);
+      const { blocks } = parseSituacion(draft.body, topic.type);
       lines.push(
         `  ${action.padEnd(12)} ${shown(file)}`,
         `    índice=${Math.max(blocks.length, 1)} anexos=${report.entries} ` +

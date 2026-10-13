@@ -3,9 +3,10 @@ import type { Plugin, ViteDevServer } from 'vite';
 import { buildContent } from './build-content.ts';
 import {
   cronicaMeta,
+  hasThreadView,
   parseSituacion,
-  SITUACION_ANCHOR,
   situacionSearchTitle,
+  THREAD_PROFILES,
   type CronicaMeta,
 } from './cronica.ts';
 import { isHistorialType, type HistorialType } from './historial.ts';
@@ -94,7 +95,8 @@ async function compute(rootDir: string): Promise<Computed> {
     );
   }
 
-  // Each history entry is a search result of its own, and so is each block of a situation.
+  // Each history entry is a search result of its own, and so is each block of a situation (a
+  // crónica's, or the content of a lore entry that is a thread).
   const titleOf = new Map(entries.map((entry) => [entry.slug, entry.data.title]));
   const cronicas: Record<string, CronicaMeta> = {};
   const sources = new Map<string, SearchSource>();
@@ -102,6 +104,7 @@ async function compute(rootDir: string): Promise<Computed> {
     const data = historiales.get(entry.slug);
     if (!data) continue;
     const { title } = entry.data;
+    const { type } = entry;
     const historialParts = data.items.map((item) => ({
       kind: 'historial' as const,
       anchor: item.id,
@@ -109,11 +112,14 @@ async function compute(rootDir: string): Promise<Computed> {
       resumen: item.participantes.join(' '),
       body: [item.bodyMarkdown, item.recompensa ?? ''].join('\n'),
     }));
-    if (entry.type !== 'cronica') {
+    if (type === 'pj') {
       sources.set(entry.slug, { body: data.fichaBody, parts: historialParts });
       continue;
     }
-    const situacion = parseSituacion(data.fichaBody);
+    // A lore entry that is no thread is indexed whole, as any other entry.
+    if (!hasThreadView(entry, data.items.length)) continue;
+    const situacion = parseSituacion(data.fichaBody, type);
+    const profile = THREAD_PROFILES[type];
     cronicas[entry.slug] = cronicaMeta(situacion, data.items);
     const zonaTitle = entry.data.zona ? titleOf.get(entry.data.zona) : undefined;
     sources.set(entry.slug, {
@@ -122,15 +128,15 @@ async function compute(rootDir: string): Promise<Computed> {
         ...situacion.blocks.map((block) => ({
           kind: 'section' as const,
           anchor: block.id,
-          title: situacionSearchTitle(title, zonaTitle, block.label),
+          title: situacionSearchTitle(type, title, zonaTitle, block.label),
           body: block.markdown,
         })),
         ...(situacion.intro
           ? [
               {
                 kind: 'section' as const,
-                anchor: SITUACION_ANCHOR,
-                title: `${title} · Situación`,
+                anchor: profile.anchor,
+                title: `${title} · ${profile.heading}`,
                 body: situacion.intro,
               },
             ]

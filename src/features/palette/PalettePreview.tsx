@@ -1,5 +1,6 @@
 import { useMemo, type ReactNode } from 'react';
 import { getZoneTitles } from '@/content/content-queries';
+import { hasThreadView, isThreadType, THREAD_PROFILES, type ThreadType } from '@/content/cronica';
 import { cronicaMetaOf } from '@/content/cronica-data';
 import { historialItemsOf, historialSummaryOf } from '@/content/historial-data';
 import type { HistorialHit, SearchResult } from '@/content/search-index';
@@ -45,7 +46,7 @@ export function PalettePreview({ option, terms }: PalettePreviewProps) {
       body = (
         <HistorialPreview
           slug={result.slug}
-          isCronica={result.type === 'cronica'}
+          thread={isThreadType(result.type) ? result.type : undefined}
           hit={result.historial}
           terms={terms}
         />
@@ -92,15 +93,16 @@ function PjPreview({ slug, data }: { slug: string; data: EntryMeta<'pj'>['data']
   );
 }
 
-/** A PJ's quest, or a crónica's annex under the crónica's name. */
+/** A PJ's quest, or the annex of a thread (crónica, lore) under the entry's name. */
 function HistorialPreview({
   slug,
-  isCronica,
+  thread,
   hit,
   terms,
 }: {
   slug: string;
-  isCronica: boolean;
+  /** The type of the thread the annex belongs to; undefined for a PJ's quest. */
+  thread: ThreadType | undefined;
   hit: HistorialHit;
   terms: readonly string[];
 }) {
@@ -108,7 +110,9 @@ function HistorialPreview({
   return (
     <>
       <span className={styles.eyebrow}>
-        {isCronica ? 'Anexo de situación' : 'Entrada de historial'}
+        {thread
+          ? `Anexo de ${THREAD_PROFILES[thread].heading.toLowerCase()}`
+          : 'Entrada de historial'}
       </span>
       <h2 className={styles.title}>{hit.parentTitle}</h2>
       {item?.title && (
@@ -120,7 +124,7 @@ function HistorialPreview({
         <>
           <dl className={styles.facts}>
             <Fact label="Fecha">{formatNumericDate(item.date)}</Fact>
-            <Fact label={isCronica ? 'Autor' : 'Narró'}>{item.authorName}</Fact>
+            <Fact label={thread ? 'Autor' : 'Narró'}>{item.authorName}</Fact>
           </dl>
           {item.participantes.length > 0 && (
             <Field label="Participantes">
@@ -160,6 +164,12 @@ function EntryPreview({
   const data = entry?.data;
   const tags = data?.tags ?? [];
   const resumen = data?.resumen ?? result.resumen;
+  const thread =
+    entry &&
+    isThreadType(entry.type) &&
+    hasThreadView(entry, historialSummaryOf(result.slug)?.total ?? 0)
+      ? entry.type
+      : undefined;
 
   return (
     <>
@@ -174,9 +184,7 @@ function EntryPreview({
           </Fact>
         </dl>
       )}
-      {data?.type === 'cronica' && (
-        <CronicaFacts slug={result.slug} anchor={result.section?.anchor} />
-      )}
+      {thread && <CronicaFacts type={thread} slug={result.slug} anchor={result.section?.anchor} />}
       {resumen && <p className={styles.text}>{resumen}</p>}
       {data?.type === 'varita' && data.uso && (
         <Field label="Uso">
@@ -203,8 +211,16 @@ function EntryPreview({
   );
 }
 
-/** When the crónica was last updated, and the block of its situation the result is. */
-function CronicaFacts({ slug, anchor }: { slug: string; anchor: string | undefined }) {
+/** When the thread was last updated, and the block of its situation the result is. */
+function CronicaFacts({
+  type,
+  slug,
+  anchor,
+}: {
+  type: ThreadType;
+  slug: string;
+  anchor: string | undefined;
+}) {
   const meta = cronicaMetaOf(slug);
   const block = meta?.situacion.blocks.find(({ id }) => id === anchor);
   return (
@@ -213,7 +229,7 @@ function CronicaFacts({ slug, anchor }: { slug: string; anchor: string | undefin
         {meta?.updated ? formatNumericDate(meta.updated) : '—'}
       </Fact>
       {block ? (
-        <Fact label="Situación">{block.label}</Fact>
+        <Fact label={THREAD_PROFILES[type].heading}>{block.label}</Fact>
       ) : (
         <Fact label="Anexos">{historialSummaryOf(slug)?.total ?? 0}</Fact>
       )}

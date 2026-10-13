@@ -51,13 +51,17 @@ La ficha tiene dos secciones:
   de entrada que los PJ (`### AAAA-MM-DD · Nombre (@usuario)`). El título de cada anexo es su
   primer encabezado o su primera línea en negrita; si no tiene, sus primeras palabras.
 
+La ficha tiene dos pestañas, "Situación" y "Anexos <n>"; si no tiene anexos, no hay pestañas y
+solo se ve la situación con su índice.
+
 Campos: `title`, `hilo` (obligatorio), `zona?`, `resumen?`, `importado?`, `importar?`, `tags` y
 `relacionados`. Plantilla en `_templates/cronica.md`.
 
 ### Seguir un hilo del foro
 
-Los hilos que se importan como crónica están en `TRACKED_TOPICS`, en `scraper/config.ts`. Para
-añadir uno, copia una entrada de la lista:
+Los hilos que se importan están en `TRACKED_TOPICS`, en `scraper/config.ts` (como Situación, y
+como lore, ver [Lore importado de un hilo](#lore-importado-de-un-hilo-lore)). Para añadir una
+Situación, copia una entrada de la lista:
 
 ```ts
 {
@@ -129,3 +133,51 @@ El informe de `scrape:topics` lista, sin textos, cada post con su región y cóm
 un reparto, añade el número del post a `assign` y vuelve a lanzar
 `npm run scrape:topics -- --refresh`. Si una región se queda sin posts, su ficha anterior no se
 borra sola: bórrala a mano o márcala `importar: false`.
+
+## Lore importado de un hilo (`lore/`)
+
+Una ficha de `lore/` también puede venir de un hilo del foro (por ejemplo `lore/cosmos.md`, "Sobre
+el cosmos: información para DMs"). Se importa con el mismo motor que la Situación y tiene las
+mismas dos secciones:
+
+- `## Contenido`: el post principal (#1). Cada párrafo que empieza con una etiqueta corta en
+  negrita (`**Ymir:** …`) abre un bloque: sale en el índice de la pestaña "Contenido" y la
+  búsqueda lo encuentra por separado ("El cosmos de Asgoria · Ymir").
+- `## Historial`: las respuestas, como **anexos**, con el mismo formato que en la Situación. Si
+  el hilo no tiene respuestas, la sección no se escribe.
+
+Una ficha `lore` se ve como una Situación (pestañas "Contenido" y "Anexos <n>", "Narrado por" y
+el kicker "Lore · <categoría>") cuando tiene `hilo:` o anexos en `## Historial`. Las demás fichas
+lore se ven como siempre. Igual que en la Situación, una ficha sin anexos no muestra la barra de
+pestañas: solo el Contenido con su índice.
+
+Campos: `title`, `categoria` (`historia`, `faccion`, `religion`, `cultura`, `cosmologia` u
+`otro`), `hilo?`, `importado?`, `importar?`, `zona?`, `resumen?`, `tags` y `relacionados`.
+
+### Añadir un hilo de lore
+
+Copia una entrada de `TRACKED_TOPICS` (`scraper/config.ts`) y ponle `type: 'lore'`:
+
+```ts
+{
+  url: 'https://asgoria.com.ar/foro/topic/sobre-el-cosmos-informacion-para-dms',
+  type: 'lore',
+  categoria: 'cosmologia',            // obligatoria: la categoría de la ficha al crearla
+  slug: 'cosmos',                     // opcional: nombre del fichero; por defecto, el slug del hilo
+  title: 'El cosmos de Asgoria',      // opcional: título al crear la ficha
+  zona: 'gadelica',                   // opcional, como en la Situación (con zonaTitle)
+},
+```
+
+`split` y `assign` solo valen para `type: 'cronica'`. Después, los mismos comandos:
+
+```sh
+npm run scrape:login                 # solo si la sesión ha caducado
+npm run scrape:topics                # baja los hilos nuevos y escribe content/lore/<slug>.md
+npm run scrape:topics -- --refresh   # además, vuelve a bajar la última página de cada hilo
+npm run validate
+```
+
+Al reimportar: se conserva todo el frontmatter (`categoria`, `tags`, `relacionados`…; solo cambian
+`hilo` e `importado`), el cuerpo se regenera desde el foro y una ficha con `importar: false` no se
+toca.

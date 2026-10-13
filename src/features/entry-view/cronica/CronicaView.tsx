@@ -3,14 +3,16 @@ import { Link, createSearchParams, useLocation, useSearchParams } from 'react-ro
 import type { EntryContext } from '@/content/content-queries';
 import {
   parseSituacion,
-  SITUACION_ANCHOR,
+  THREAD_PROFILES,
   type CronicaMeta,
   type Situacion,
+  type ThreadType,
 } from '@/content/cronica';
 import { cronicaMetaOf } from '@/content/cronica-data';
+import { HISTORIAL_PROFILES } from '@/content/historial';
 import { historialItemsOf, historialSummaryOf, splitHistorialBody } from '@/content/historial-data';
 import { ownNamesOf, type HistorialSummary } from '@/content/historial-items';
-import { TYPE_LABELS } from '@/content/type-labels';
+import { LORE_CATEGORY_LABELS, TYPE_LABELS } from '@/content/type-labels';
 import type { EntryMeta } from '@/content/types';
 import { useEntryBody } from '@/content/use-entry-body';
 import { formatNumericDate } from '@/features/entry-list/entry-meta';
@@ -27,30 +29,28 @@ import { scrollAndFlash } from '../scroll-to';
 import { BlockIndex, BlockSections } from '../ThematicBlocks';
 import styles from './CronicaView.module.css';
 
-const TABS = [
-  { id: 'situacion', label: 'Situación' },
-  { id: 'anexos', label: 'Anexos' },
-] as const;
-
-type TabId = (typeof TABS)[number]['id'];
-
 const EMPTY_SUMMARY: HistorialSummary = { total: 0, dms: [], companions: [], years: [] };
 /** The situation gets an index from this many blocks on. */
 const MIN_INDEXED_BLOCKS = 2;
 
 interface CronicaViewProps {
-  entry: EntryMeta<'cronica'>;
+  entry: EntryMeta<ThreadType>;
   context: EntryContext;
   /** The page title, which EntryPage focuses when the DM moves to another entry. */
   title: ReactNode;
 }
 
 /**
- * /cronica/:slug — header, the situation (post #1, split in thematic blocks with an index) and
- * the annexes (the replies, in thread order) in two tabs. The index, the dates and the annexes'
+ * /cronica/:slug, and /lore/:slug for a lore entry imported from a thread — header, the
+ * situation (post #1, called "Situación" or "Contenido" by type, split in thematic blocks with
+ * an index) and the annexes (the replies, in thread order) in two tabs; an entry without
+ * annexes shows the situation alone, with no tab bar. The index, the dates and the annexes'
  * heads come from the metadata at once; their texts come with the body, loaded when it opens.
  */
 export function CronicaView({ entry, context, title }: CronicaViewProps) {
+  const profile = THREAD_PROFILES[entry.type];
+  const mainTab = profile.tab;
+  const annexTab = HISTORIAL_PROFILES[entry.type].tab;
   const meta = cronicaMetaOf(entry.slug);
   const summary = historialSummaryOf(entry.slug) ?? EMPTY_SUMMARY;
   const items = historialItemsOf(entry.slug);
@@ -59,33 +59,40 @@ export function CronicaView({ entry, context, title }: CronicaViewProps) {
   const anchor = decodeURIComponent(hash.slice(1));
   // A link to an annex (#h-…, or #h-…--<block> inside it) opens the annexes without ?tab=.
   const toAnnex = items.some((item) => item.id === anchor.split('--')[0]);
+  // Without annexes there is nothing to switch to: no tab bar, and ?tab=anexos shows the situation.
+  const hasAnnexes = items.length > 0;
   const tabParam = params.get('tab');
-  const tab: TabId =
-    tabParam === 'anexos' || (tabParam !== 'situacion' && toAnnex) ? 'anexos' : 'situacion';
+  const tab =
+    hasAnnexes && (tabParam === annexTab || (tabParam !== mainTab && toAnnex)) ? annexTab : mainTab;
 
   const rawBody = useEntryBody(entry.path);
   const body = useMemo(
     () =>
-      rawBody === undefined ? undefined : splitHistorialBody(rawBody, 'cronica', ownNamesOf(entry)),
+      rawBody === undefined
+        ? undefined
+        : splitHistorialBody(rawBody, entry.type, ownNamesOf(entry)),
     [rawBody, entry],
   );
-  const situacion = useMemo(() => body && parseSituacion(body.fichaBody), [body]);
+  const situacion = useMemo(
+    () => body && parseSituacion(body.fichaBody, entry.type),
+    [body, entry.type],
+  );
   // Splits the annexes little by little, so the first search of them is instant.
   useEffect(() => body?.prepareWhenIdle(), [body]);
 
   // A link to a block of the situation (#s-…): scroll to it once its text is there.
   useEffect(() => {
-    if (tab !== 'situacion' || !situacion || !anchor) return;
+    if (tab !== mainTab || !situacion || !anchor) return;
     const block = document.getElementById(anchor);
     return block ? scrollAndFlash(block) : undefined;
-  }, [tab, situacion, anchor]);
+  }, [tab, mainTab, situacion, anchor]);
 
-  function selectTab(next: TabId) {
+  function selectTab(next: string) {
     setParams(
       (previous) => {
         const updated = new URLSearchParams(previous);
         // The situation is the default, unless the address points to an annex.
-        if (next === 'situacion' && !toAnnex) updated.delete('tab');
+        if (next === mainTab && !toAnnex) updated.delete('tab');
         else updated.set('tab', next);
         return updated;
       },
@@ -95,15 +102,20 @@ export function CronicaView({ entry, context, title }: CronicaViewProps) {
 
   const { hilo, resumen } = entry.data;
   const baseId = useId();
-  const tabId = (id: TabId) => `${baseId}-tab-${id}`;
-  const panelId = (id: TabId) => `${baseId}-panel-${id}`;
+  const tabs = [
+    { id: mainTab, label: profile.heading, count: undefined },
+    { id: annexTab, label: 'Anexos', count: summary.total },
+  ];
+  const tabId = (id: string) => `${baseId}-tab-${id}`;
+  const panelId = (id: string) => `${baseId}-panel-${id}`;
 
   return (
     <div className={`${pageStyles.page} ${styles.page}`}>
       <div className={pageStyles.head}>
         <div className={pageStyles.titles}>
           <p className={pageStyles.kicker}>
-            {TYPE_LABELS.cronica.singular}
+            {TYPE_LABELS[entry.type].singular}
+            {entry.data.type === 'lore' && ` · ${LORE_CATEGORY_LABELS[entry.data.categoria]}`}
             {context.zona && (
               <>
                 {' · '}
@@ -122,7 +134,7 @@ export function CronicaView({ entry, context, title }: CronicaViewProps) {
           {resumen && <p className={pageStyles.subtitle}>{resumen}</p>}
         </div>
         <div className={pageStyles.actions}>
-          <PinButton item={{ type: 'cronica', slug: entry.slug }} />
+          <PinButton item={{ type: entry.type, slug: entry.slug }} />
           {import.meta.env.DEV && (
             <a
               className={pageStyles.secondaryButton}
@@ -132,37 +144,41 @@ export function CronicaView({ entry, context, title }: CronicaViewProps) {
               Editar .md
             </a>
           )}
-          <a
-            className={pageStyles.secondaryButton}
-            href={hilo}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Hilo del foro <span aria-hidden="true">↗</span>
-          </a>
+          {hilo && (
+            <a
+              className={pageStyles.secondaryButton}
+              href={hilo}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Hilo del foro <span aria-hidden="true">↗</span>
+            </a>
+          )}
         </div>
       </div>
 
-      <EntryTabs
-        tabs={TABS.map(({ id, label }) => ({
-          id,
-          label,
-          count: id === 'anexos' ? summary.total : undefined,
-          tabId: tabId(id),
-          panelId: panelId(id),
-        }))}
-        selected={tab}
-        onSelect={selectTab}
-      />
+      {hasAnnexes && (
+        <EntryTabs
+          tabs={tabs.map(({ id, label, count }) => ({
+            id,
+            label,
+            count,
+            tabId: tabId(id),
+            panelId: panelId(id),
+          }))}
+          selected={tab}
+          onSelect={selectTab}
+        />
+      )}
 
       <div className={tabStyles.columns}>
         <div
-          role="tabpanel"
-          id={panelId(tab)}
-          aria-labelledby={tabId(tab)}
+          {...(hasAnnexes
+            ? { role: 'tabpanel', id: panelId(tab), 'aria-labelledby': tabId(tab) }
+            : {})}
           className={tabStyles.panel}
         >
-          {tab === 'situacion' ? (
+          {tab === mainTab ? (
             <SituacionTab entry={entry} meta={meta} situacion={situacion} />
           ) : (
             <HistorialPanel entry={entry} items={items} summary={summary} body={body} />
@@ -178,7 +194,7 @@ export function CronicaView({ entry, context, title }: CronicaViewProps) {
 }
 
 interface SituacionTabProps {
-  entry: EntryMeta<'cronica'>;
+  entry: EntryMeta<ThreadType>;
   meta: CronicaMeta | undefined;
   /** Undefined while the body loads. */
   situacion: Situacion | undefined;
@@ -187,6 +203,7 @@ interface SituacionTabProps {
 /** Who wrote it and when, the index at once; the blocks once the body is loaded; then the tags. */
 function SituacionTab({ entry, meta, situacion }: SituacionTabProps) {
   const { tags = [] } = entry.data;
+  const profile = THREAD_PROFILES[entry.type];
   const index = meta?.situacion.blocks ?? [];
   const isEmpty = situacion && !situacion.intro && situacion.blocks.length === 0 && !situacion.rest;
 
@@ -199,12 +216,14 @@ function SituacionTab({ entry, meta, situacion }: SituacionTabProps) {
           Cargando…
         </p>
       ) : isEmpty ? (
-        <p className={tabStyles.loading}>Esta ficha todavía no tiene situación.</p>
+        <p className={tabStyles.loading}>
+          {`Esta ficha todavía no tiene ${profile.heading.toLowerCase()}.`}
+        </p>
       ) : (
         <>
           {situacion.intro && (
             <BlockSections
-              blocks={[{ id: SITUACION_ANCHOR, label: 'Situación', markdown: situacion.intro }]}
+              blocks={[{ id: profile.anchor, label: profile.heading, markdown: situacion.intro }]}
             />
           )}
           <BlockSections blocks={situacion.blocks} />
@@ -217,7 +236,7 @@ function SituacionTab({ entry, meta, situacion }: SituacionTabProps) {
             <li key={tag}>
               <Link
                 className={pageStyles.tag}
-                to={{ pathname: '/cronica', search: `?${createSearchParams({ tag })}` }}
+                to={{ pathname: `/${entry.type}`, search: `?${createSearchParams({ tag })}` }}
               >
                 {`#${tag}`}
               </Link>

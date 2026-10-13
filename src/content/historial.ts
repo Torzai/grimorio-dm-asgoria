@@ -3,13 +3,13 @@ import { slugify } from './normalize.ts';
 import type { ContentIssue, Entry, EntryType } from './types.ts';
 
 /*
- * The '## Historial' section, which any type in HISTORIAL_TYPES may have: a PJ's quests, a
- * crónica's annexes. One parser, one set of items and one view for all of them; what changes
- * per type is in HISTORIAL_PROFILES.
+ * The '## Historial' section, which any type in HISTORIAL_TYPES may have: a PJ's quests, the
+ * annexes of a crónica or of a lore entry imported from a thread. One parser, one set of items
+ * and one view for all of them; what changes per type is in HISTORIAL_PROFILES.
  */
 
 /** Types whose body may hold a '## Historial' section. */
-export const HISTORIAL_TYPES = ['pj', 'cronica'] as const satisfies readonly EntryType[];
+export const HISTORIAL_TYPES = ['pj', 'cronica', 'lore'] as const satisfies readonly EntryType[];
 
 export type HistorialType = (typeof HISTORIAL_TYPES)[number];
 
@@ -36,9 +36,18 @@ export interface HistorialProfile {
   tab: string;
 }
 
+/** The annexes of a forum thread, in a crónica or in a lore entry. */
+const THREAD_PROFILE: HistorialProfile = {
+  order: 'thread',
+  entryTitle: 'detected',
+  participants: false,
+  tab: 'anexos',
+};
+
 export const HISTORIAL_PROFILES: Readonly<Record<HistorialType, HistorialProfile>> = {
   pj: { order: 'date', entryTitle: 'date-author', participants: true, tab: 'historial' },
-  cronica: { order: 'thread', entryTitle: 'detected', participants: false, tab: 'anexos' },
+  cronica: THREAD_PROFILE,
+  lore: THREAD_PROFILE,
 };
 
 /** One entry of a history, from a heading like '### 2026-08-31 · She Wolf (@she-wolf)'. */

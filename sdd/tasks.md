@@ -24,6 +24,7 @@
 | T14 | Importador: conversión a borradores (✅ para PJ) | T13 | No |
 | T15 | Tipo crónica e importador de hilos seguidos | T06d, T14 | 🎭 Sí |
 | T15b | Situación por regiones: hilos multi-región | T15 | 🎭 Sí |
+| T15c | Lore importado de un hilo (cosmología) | T15b | 🎭 Sí |
 
 ---
 
@@ -206,5 +207,16 @@
 - Documentado en `content/README.md` ("Partir un hilo que mezcla regiones").
 
 **Aceptación (comprobación manual en el navegador):** `validate`, `lint` y `build` en verde; el sidebar muestra "Situación por regiones" con una ficha por región, Gadélica incluida; cada ficha enlaza con su zona y la zona muestra su situación; `/cronica/situacion-gadelica` funciona; los posts #4 y #5 están en la ficha de Loren y los demás dudosos en la de Mraganur; buscar "Arboleda" en la palette lleva a la ficha de Loren.
+
+**Estado:** ✅ hecha.
+
+## T15c · Lore importado de un hilo (cosmología) 🎭
+- `lore.categoria` admite `cosmologia` ("Cosmología") y `lore` admite `hilo?`, `importado?` e `importar?`, como `cronica`. La lista de lore gana el filtro "Categoría" (`?categoria=`).
+- `TRACKED_TOPICS` admite `type: 'lore'` con `categoria` obligatoria. Mismo motor que la Situación: el post #1 va bajo `## Contenido` (`## Situación` en `cronica`) y las respuestas son anexos en `## Historial`. `cronica-draft.ts` y `sync-topics.ts` reciben el tipo de destino; el título de la sección sale de `THREAD_PROFILES` (`src/content/cronica.ts`), el mismo perfil que lee el visor. Reimportar conserva el frontmatter y respeta `importar: false`.
+- Una ficha `lore` usa la vista de la Situación (`CronicaView`, común a ambos tipos) cuando viene de un hilo (`hilo:`) o tiene anexos en `## Historial`: pestañas "Contenido" (con índice de bloques) y "Anexos <n>", aside "Narrado por" y kicker "Lore · <categoría>". Una ficha sin anexos (lore o cronica) no muestra la barra de pestañas: solo el contenido con su índice. `HISTORIAL_TYPES` incluye `lore`, con el mismo perfil que `cronica`. Las demás fichas lore se ven como siempre.
+- Búsqueda: cada bloque del Contenido y cada anexo son resultados propios ("El cosmos de Asgoria · Ymir").
+- Hilo importado: `lore/cosmos` ("El cosmos de Asgoria", `cosmologia`). Documentado en `content/README.md`.
+
+**Aceptación (comprobación manual en el navegador):** `validate`, `lint` y `build` en verde; `/lore/cosmos` (sin anexos) se ve como una ficha de Situación sin barra de pestañas, con su índice y el kicker "Lore · Cosmología"; una Situación con anexos conserva sus pestañas; la lista "Lore y facciones" filtra por categoría "Cosmología"; buscar en la palette un término de un bloque abre `/lore/cosmos` en ese bloque; `/cronica/situacion-gadelica` y los PJ siguen igual.
 
 **Estado:** ✅ hecha.

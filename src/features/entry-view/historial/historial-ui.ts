@@ -1,6 +1,6 @@
 import type { HistorialType } from '@/content/historial';
 
-/** The words of a history's view, per type: a PJ's quests or a crónica's annexes. */
+/** The words of a history's view, per type: a PJ's quests or the annexes of a thread. */
 export interface HistorialUi {
   /** 'entrada' / 'entradas' */
   one: string;
@@ -17,6 +17,21 @@ export interface HistorialUi {
   copyLink: string;
 }
 
+/** The annexes of a forum thread, in a crónica or in a lore entry. */
+const THREAD_UI: HistorialUi = {
+  one: 'anexo',
+  many: 'anexos',
+  searchLabel: 'Buscar en los anexos',
+  searchPlaceholder: 'Buscar en los anexos…',
+  authorParam: 'autor',
+  authorLabel: 'Filtrar por autor',
+  authorAll: 'Autor: todos',
+  authorPrefix: 'Autor',
+  empty: 'Esta ficha todavía no tiene anexos.',
+  noMatches: 'Ningún anexo coincide con la búsqueda y el filtro.',
+  copyLink: 'Enlace a este anexo',
+};
+
 export const HISTORIAL_UI: Readonly<Record<HistorialType, HistorialUi>> = {
   pj: {
     one: 'entrada',
@@ -31,19 +46,8 @@ export const HISTORIAL_UI: Readonly<Record<HistorialType, HistorialUi>> = {
     noMatches: 'Ninguna entrada coincide con la búsqueda y los filtros.',
     copyLink: 'Enlace a esta entrada',
   },
-  cronica: {
-    one: 'anexo',
-    many: 'anexos',
-    searchLabel: 'Buscar en los anexos',
-    searchPlaceholder: 'Buscar en los anexos…',
-    authorParam: 'autor',
-    authorLabel: 'Filtrar por autor',
-    authorAll: 'Autor: todos',
-    authorPrefix: 'Autor',
-    empty: 'Esta ficha todavía no tiene anexos.',
-    noMatches: 'Ningún anexo coincide con la búsqueda y el filtro.',
-    copyLink: 'Enlace a este anexo',
-  },
+  cronica: THREAD_UI,
+  lore: THREAD_UI,
 };
 
 /** '1 entrada', '6 anexos'. */

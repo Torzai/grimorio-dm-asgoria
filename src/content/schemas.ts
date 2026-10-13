@@ -118,6 +118,14 @@ const commonShape = {
   actualizado: isoDate('actualizado').optional(),
 };
 
+/** What an entry brought from the forum by the importer carries (pj, cronica, lore). */
+const importedShape = {
+  /** When the entry was brought from the forum by the importer. */
+  importado: isoDate('importado').optional(),
+  /** false: the importer never touches this entry again. */
+  importar: boolean('importar').optional(),
+};
+
 export const entrySchemas = {
   npc: z.object({
     type: z.literal('npc'),
@@ -144,10 +152,7 @@ export const entrySchemas = {
     estado: oneOf('estado', PJ_ESTADOS),
     /** The PJ's thread in the forum. */
     hilo: webAddress('hilo').optional(),
-    /** When the entry was brought from the forum by the importer. */
-    importado: isoDate('importado').optional(),
-    /** false: the importer never touches this entry again (scrape:convert-all). */
-    importar: boolean('importar').optional(),
+    ...importedShape,
   }),
   zona: z.object({
     type: z.literal('zona'),
@@ -158,17 +163,27 @@ export const entrySchemas = {
   lore: z.object({
     type: z.literal('lore'),
     ...commonShape,
-    categoria: oneOf('categoria', ['historia', 'faccion', 'religion', 'cultura', 'otro']),
+    categoria: oneOf('categoria', [
+      'historia',
+      'faccion',
+      'religion',
+      'cultura',
+      'cosmologia',
+      'otro',
+    ]),
+    /**
+     * The forum thread a lore entry comes from (scrape:topics): post #1 is its '## Contenido'
+     * and the replies its annexes, as in a crónica.
+     */
+    hilo: webAddress('hilo').optional(),
+    ...importedShape,
   }),
   cronica: z.object({
     type: z.literal('cronica'),
     ...commonShape,
     /** The forum thread the crónica comes from: post #1 is the situation, replies its annexes. */
     hilo: webAddress('hilo'),
-    /** When the entry was brought from the forum by the importer. */
-    importado: isoDate('importado').optional(),
-    /** false: the importer never touches this entry again (scrape:topics). */
-    importar: boolean('importar').optional(),
+    ...importedShape,
   }),
   varita: z.object({
     type: z.literal('varita'),

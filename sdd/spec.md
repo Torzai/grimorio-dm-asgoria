@@ -75,7 +75,7 @@ Como DM, quiero leer y buscar dentro del historial de un PJ (cientos de quests) 
 
 **HU-11 · Crónicas de región y trama**
 Como DM narrando, quiero ver de un vistazo cómo está una región (o una trama) y buscar en lo que se ha ido añadiendo a su hilo.
-- Ficha de crónica con cabecera ("Crónica · <zona>", título, "Última actualización DD/MM/AAAA", "Hilo del foro ↗") y pestañas "Situación" (por defecto) y "Anexos <n>" (`?tab=anexos`).
+- Ficha de crónica con cabecera ("Crónica · <zona>", título, "Última actualización DD/MM/AAAA", "Hilo del foro ↗") y pestañas "Situación" (por defecto) y "Anexos <n>" (`?tab=anexos`); sin anexos no hay barra de pestañas y se ve solo la situación con su índice. Lo mismo vale para el lore importado de un hilo ("Contenido").
 - "Situación" (post #1): autor y fechas de publicación y edición, índice de los bloques temáticos (párrafos que empiezan con una etiqueta en negrita) y cada bloque bajo su anchor (`#s-<etiqueta>`).
 - "Anexos" (las respuestas): en el orden del hilo, plegados, con título propio (primer encabezado o primera línea en negrita, ≤ 80 caracteres; si no, sus primeras palabras), "<autor> · DD/MM/AAAA" y "editado DD/MM/AAAA"; buscador interno y filtro por autor (`?autor=`); un anexo con bloques en negrita lleva mini-índice al desplegarlo.
 - Misma lógica de historial que los PJ (parseo, entradas como documentos de búsqueda, anchors, buscador, filtros); "Suele jugar con", participantes y años solo en PJ.
@@ -107,7 +107,7 @@ Un fichero = una ficha. El **slug** es el nombre del fichero sin extensión (keb
 | `npc` | `faccion?`, `raza?`, `clase?`, `ubicacion?`, `tag_toolset?` |
 | `pj` | `cuenta_nwn` (obligatorio), `estado` (obligatorio): `activo` \| `inactivo` \| `retirado` \| `muerto`, `sexo?`, `raza?`, `clases?` (string[], máx. 3), `alineamiento?` (texto libre), `deidad?`, `hilo?` (URL del hilo del foro), `importado?` (fecha ISO) |
 | `zona` | `region?`, `mapa?` (ruta relativa a `content/assets/`) |
-| `lore` | `categoria`: `historia` \| `faccion` \| `religion` \| `cultura` \| `otro` |
+| `lore` | `categoria`: `historia` \| `faccion` \| `religion` \| `cultura` \| `cosmologia` \| `otro`; `hilo?` (URL del hilo del foro; con él, o con anexos en `## Historial`, la ficha se ve como una crónica, con `## Contenido` en lugar de `## Situación`), `importado?` (fecha ISO), `importar?` (bool) |
 | `cronica` | `hilo` (obligatorio, URL del hilo del foro), `importado?` (fecha ISO), `importar?` (bool) |
 | `varita` | `cargas?` (int), `nivel_lanzador?` (int), `recarga?` (bool), `uso?` |
 | `comando` | `sintaxis` (obligatorio), `ejemplo?`, `ambito`: `jugador` \| `dm` |

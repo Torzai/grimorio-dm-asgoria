@@ -1,8 +1,9 @@
 import { useEffect, useEffectEvent, useMemo, useRef, type RefObject } from 'react';
 import { Link, createSearchParams, useLocation, useNavigationType, useParams } from 'react-router';
 import { getEntry, getEntryContext, isEntryType } from '@/content/content-queries';
+import { hasThreadView, type ThreadType } from '@/content/cronica';
 import { isHistorialType } from '@/content/historial';
-import { historialItemsOf } from '@/content/historial-data';
+import { historialItemsOf, historialSummaryOf } from '@/content/historial-data';
 import { TYPE_LABELS } from '@/content/type-labels';
 import type { EntryMeta } from '@/content/types';
 import { useContent } from '@/content/use-content';
@@ -51,12 +52,13 @@ function EntryView({ entry }: { entry: EntryMeta }) {
     );
   }
 
-  if (entry.data.type === 'cronica') {
+  // A crónica, or a lore entry that is a thread (content/README.md).
+  if (hasThreadView(entry, historialSummaryOf(entry.slug)?.total ?? 0)) {
     return (
       <CronicaView
-        // A fresh view per crónica, so the annexes' search and open entries don't carry over.
+        // A fresh view per entry, so the annexes' search and open entries don't carry over.
         key={entry.slug}
-        entry={entry as EntryMeta<'cronica'>}
+        entry={entry as EntryMeta<ThreadType>}
         context={context}
         title={
           <h1 ref={titleRef} tabIndex={-1} className={styles.title}>
@@ -132,7 +134,7 @@ function EntryView({ entry }: { entry: EntryMeta }) {
 
 /**
  * Puts the open entry at the top of the recents; a link to a history entry (#h-…, a PJ's quest
- * or a crónica's annex) puts that history entry instead.
+ * or the annex of a thread) puts that history entry instead.
  */
 function useTrackRecent(entry: EntryMeta) {
   const { hash } = useLocation();
