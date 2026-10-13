@@ -1,6 +1,7 @@
 import { useId, useMemo, type ReactNode } from 'react';
 import { Link } from 'react-router';
 import { countByType, listEntries } from '@/content/content-queries';
+import { cronicasByUpdate } from '@/content/cronica-data';
 import { recentActivePjs } from '@/content/pj-data';
 import { PJ_ESTADO_LABELS, TYPE_LABELS, TYPE_NAV_ORDER } from '@/content/type-labels';
 import type { EntryMeta } from '@/content/types';
@@ -27,6 +28,7 @@ export function HomePage() {
     [entries],
   );
   const counts = useMemo(() => countByType(entries), [entries]);
+  const cronicas = useMemo(() => cronicasByUpdate(entries), [entries]);
 
   return (
     <div className={styles.page}>
@@ -67,6 +69,25 @@ export function HomePage() {
                     </span>
                     <span className={styles.rowMeta}>
                       {`${PJ_ESTADO_LABELS[entry.data.estado]} · ${formatNumericDate(last)}`}
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Box>
+
+        <Box title="Crónicas">
+          {cronicas.length === 0 ? (
+            <p className={styles.empty}>Todavía no hay crónicas.</p>
+          ) : (
+            <ul className={styles.list}>
+              {cronicas.map(({ entry, updated }) => (
+                <li key={entry.slug}>
+                  <Link className={styles.row} to={`/cronica/${entry.slug}`}>
+                    <span className={styles.rowTitle}>{entry.data.title}</span>
+                    <span className={styles.rowMeta}>
+                      {updated ? formatNumericDate(updated) : 'Sin fecha'}
                     </span>
                   </Link>
                 </li>

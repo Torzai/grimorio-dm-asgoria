@@ -1,14 +1,20 @@
 import MiniSearch, { type AsPlainObject, type Options } from 'minisearch';
 import { normalize, withoutApostrophes } from './normalize.ts';
-import type { HistorialItem } from './pj-historial.ts';
 import type { Entry, EntryType } from './types.ts';
 
-/** A result that is one entry of a PJ's history, not the whole entry. */
+/** A result that is one entry of a history (a PJ's quest, a crónica's annex). */
 export interface HistorialHit {
-  /** Anchor of the entry inside the PJ: 'h-2023-09-12-li-zakien'. */
+  /** Anchor of the entry inside its parent: 'h-2023-09-12-li-zakien'. */
   entryId: string;
-  /** Title of the PJ, which the result's title starts with. */
-  pjTitle: string;
+  /** Title of the parent entry, which the result's title starts with. */
+  parentTitle: string;
+}
+
+/** A result that is one thematic block of an entry (a block of a crónica's situation). */
+export interface SectionHit {
+  /** Anchor of the block inside its parent: 's-magia'. */
+  anchor: string;
+  parentTitle: string;
 }
 
 export interface SearchResult {
@@ -17,8 +23,10 @@ export interface SearchResult {
   title: string;
   resumen?: string;
   zona?: string;
-  /** Set when the result is a history entry; slug and type are then the PJ's. */
+  /** Set when the result is a history entry; slug and type are then its parent's. */
   historial?: HistorialHit;
+  /** Set when the result is a block of the parent's text; slug and type are the parent's. */
+  section?: SectionHit;
   score: number;
 }
 
@@ -44,7 +52,7 @@ export interface SerializedIndex {
 }
 
 interface IndexedDocument {
-  /** The slug, or '<slug>#<entryId>' for a history entry. */
+  /** The slug, or '<slug>#<anchor>' for a part of an entry (history entry, block). */
   id: string;
   title: string;
   aliases: string;
@@ -53,11 +61,22 @@ interface IndexedDocument {
   body: string;
 }
 
-/** What buildIndex needs from a PJ's history, already split at build time. */
-export interface PjSearchSource {
-  /** The body without the '## Historial' section. */
-  fichaBody: string;
-  items: readonly Pick<HistorialItem, 'id' | 'date' | 'authorName' | 'participantes' | 'recompensa' | 'bodyMarkdown'>[];
+/** A part of an entry that is indexed as a result of its own ('<slug>#<anchor>'). */
+export interface SubDocument {
+  kind: 'historial' | 'section';
+  /** 'h-2023-09-12-li-zakien', 's-magia' */
+  anchor: string;
+  title: string;
+  /** Words weighted as a resumen: a quest's participants. */
+  resumen?: string;
+  body: string;
+}
+
+/** An entry split at build time: what stays in its own document, and its parts. */
+export interface SearchSource {
+  /** The body without its parts (a PJ without its history, a crónica without its situation). */
+  body: string;
+  parts: readonly SubDocument[];
 }
 
 const FIELDS = ['title', 'aliases', 'tags', 'resumen', 'body'];
@@ -66,8 +85,8 @@ const STOPWORDS = new Set(['de', 'del', 'la', 'el', 'los', 'las', 'y', 'en', 'a'
 // Also splits on symbols such as '|', so '[[slug|texto]]' indexes 'texto' on its own.
 const SEPARATORS = /[\n\r\p{Z}\p{P}\p{S}]+/u;
 /**
- * A history entry's title starts with its PJ's name and its text often repeats it, so without
- * this the entries of a PJ outrank the PJ itself when searching for its name.
+ * A part's title starts with its parent's name and its text often repeats it, so without this
+ * the entries of a PJ outrank the PJ itself when searching for its name.
  */
 const HISTORIAL_BOOST = 0.5;
 
@@ -91,25 +110,19 @@ const OPTIONS: Options<IndexedDocument> = {
   searchOptions: { boost: BOOST, prefix: true, fuzzy: 0.2 },
 };
 
-/** '2023-09-12' → '12/09/2023'. */
-function numericDate(isoDate: string): string {
-  const [year, month, day] = isoDate.split('-');
-  return `${day}/${month}/${year}`;
-}
-
 /**
- * Indexes every entry. A PJ with its history in `historiales` is indexed without it, and each
- * history entry becomes a document of its own ('<slug>#<entryId>').
+ * Indexes every entry. An entry split in `sources` is indexed with the body left there, and
+ * each of its parts becomes a document of its own ('<slug>#<anchor>').
  */
 export function buildIndex(
   entries: readonly Entry[],
-  historiales: ReadonlyMap<string, PjSearchSource> = new Map(),
+  sources: ReadonlyMap<string, SearchSource> = new Map(),
 ): SearchIndex {
   const engine = new MiniSearch<IndexedDocument>(OPTIONS);
   const stored = new Map<string, StoredResult>();
 
   for (const { slug, type, data, body } of entries) {
-    const historial = type === 'pj' ? historiales.get(slug) : undefined;
+    const source = sources.get(slug);
     const { title, resumen, zona } = data;
     engine.add({
       id: slug,
@@ -117,7 +130,7 @@ export function buildIndex(
       aliases: (data.aliases ?? []).join(' '),
       tags: (data.tags ?? []).join(' '),
       resumen: resumen ?? '',
-      body: historial ? historial.fichaBody : body,
+      body: source ? source.body : body,
     });
     stored.set(slug, {
       slug,
@@ -127,18 +140,24 @@ export function buildIndex(
       ...(zona === undefined ? {} : { zona }),
     });
 
-    for (const item of historial?.items ?? []) {
-      const id = `${slug}#${item.id}`;
-      const itemTitle = `${title} · ${numericDate(item.date)} · ${item.authorName}`;
+    for (const part of source?.parts ?? []) {
+      const id = `${slug}#${part.anchor}`;
       engine.add({
         id,
-        title: itemTitle,
+        title: part.title,
         aliases: '',
         tags: '',
-        resumen: item.participantes.join(' '),
-        body: [item.bodyMarkdown, item.recompensa ?? ''].join('\n'),
+        resumen: part.resumen ?? '',
+        body: part.body,
       });
-      stored.set(id, { slug, type, title: itemTitle, historial: { entryId: item.id, pjTitle: title } });
+      stored.set(id, {
+        slug,
+        type,
+        title: part.title,
+        ...(part.kind === 'historial'
+          ? { historial: { entryId: part.anchor, parentTitle: title } }
+          : { section: { anchor: part.anchor, parentTitle: title } }),
+      });
     }
   }
   return { engine, stored };

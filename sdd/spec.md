@@ -73,6 +73,16 @@ Como DM, quiero leer y buscar dentro del historial de un PJ (cientos de quests) 
 - La búsqueda global indexa cada entrada como resultado propio ("Entrada de historial") y la abre desplegada y resaltada; la ficha se indexa sin el historial.
 - Todo se calcula al compilar, no en el navegador.
 
+**HU-11 · Crónicas de región y trama**
+Como DM narrando, quiero ver de un vistazo cómo está una región (o una trama) y buscar en lo que se ha ido añadiendo a su hilo.
+- Ficha de crónica con cabecera ("Crónica · <zona>", título, "Última actualización DD/MM/AAAA", "Hilo del foro ↗") y pestañas "Situación" (por defecto) y "Anexos <n>" (`?tab=anexos`).
+- "Situación" (post #1): autor y fechas de publicación y edición, índice de los bloques temáticos (párrafos que empiezan con una etiqueta en negrita) y cada bloque bajo su anchor (`#s-<etiqueta>`).
+- "Anexos" (las respuestas): en el orden del hilo, plegados, con título propio (primer encabezado o primera línea en negrita, ≤ 80 caracteres; si no, sus primeras palabras), "<autor> · DD/MM/AAAA" y "editado DD/MM/AAAA"; buscador interno y filtro por autor (`?autor=`); un anexo con bloques en negrita lleva mini-índice al desplegarlo.
+- Misma lógica de historial que los PJ (parseo, entradas como documentos de búsqueda, anchors, buscador, filtros); "Suele jugar con", participantes y años solo en PJ.
+- Panel: "Narrado por" (autores con su nº de posts) y relacionados. La ficha de su zona las lista en "Crónicas de esta zona"; la home, en la caja "Crónicas".
+- Búsqueda global: la crónica (sin su situación ni sus anexos), cada bloque de la situación ("Situación de Gadélica · Magia", abre su anchor) y cada anexo (grupo "Historial", "<crónica> · <título>").
+- "Última actualización" es la fecha más reciente entre publicaciones y ediciones del hilo; derivada, no se guarda.
+
 ## 3. Modelo de contenido
 
 Un fichero = una ficha. El **slug** es el nombre del fichero sin extensión (kebab-case, único globalmente). La carpeta debe coincidir con `type`.
@@ -81,7 +91,7 @@ Un fichero = una ficha. El **slug** es el nombre del fichero sin extensión (keb
 
 | Campo | Tipo | Obligatorio | Notas |
 |---|---|---|---|
-| `type` | enum | sí | `npc`, `pj`, `zona`, `lore`, `varita`, `comando`, `herramienta`, `sesion` |
+| `type` | enum | sí | `npc`, `pj`, `zona`, `lore`, `cronica`, `varita`, `comando`, `herramienta`, `sesion` |
 | `title` | string | sí | |
 | `aliases` | string[] | no | Otros nombres o apodos |
 | `tags` | string[] | no | kebab-case |
@@ -98,6 +108,7 @@ Un fichero = una ficha. El **slug** es el nombre del fichero sin extensión (keb
 | `pj` | `cuenta_nwn` (obligatorio), `estado` (obligatorio): `activo` \| `inactivo` \| `retirado` \| `muerto`, `sexo?`, `raza?`, `clases?` (string[], máx. 3), `alineamiento?` (texto libre), `deidad?`, `hilo?` (URL del hilo del foro), `importado?` (fecha ISO) |
 | `zona` | `region?`, `mapa?` (ruta relativa a `content/assets/`) |
 | `lore` | `categoria`: `historia` \| `faccion` \| `religion` \| `cultura` \| `otro` |
+| `cronica` | `hilo` (obligatorio, URL del hilo del foro), `importado?` (fecha ISO), `importar?` (bool) |
 | `varita` | `cargas?` (int), `nivel_lanzador?` (int), `recarga?` (bool), `uso?` |
 | `comando` | `sintaxis` (obligatorio), `ejemplo?`, `ambito`: `jugador` \| `dm` |
 | `herramienta` | `uso?`, `donde?` |
@@ -114,10 +125,20 @@ Los NPC los interpretan los DMs; los PJ son los personajes de los jugadores. De 
 - **Participantes**: en una `sesion`, `participantes` lista los PJ que jugaron. Cuentan como enlaces en las dos direcciones, así que la sesión aparece en el "Diario de sesiones" de cada PJ. Un participante que no existe o que no es un PJ da **warning**.
 - **Privacidad** (constitución P10): se guarda la cuenta de NWN del jugador, nunca su email ni su usuario de Discord.
 
+### Crónica: situación y anexos
+
+Una crónica es un hilo del foro sobre la situación de una región o el avance de una trama. Se importa con `npm run scrape:topics` desde la lista `TRACKED_TOPICS` de `scraper/config.ts`.
+
+- **Situación**: sección `## Situación`, el post #1. Un párrafo que empieza con una etiqueta corta en negrita (≤ 80 caracteres, que no sea una frase acabada en punto) abre un bloque temático; lo anterior a la primera etiqueta es "Situación general". El importador cierra la sección con `_Publicado el DD/MM/AAAA por Nombre_` y `_Editado el DD/MM/AAAA por Nombre_`.
+- **Anexos**: sección `## Historial` con el formato de entradas de los PJ (`### AAAA-MM-DD · Nombre (@usuario)`), en el **orden del hilo**: `validate` no exige que vaya del más reciente al más antiguo.
+- **Última actualización**: la fecha máxima entre publicaciones y ediciones (las notas del importador incluidas). Derivada, como la última actividad de un PJ.
+- Al reimportar se conserva el frontmatter (solo cambian `hilo` e `importado`), se regenera el cuerpo y `importar: false` protege la ficha. Si la zona del hilo no existe, se crea una ficha mínima (`title`, `tags: [importado]`).
+
 ### Convenciones de cuerpo (recomendadas, no validadas)
 
 - NPC: `## Cómo interpretarlo`, `## Qué sabe`, `## Ganchos`.
 - PJ: `## Descripción Física`, `## Origen`, `## Objetivos`, `## Otras Notas` y `## Historial` (este con el formato de arriba, que sí se valida).
+- Crónica: `## Situación` y `## Historial` (los anexos, con el formato de arriba).
 - Varita: `## Efecto`, `## Reglas del server`.
 - Sesión: texto libre con `[[enlaces]]` a lo que apareció.
 

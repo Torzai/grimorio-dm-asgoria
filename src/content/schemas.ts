@@ -160,6 +160,16 @@ export const entrySchemas = {
     ...commonShape,
     categoria: oneOf('categoria', ['historia', 'faccion', 'religion', 'cultura', 'otro']),
   }),
+  cronica: z.object({
+    type: z.literal('cronica'),
+    ...commonShape,
+    /** The forum thread the crónica comes from: post #1 is the situation, replies its annexes. */
+    hilo: webAddress('hilo'),
+    /** When the entry was brought from the forum by the importer. */
+    importado: isoDate('importado').optional(),
+    /** false: the importer never touches this entry again (scrape:topics). */
+    importar: boolean('importar').optional(),
+  }),
   varita: z.object({
     type: z.literal('varita'),
     ...commonShape,
@@ -198,6 +208,7 @@ export const entryFrontmatterSchema = z.discriminatedUnion(
     entrySchemas.pj,
     entrySchemas.zona,
     entrySchemas.lore,
+    entrySchemas.cronica,
     entrySchemas.varita,
     entrySchemas.comando,
     entrySchemas.herramienta,

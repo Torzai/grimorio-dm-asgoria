@@ -6,6 +6,7 @@ export const ENTRY_TYPES = [
   'pj',
   'zona',
   'lore',
+  'cronica',
   'varita',
   'comando',
   'herramienta',

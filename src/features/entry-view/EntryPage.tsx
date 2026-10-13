@@ -1,7 +1,8 @@
 import { useEffect, useEffectEvent, useMemo, useRef, type RefObject } from 'react';
 import { Link, createSearchParams, useLocation, useNavigationType, useParams } from 'react-router';
 import { getEntry, getEntryContext, isEntryType } from '@/content/content-queries';
-import { pjHistorialOf } from '@/content/pj-data';
+import { isHistorialType } from '@/content/historial';
+import { historialItemsOf } from '@/content/historial-data';
 import { TYPE_LABELS } from '@/content/type-labels';
 import type { EntryMeta } from '@/content/types';
 import { useContent } from '@/content/use-content';
@@ -13,6 +14,7 @@ import { useDocumentTitle } from '@/hooks/use-document-title';
 import { EntryAside } from './EntryAside';
 import { EntryBody } from './EntryBody';
 import { editorUrl } from './editor-link';
+import { CronicaView } from './cronica/CronicaView';
 import { PjView } from './pj/PjView';
 import styles from './EntryPage.module.css';
 
@@ -39,6 +41,22 @@ function EntryView({ entry }: { entry: EntryMeta }) {
         // A fresh view per PJ, so the history's search and open entries don't carry over.
         key={entry.slug}
         entry={entry as EntryMeta<'pj'>}
+        context={context}
+        title={
+          <h1 ref={titleRef} tabIndex={-1} className={styles.title}>
+            {entry.data.title}
+          </h1>
+        }
+      />
+    );
+  }
+
+  if (entry.data.type === 'cronica') {
+    return (
+      <CronicaView
+        // A fresh view per crónica, so the annexes' search and open entries don't carry over.
+        key={entry.slug}
+        entry={entry as EntryMeta<'cronica'>}
         context={context}
         title={
           <h1 ref={titleRef} tabIndex={-1} className={styles.title}>
@@ -113,8 +131,8 @@ function EntryView({ entry }: { entry: EntryMeta }) {
 }
 
 /**
- * Puts the open entry at the top of the recents; a link to a history entry (#h-…) puts that
- * history entry instead.
+ * Puts the open entry at the top of the recents; a link to a history entry (#h-…, a PJ's quest
+ * or a crónica's annex) puts that history entry instead.
  */
 function useTrackRecent(entry: EntryMeta) {
   const { hash } = useLocation();
@@ -123,8 +141,9 @@ function useTrackRecent(entry: EntryMeta) {
   const { type, slug } = entry;
   useEffect(() => {
     const id = decodeURIComponent(hash.slice(1));
-    const isHistorial = type === 'pj' && pjHistorialOf(slug).some((item) => item.id === id);
-    addRecent(isHistorial ? historialItem(slug, id) : { type, slug });
+    const isHistorial =
+      isHistorialType(type) && historialItemsOf(slug).some((item) => item.id === id);
+    addRecent(isHistorial ? historialItem(type, slug, id) : { type, slug });
   }, [type, slug, hash]);
 }
 
@@ -135,7 +154,7 @@ function useTrackRecent(entry: EntryMeta) {
 function useFocusTitleOnChange(entry: EntryMeta, titleRef: RefObject<HTMLHeadingElement | null>) {
   const navigationType = useNavigationType();
   const focusTitle = useEffectEvent(() => {
-    // A link to a part of the page (#h-… in a PJ's history) scrolls there instead.
+    // A link to a part of the page (#h-… in a history, #s-… in a situation) scrolls there instead.
     if (navigationType === 'POP' || window.location.hash) return;
     window.scrollTo(0, 0);
     titleRef.current?.focus({ preventScroll: true });

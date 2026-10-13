@@ -214,6 +214,24 @@
   cursor: pointer;
 }
 
+/* An annex has a title instead of the date column. */
+.entry[data-titled] .entryHead {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.entryTitle {
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-tight);
+  color: var(--color-text);
+  overflow-wrap: anywhere;
+}
+
+.entry[data-open] .entryTitle {
+  color: var(--color-gold-bright);
+}
+
 .entry[data-open] .entryHead {
   padding-top: var(--space-16);
   padding-bottom: var(--space-16);
@@ -318,6 +336,10 @@
   flex-direction: column;
   gap: var(--space-12);
   padding: 0 var(--space-18) var(--space-18) calc(var(--space-18) * 2 + var(--historial-date-width));
+}
+
+.entry[data-titled] .entryBody {
+  padding-left: var(--space-18);
 }
 
 .noText {

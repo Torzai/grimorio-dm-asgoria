@@ -1,6 +1,7 @@
 import { useMemo, type ReactNode } from 'react';
 import { getZoneTitles } from '@/content/content-queries';
-import { pjHistorialOf, pjSummaryOf } from '@/content/pj-data';
+import { cronicaMetaOf } from '@/content/cronica-data';
+import { historialItemsOf, historialSummaryOf } from '@/content/historial-data';
 import type { HistorialHit, SearchResult } from '@/content/search-index';
 import { PJ_ESTADO_LABELS, TYPE_LABELS } from '@/content/type-labels';
 import type { EntryMeta } from '@/content/types';
@@ -41,7 +42,14 @@ export function PalettePreview({ option, terms }: PalettePreviewProps) {
     const { result } = option;
     const entry = byKey.get(`${result.type}/${result.slug}`);
     if (result.historial) {
-      body = <HistorialPreview slug={result.slug} hit={result.historial} terms={terms} />;
+      body = (
+        <HistorialPreview
+          slug={result.slug}
+          isCronica={result.type === 'cronica'}
+          hit={result.historial}
+          terms={terms}
+        />
+      );
     } else if (entry?.data.type === 'pj') {
       body = <PjPreview slug={entry.slug} data={entry.data} />;
     } else {
@@ -57,7 +65,7 @@ export function PalettePreview({ option, terms }: PalettePreviewProps) {
 }
 
 function PjPreview({ slug, data }: { slug: string; data: EntryMeta<'pj'>['data'] }) {
-  const summary = pjSummaryOf(slug);
+  const summary = historialSummaryOf(slug);
   const { estado, raza, clases = [], cuenta_nwn } = data;
   const identity = [raza, clases.join(' / ')].filter(Boolean).join(' · ');
   return (
@@ -84,25 +92,35 @@ function PjPreview({ slug, data }: { slug: string; data: EntryMeta<'pj'>['data']
   );
 }
 
+/** A PJ's quest, or a crónica's annex under the crónica's name. */
 function HistorialPreview({
   slug,
+  isCronica,
   hit,
   terms,
 }: {
   slug: string;
+  isCronica: boolean;
   hit: HistorialHit;
   terms: readonly string[];
 }) {
-  const item = pjHistorialOf(slug).find((candidate) => candidate.id === hit.entryId);
+  const item = historialItemsOf(slug).find((candidate) => candidate.id === hit.entryId);
   return (
     <>
-      <span className={styles.eyebrow}>Entrada de historial</span>
-      <h2 className={styles.title}>{hit.pjTitle}</h2>
+      <span className={styles.eyebrow}>
+        {isCronica ? 'Anexo de crónica' : 'Entrada de historial'}
+      </span>
+      <h2 className={styles.title}>{hit.parentTitle}</h2>
+      {item?.title && (
+        <p className={styles.identity}>
+          <Highlighted text={item.title} terms={terms} />
+        </p>
+      )}
       {item && (
         <>
           <dl className={styles.facts}>
             <Fact label="Fecha">{formatNumericDate(item.date)}</Fact>
-            <Fact label="Narró">{item.authorName}</Fact>
+            <Fact label={isCronica ? 'Autor' : 'Narró'}>{item.authorName}</Fact>
           </dl>
           {item.participantes.length > 0 && (
             <Field label="Participantes">
@@ -156,6 +174,9 @@ function EntryPreview({
           </Fact>
         </dl>
       )}
+      {data?.type === 'cronica' && (
+        <CronicaFacts slug={result.slug} anchor={result.section?.anchor} />
+      )}
       {resumen && <p className={styles.text}>{resumen}</p>}
       {data?.type === 'varita' && data.uso && (
         <Field label="Uso">
@@ -179,6 +200,24 @@ function EntryPreview({
         </Field>
       )}
     </>
+  );
+}
+
+/** When the crónica was last updated, and the block of its situation the result is. */
+function CronicaFacts({ slug, anchor }: { slug: string; anchor: string | undefined }) {
+  const meta = cronicaMetaOf(slug);
+  const block = meta?.situacion.blocks.find(({ id }) => id === anchor);
+  return (
+    <dl className={styles.facts}>
+      <Fact label="Última actualización">
+        {meta?.updated ? formatNumericDate(meta.updated) : '—'}
+      </Fact>
+      {block ? (
+        <Fact label="Situación">{block.label}</Fact>
+      ) : (
+        <Fact label="Anexos">{historialSummaryOf(slug)?.total ?? 0}</Fact>
+      )}
+    </dl>
   );
 }
 

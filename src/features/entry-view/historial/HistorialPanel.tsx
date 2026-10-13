@@ -1,9 +1,15 @@
 import { useEffect, useEffectEvent, useId, useMemo, useState } from 'react';
 import { useLocation, useSearchParams } from 'react-router';
 import { queryTerms } from '@/content/highlight';
-import type { PjBody } from '@/content/pj-data';
-import { previewSearchText, type HistorialItemMeta, type PjSummary } from '@/content/pj-historial';
+import { HISTORIAL_PROFILES, type HistorialType } from '@/content/historial';
+import type { HistorialBody } from '@/content/historial-data';
+import {
+  previewSearchText,
+  type HistorialItemMeta,
+  type HistorialSummary,
+} from '@/content/historial-items';
 import type { EntryMeta } from '@/content/types';
+import { scrollAndFlash } from '../scroll-to';
 import { HistorialEntry } from './HistorialEntry';
 import {
   groupHistorial,
@@ -12,6 +18,7 @@ import {
   type HistorialFilters,
   type SearchTextOf,
 } from './historial-filter';
+import { countText, HISTORIAL_UI } from './historial-ui';
 import styles from './HistorialPanel.module.css';
 
 const DEBOUNCE_MS = 150;
@@ -19,29 +26,32 @@ const DEBOUNCE_MS = 150;
 const AUTO_EXPAND_LIMIT = 25;
 
 /** The URL parameters of the history; the list's filters (?zona=&estado=&tag=) are left alone. */
-type HistorialParam = 'q' | 'dm' | 'con' | 'anio';
+type HistorialParam = 'q' | 'dm' | 'autor' | 'con' | 'anio';
 
 interface HistorialPanelProps {
-  entry: EntryMeta<'pj'>;
-  /** The history without its text, newest first. */
+  entry: EntryMeta<HistorialType>;
+  /** The history without its text, in its type's order. */
   items: readonly HistorialItemMeta[];
-  summary: PjSummary;
-  /** The text of the entries; undefined while the PJ's body loads. */
-  body: PjBody | undefined;
+  summary: HistorialSummary;
+  /** The text of the entries; undefined while the entry's body loads. */
+  body: HistorialBody | undefined;
 }
 
 /**
- * Search, filters and the history grouped by year. Filters live in the URL. Everything but
- * the text of an open entry shows at once; until the body loads, the search looks into the
- * previews.
+ * Search, filters and the history: a PJ's grouped by year, newest first; a crónica's annexes in
+ * the order of the thread. Filters live in the URL. Everything but the text of an open entry
+ * shows at once; until the body loads, the search looks into the previews.
  */
 export function HistorialPanel({ entry, items, summary, body }: HistorialPanelProps) {
+  const profile = HISTORIAL_PROFILES[entry.type];
+  const ui = HISTORIAL_UI[entry.type];
+  const byYear = profile.order === 'date';
   const [params, setParams] = useSearchParams();
   const { hash } = useLocation();
   const urlQuery = params.get('q') ?? '';
-  const dm = params.get('dm') || undefined;
-  const con = params.get('con') || undefined;
-  const year = params.get('anio') || undefined;
+  const author = params.get(ui.authorParam) || undefined;
+  const con = (profile.participants && params.get('con')) || undefined;
+  const year = (byYear && params.get('anio')) || undefined;
 
   function setParam(key: HistorialParam, value: string | undefined) {
     setParams(
@@ -75,8 +85,8 @@ export function HistorialPanel({ entry, items, summary, body }: HistorialPanelPr
 
   const terms = useMemo(() => queryTerms(urlQuery), [urlQuery]);
   const filters = useMemo<HistorialFilters>(
-    () => ({ terms, dm, con, year }),
-    [terms, dm, con, year],
+    () => ({ terms, author, con, year }),
+    [terms, author, con, year],
   );
   const ownNames = useMemo(() => [entry.data.title, ...(entry.data.aliases ?? [])], [entry.data]);
   const companions = useMemo(() => participantOptions(items, ownNames), [items, ownNames]);
@@ -88,15 +98,16 @@ export function HistorialPanel({ entry, items, summary, body }: HistorialPanelPr
     [body],
   );
 
-  // The entry a link points to (#h-…), when it exists.
+  // The entry a link points to (#h-…), or the entry of a block inside it (#h-…--clan).
+  const anchor = decodeURIComponent(hash.slice(1));
   const target = useMemo(() => {
-    const id = decodeURIComponent(hash.slice(1));
+    const id = anchor.split('--')[0];
     return items.some((item) => item.id === id) ? id : undefined;
-  }, [hash, items]);
+  }, [anchor, items]);
 
   const groups = useMemo(
-    () => groupHistorial(items, filters, searchTextOf, target),
-    [items, filters, searchTextOf, target],
+    () => groupHistorial(items, filters, searchTextOf, { keep: target, byYear }),
+    [items, filters, searchTextOf, target, byYear],
   );
   const visible = useMemo(() => groups.flatMap((group) => group.items), [groups]);
   const filtering = hasFilters(filters);
@@ -122,23 +133,31 @@ export function HistorialPanel({ entry, items, summary, body }: HistorialPanelPr
 
   const anyClosed = visible.some((item) => !isOpen(item));
 
-  // A link to an entry: open it (isOpen does), scroll to it and flash it once.
+  // A link to an entry: open it (isOpen does), scroll to it and flash it once. A link to a block
+  // inside it scrolls to the block, once the text that holds it is loaded.
+  const toBlock = anchor !== target && body !== undefined;
   useEffect(() => {
     const article = target ? document.getElementById(target) : null;
     if (!article) return;
-    article.scrollIntoView({ block: 'start' });
-    article.querySelector('button')?.focus({ preventScroll: true });
-    article.dataset.flash = '';
-    const stop = () => delete article.dataset.flash;
-    article.addEventListener('animationend', stop, { once: true });
-    return () => {
-      article.removeEventListener('animationend', stop);
-      stop();
-    };
-  }, [target]);
+    const block = toBlock ? document.getElementById(anchor) : null;
+    return block ? scrollAndFlash(block) : scrollAndFlash(article, article.querySelector('button'));
+  }, [target, anchor, toBlock]);
 
   const searchId = useId();
   const countId = useId();
+
+  const entryOf = (item: HistorialItemMeta) => (
+    <HistorialEntry
+      key={item.id}
+      item={item}
+      text={isOpen(item) ? body?.textOf(item.id) : undefined}
+      type={entry.type}
+      slug={entry.slug}
+      terms={terms}
+      open={isOpen(item)}
+      onToggle={() => setOpen([item.id], !isOpen(item))}
+    />
+  );
 
   return (
     <div className={styles.panel}>
@@ -155,14 +174,14 @@ export function HistorialPanel({ entry, items, summary, body }: HistorialPanelPr
             <path d="M20 20l-4-4" />
           </svg>
           <label htmlFor={searchId} className="visually-hidden">
-            Buscar en el historial
+            {ui.searchLabel}
           </label>
           <input
             id={searchId}
             type="search"
             className={styles.searchInput}
             value={query}
-            placeholder="Buscar en el historial…"
+            placeholder={ui.searchPlaceholder}
             autoComplete="off"
             aria-describedby={countId}
             onChange={(event) => setQuery(event.target.value)}
@@ -173,21 +192,23 @@ export function HistorialPanel({ entry, items, summary, body }: HistorialPanelPr
         </div>
 
         <ChipSelect
-          label="Filtrar por DM"
-          allText="DM: todos"
-          prefix="DM"
-          value={dm}
+          label={ui.authorLabel}
+          allText={ui.authorAll}
+          prefix={ui.authorPrefix}
+          value={author}
           options={summary.dms}
-          onChange={(value) => setParam('dm', value)}
+          onChange={(value) => setParam(ui.authorParam, value)}
         />
-        <ChipSelect
-          label="Filtrar por compañero"
-          allText="Con: cualquiera"
-          prefix="Con"
-          value={con}
-          options={companions}
-          onChange={(value) => setParam('con', value)}
-        />
+        {profile.participants && (
+          <ChipSelect
+            label="Filtrar por compañero"
+            allText="Con: cualquiera"
+            prefix="Con"
+            value={con}
+            options={companions}
+            onChange={(value) => setParam('con', value)}
+          />
+        )}
         <button
           type="button"
           className={styles.chip}
@@ -203,7 +224,7 @@ export function HistorialPanel({ entry, items, summary, body }: HistorialPanelPr
         </button>
       </div>
 
-      {summary.years.length > 1 && (
+      {byYear && summary.years.length > 1 && (
         <div className={styles.years} role="group" aria-label="Filtrar por año">
           <button
             type="button"
@@ -219,7 +240,7 @@ export function HistorialPanel({ entry, items, summary, body }: HistorialPanelPr
               type="button"
               className={styles.yearChip}
               aria-pressed={year === value}
-              aria-label={`${value}, ${entriesText(count)}`}
+              aria-label={`${value}, ${countText(ui, count)}`}
               onClick={() => setParam('anio', year === value ? undefined : value)}
             >
               {`${value} · ${count}`}
@@ -229,12 +250,8 @@ export function HistorialPanel({ entry, items, summary, body }: HistorialPanelPr
       )}
 
       {groups.length === 0 ? (
-        <p className={styles.empty}>
-          {items.length === 0
-            ? 'Este PJ todavía no tiene historial.'
-            : 'Ninguna entrada coincide con la búsqueda y los filtros.'}
-        </p>
-      ) : (
+        <p className={styles.empty}>{items.length === 0 ? ui.empty : ui.noMatches}</p>
+      ) : byYear ? (
         groups.map((group) => (
           <section key={group.year} className={styles.group} aria-labelledby={`anio-${group.year}`}>
             <h2 id={`anio-${group.year}`} className={styles.groupTitle}>
@@ -242,22 +259,14 @@ export function HistorialPanel({ entry, items, summary, body }: HistorialPanelPr
               <span className={styles.groupCount}>
                 {filtering
                   ? `· ${group.items.length} de ${group.total} coinciden`
-                  : `· ${entriesText(group.total)}`}
+                  : `· ${countText(ui, group.total)}`}
               </span>
             </h2>
-            {group.items.map((item) => (
-              <HistorialEntry
-                key={item.id}
-                item={item}
-                text={isOpen(item) ? body?.textOf(item.id) : undefined}
-                slug={entry.slug}
-                terms={terms}
-                open={isOpen(item)}
-                onToggle={() => setOpen([item.id], !isOpen(item))}
-              />
-            ))}
+            {group.items.map(entryOf)}
           </section>
         ))
+      ) : (
+        <div className={styles.group}>{groups.flatMap((group) => group.items).map(entryOf)}</div>
       )}
     </div>
   );
@@ -265,10 +274,6 @@ export function HistorialPanel({ entry, items, summary, body }: HistorialPanelPr
 
 function matchesText(count: number): string {
   return count === 1 ? '1 coincidencia' : `${count} coincidencias`;
-}
-
-function entriesText(count: number): string {
-  return count === 1 ? '1 entrada' : `${count} entradas`;
 }
 
 interface ChipSelectProps {

@@ -1,132 +1,5 @@
-import { normalize, slugify } from './normalize.ts';
+import { normalize } from './normalize.ts';
 import type { ContentIssue, Entry } from './types.ts';
-
-/** One entry of a PJ's history, from a heading like '### 2026-08-31 · She Wolf (@she-wolf)'. */
-export interface HistorialEntry {
-  /** 'AAAA-MM-DD' */
-  date: string;
-  authorName: string;
-  /** Forum user without the '@'; undefined when the heading has none. */
-  authorHandle?: string;
-  /**
-   * Stable anchor, unique within the PJ: 'h-2026-08-31-she-wolf', then '-2', '-3'… when the
-   * same date and author repeat.
-   */
-  id: string;
-  /** The Markdown under the heading, up to the next entry, trimmed. */
-  body: string;
-}
-
-export interface Historial {
-  /** The valid entries, in the order they are written. */
-  entries: HistorialEntry[];
-  /** Why some headings of the section are not entries; in Spanish, for validate. */
-  problems: string[];
-  /** The body without the '## Historial' section: what "Ficha y trasfondo" shows. */
-  fichaBody: string;
-}
-
-export const HISTORIAL_FORMAT = '### AAAA-MM-DD · Nombre (@usuario)';
-
-const SECTION = /^##\s+historial\s*#*\s*$/i;
-const NEXT_SECTION = /^#{1,2}\s/;
-/** Only '### AAAA-MM-DD · …' opens an entry; any other '### ' line is text of the entry. */
-const ENTRY_HEADING = /^###\s+(\d{4}-\d{2}-\d{2}\s+·\s+.*?)(?:\s+#+)?\s*$/;
-const ENTRY = /^(\S+)\s+·\s+(.+?)(?:\s+\(@([^()\s]+)\))?$/;
-const FENCE = /^ {0,3}(`{3,}|~{3,})/;
-
-/**
- * Reads the '## Historial' section of a PJ body and its '### AAAA-MM-DD · Nombre (@usuario)'
- * headings, up to the next '#' or '##' heading. Headings inside fenced code are not entries.
- * Any other '### ' line (a heading pasted in a post) is text of the entry before it, so it
- * never splits an entry.
- */
-export function parseHistorial(body: string): Historial {
-  const entries: HistorialEntry[] = [];
-  const problems: string[] = [];
-  const timesSeen = new Map<string, number>();
-  const fichaLines: string[] = [];
-  let entryLines: string[] | undefined;
-  let inSection = false;
-  let fence: string | undefined;
-
-  const closeEntry = () => {
-    const last = entries.at(-1);
-    if (last && entryLines) last.body = entryLines.join('\n').trim();
-    entryLines = undefined;
-  };
-
-  for (const line of body.split(/\r?\n/)) {
-    // Lines of fenced code, fences included, are never headings.
-    const fenceMark = FENCE.exec(line)?.[1];
-    let isCode = true;
-    if (fence !== undefined) {
-      if (fenceMark?.[0] === fence[0] && fenceMark.length >= fence.length) fence = undefined;
-    } else if (fenceMark !== undefined) {
-      fence = fenceMark;
-    } else {
-      isCode = false;
-    }
-
-    if (!isCode && SECTION.test(line)) {
-      inSection = true;
-      continue;
-    }
-    if (!isCode && inSection && NEXT_SECTION.test(line)) {
-      closeEntry();
-      inSection = false;
-    }
-    if (!inSection) {
-      fichaLines.push(line);
-      continue;
-    }
-
-    const heading = isCode ? undefined : ENTRY_HEADING.exec(line)?.[1];
-    if (heading === undefined) {
-      entryLines?.push(line);
-      continue;
-    }
-    const match = ENTRY.exec(heading);
-    if (!match) {
-      entryLines?.push(line);
-      continue;
-    }
-    const [, date, authorName, authorHandle] = match;
-    if (!isCalendarDate(date)) {
-      problems.push(
-        `la entrada '### ${heading}' del historial tiene una fecha que no existe`,
-      );
-      entryLines?.push(line);
-      continue;
-    }
-    closeEntry();
-    const baseId = `h-${date}-${slugify(authorName) || 'autor'}`;
-    const count = (timesSeen.get(baseId) ?? 0) + 1;
-    timesSeen.set(baseId, count);
-    entries.push({
-      date,
-      authorName,
-      ...(authorHandle === undefined ? {} : { authorHandle }),
-      id: count === 1 ? baseId : `${baseId}-${count}`,
-      body: '',
-    });
-    entryLines = [];
-  }
-  closeEntry();
-  return { entries, problems, fichaBody: fichaLines.join('\n').trim() };
-}
-
-const parsed = new WeakMap<Entry, Historial>();
-
-/** parseHistorial of an entry's body, parsed once per entry. */
-export function historialOf(entry: Entry): Historial {
-  let historial = parsed.get(entry);
-  if (!historial) {
-    historial = parseHistorial(entry.body);
-    parsed.set(entry, historial);
-  }
-  return historial;
-}
 
 /** The 9 alignments of D&D 3.5, as normalizeAlignment returns them. */
 export const ALIGNMENTS = [
@@ -278,40 +151,19 @@ function editDistance(a: string, b: string): number {
 }
 
 /**
- * Warnings of a PJ entry, never errors: an alignment that is not one of the 9, history headings
- * that can't be read and a history that is not written newest first.
+ * Warnings of a PJ entry, never errors: an alignment that is not one of the 9. The history's
+ * warnings come from historialIssues (historial.ts).
  */
 export function pjIssues(entry: Entry): ContentIssue[] {
   if (entry.data.type !== 'pj') return [];
-  const issues: ContentIssue[] = [];
-  const warn = (message: string, field?: string) =>
-    issues.push({ path: entry.path, level: 'warning', field, message });
-
   const { alineamiento } = entry.data;
-  if (alineamiento !== undefined && normalizeAlignment(alineamiento) === undefined) {
-    warn(
-      `'alineamiento' tiene '${alineamiento}', que no es uno de los 9 alineamientos de D&D 3.5 (p. ej. Legal bueno, Neutral o Caótico maligno); se muestra tal cual`,
-      'alineamiento',
-    );
-  }
-
-  const { entries, problems } = historialOf(entry);
-  for (const problem of problems) warn(problem);
-  const misplaced = entries.find((current, index) => index > 0 && current.date > entries[index - 1].date);
-  if (misplaced) {
-    warn(
-      `el historial debe ir del más reciente al más antiguo: la entrada del ${misplaced.date} está debajo de una más antigua`,
-    );
-  }
-  return issues;
-}
-
-function isCalendarDate(text: string): boolean {
-  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(text);
-  if (!match) return false;
-  const [year, month, day] = match.slice(1).map(Number);
-  const date = new Date(Date.UTC(year, month - 1, day));
-  return (
-    date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day
-  );
+  if (alineamiento === undefined || normalizeAlignment(alineamiento) !== undefined) return [];
+  return [
+    {
+      path: entry.path,
+      level: 'warning',
+      field: 'alineamiento',
+      message: `'alineamiento' tiene '${alineamiento}', que no es uno de los 9 alineamientos de D&D 3.5 (p. ej. Legal bueno, Neutral o Caótico maligno); se muestra tal cual`,
+    },
+  ];
 }

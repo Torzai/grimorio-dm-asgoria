@@ -1,22 +1,32 @@
 import { resolve, sep } from 'node:path';
 import type { Plugin, ViteDevServer } from 'vite';
 import { buildContent } from './build-content.ts';
-import { readContentFiles } from './load-from-fs.ts';
 import {
-  buildPjHistorial,
+  cronicaMeta,
+  parseSituacion,
+  SITUACION_ANCHOR,
+  situacionSearchTitle,
+  type CronicaMeta,
+} from './cronica.ts';
+import { isHistorialType, type HistorialType } from './historial.ts';
+import {
+  buildHistorial,
+  itemSearchTitle,
+  type HistorialData,
   type HistorialItemMeta,
-  type PjHistorialData,
-  type PjSummary,
-} from './pj-historial.ts';
+  type HistorialSummary,
+} from './historial-items.ts';
+import { readContentFiles } from './load-from-fs.ts';
 import { nameKey, resolvePjNames, type NameResolution } from './pj-names.ts';
-import { buildIndex, serializeIndex } from './search-index.ts';
-import type { EntryMeta } from './types.ts';
+import { buildIndex, serializeIndex, type SearchSource } from './search-index.ts';
+import type { Entry, EntryMeta } from './types.ts';
 
 /*
  * Node-only. Does at build time (and once per change in dev) the heavy work over the content
  * and hands the browser two virtual modules:
  *   virtual:grimorio/content       every entry without its body, the issues, the link graph,
- *                                  and each PJ's history without the text of its entries (eager)
+ *                                  each history (PJ, crónica) without the text of its entries
+ *                                  and what is derived from each crónica (eager)
  *   virtual:grimorio/search-index  the MiniSearch index, serialized (its own chunk, loaded
  *                                  when the browser is idle or the search is first used)
  * The bodies are not here: load-from-glob.ts imports each .md on its own when it is opened.
@@ -30,50 +40,104 @@ interface Computed {
   indexModule: string;
 }
 
+const hasHistorial = (entry: Entry): entry is Entry<HistorialType> => isHistorialType(entry.type);
+
 async function compute(rootDir: string): Promise<Computed> {
   const { entries, issues, links } = buildContent(await readContentFiles(rootDir));
 
-  const historiales = new Map<string, PjHistorialData>();
-  const summaries: Record<string, PjSummary> = {};
-  const pjs = entries.filter((entry) => entry.type === 'pj');
-  for (const pj of pjs) {
-    const { summary, data } = buildPjHistorial(pj);
-    historiales.set(pj.slug, data);
-    summaries[pj.slug] = summary;
+  const historiales = new Map<string, HistorialData>();
+  const summaries: Record<string, HistorialSummary> = {};
+  const withHistorial = entries.filter(hasHistorial);
+  for (const entry of withHistorial) {
+    const { summary, data } = buildHistorial(entry);
+    historiales.set(entry.slug, data);
+    summaries[entry.slug] = summary;
   }
 
   // Which PJ each companion and participant is, so the browser only reads the slug.
+  const pjs = withHistorial.filter((entry) => entry.type === 'pj');
   const resolutions = resolvePjNames(
     pjs.map((entry) => ({ entry, items: historiales.get(entry.slug)?.items ?? [] })),
   );
   const items: Record<string, HistorialItemMeta[]> = {};
-  for (const pj of pjs) {
-    const resolved = resolutions.get(pj.slug) ?? new Map<string, NameResolution>();
+  for (const entry of withHistorial) {
+    const resolved = resolutions.get(entry.slug) ?? new Map<string, NameResolution>();
     const resolve = (name: string) => resolved.get(nameKey(name)) ?? { kind: 'none' };
     const slugOf = (name: string) => {
       const resolution = resolve(name);
       return resolution.kind === 'pj' ? resolution.slug : null;
     };
+    const isPj = entry.type === 'pj';
 
-    const summary = summaries[pj.slug];
-    summary.companions = summary.companions.map((companion) => ({
-      ...companion,
-      pj: slugOf(companion.name),
-      ...(resolve(companion.name).kind === 'ambiguous' ? { ambiguous: true } : {}),
-    }));
-    // Without bodyMarkdown and searchText; JSON leaves out the fields that are undefined.
-    items[pj.slug] = (historiales.get(pj.slug)?.items ?? []).map(
-      ({ id, date, authorName, authorHandle, participantes, recompensa, preview }) => ({
+    if (isPj) {
+      const summary = summaries[entry.slug];
+      summary.companions = summary.companions.map((companion) => ({
+        ...companion,
+        pj: slugOf(companion.name),
+        ...(resolve(companion.name).kind === 'ambiguous' ? { ambiguous: true } : {}),
+      }));
+    }
+    // Without bodyMarkdown, searchText and blocks; JSON leaves out the fields that are undefined.
+    items[entry.slug] = (historiales.get(entry.slug)?.items ?? []).map(
+      ({ id, date, authorName, authorHandle, title, editedAt, participantes, recompensa, preview }) => ({
         id,
         date,
         authorName,
         authorHandle,
+        title,
+        editedAt,
         participantes,
-        participantesPj: participantes.map(slugOf),
+        participantesPj: isPj ? participantes.map(slugOf) : undefined,
         recompensa,
         preview,
       }),
     );
+  }
+
+  // Each history entry is a search result of its own, and so is each block of a situation.
+  const titleOf = new Map(entries.map((entry) => [entry.slug, entry.data.title]));
+  const cronicas: Record<string, CronicaMeta> = {};
+  const sources = new Map<string, SearchSource>();
+  for (const entry of withHistorial) {
+    const data = historiales.get(entry.slug);
+    if (!data) continue;
+    const { title } = entry.data;
+    const historialParts = data.items.map((item) => ({
+      kind: 'historial' as const,
+      anchor: item.id,
+      title: itemSearchTitle(title, item),
+      resumen: item.participantes.join(' '),
+      body: [item.bodyMarkdown, item.recompensa ?? ''].join('\n'),
+    }));
+    if (entry.type !== 'cronica') {
+      sources.set(entry.slug, { body: data.fichaBody, parts: historialParts });
+      continue;
+    }
+    const situacion = parseSituacion(data.fichaBody);
+    cronicas[entry.slug] = cronicaMeta(situacion, data.items);
+    const zonaTitle = entry.data.zona ? titleOf.get(entry.data.zona) : undefined;
+    sources.set(entry.slug, {
+      body: situacion.rest,
+      parts: [
+        ...situacion.blocks.map((block) => ({
+          kind: 'section' as const,
+          anchor: block.id,
+          title: situacionSearchTitle(title, zonaTitle, block.label),
+          body: block.markdown,
+        })),
+        ...(situacion.intro
+          ? [
+              {
+                kind: 'section' as const,
+                anchor: SITUACION_ANCHOR,
+                title: `${title} · Situación`,
+                body: situacion.intro,
+              },
+            ]
+          : []),
+        ...historialParts,
+      ],
+    });
   }
 
   const metas: EntryMeta[] = entries.map(({ slug, type, path, data }) => ({
@@ -90,10 +154,11 @@ async function compute(rootDir: string): Promise<Computed> {
       backlinks: [...links.backlinks],
       byZona: [...links.byZona],
     })};`,
-    `export const pjSummaries = ${jsonModuleValue(summaries)};`,
-    `export const pjHistoriales = ${jsonModuleValue(items)};`,
+    `export const historialSummaries = ${jsonModuleValue(summaries)};`,
+    `export const historialItems = ${jsonModuleValue(items)};`,
+    `export const cronicas = ${jsonModuleValue(cronicas)};`,
   ].join('\n');
-  const index = serializeIndex(buildIndex(entries, historiales));
+  const index = serializeIndex(buildIndex(entries, sources));
   return { contentModule, indexModule: `export default ${jsonModuleValue(index)};` };
 }
 

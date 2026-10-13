@@ -1,4 +1,5 @@
-import { pjSummaryOf } from '@/content/pj-data';
+import { cronicaMetaOf } from '@/content/cronica-data';
+import { historialSummaryOf } from '@/content/historial-data';
 import { LORE_CATEGORY_LABELS, PJ_ESTADO_LABELS } from '@/content/type-labels';
 import type { EntryMeta } from '@/content/types';
 
@@ -23,12 +24,12 @@ export function formatNumericDate(isoDate: string): string {
 
 /**
  * Parts of the secondary line of a list card, skipping what the entry doesn't have:
- * zona title, then faction (NPC), category (lore) or date (session).
+ * zona title, then faction (NPC), category (lore), date (session) or last update (crónica).
  * A PJ shows its estado and the day of its latest history entry instead.
  */
 export function getEntryMeta(entry: EntryMeta, zoneTitles: ReadonlyMap<string, string>): string[] {
   if (entry.data.type === 'pj') {
-    const newest = pjSummaryOf(entry.slug)?.last;
+    const newest = historialSummaryOf(entry.slug)?.last;
     return [
       PJ_ESTADO_LABELS[entry.data.estado],
       newest ? `Última actividad ${formatNumericDate(newest)}` : 'Sin historial',
@@ -48,6 +49,11 @@ export function getEntryMeta(entry: EntryMeta, zoneTitles: ReadonlyMap<string, s
     case 'sesion':
       parts.push(formatDate(entry.data.fecha));
       break;
+    case 'cronica': {
+      const updated = cronicaMetaOf(entry.slug)?.updated;
+      if (updated) parts.push(`Última actualización ${formatNumericDate(updated)}`);
+      break;
+    }
   }
   return parts;
 }

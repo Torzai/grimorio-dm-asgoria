@@ -1,4 +1,5 @@
 import { createSearchParams, type To } from 'react-router';
+import { HISTORIAL_PROFILES, isHistorialType } from '@/content/historial';
 import type { SearchResult } from '@/content/search-index';
 import { ENTRY_TYPES, type EntryType } from '@/content/types';
 
@@ -11,6 +12,7 @@ export const KIND_ORDER: readonly ResultKind[] = [
   'npc',
   'historial',
   'lore',
+  'cronica',
   'zona',
   'varita',
   'comando',
@@ -24,6 +26,7 @@ export const KIND_LABELS: Readonly<Record<ResultKind, string>> = {
   npc: 'NPCs',
   historial: 'Historial',
   lore: 'Lore',
+  cronica: 'Crónicas',
   zona: 'Zonas',
   varita: 'Varitas',
   comando: 'Comandos',
@@ -37,6 +40,7 @@ export const KIND_TAGS: Readonly<Record<ResultKind, string>> = {
   npc: 'npc',
   historial: 'historial',
   lore: 'lore',
+  cronica: 'crónica',
   zona: 'zona',
   varita: 'varita',
   comando: 'comando',
@@ -105,20 +109,24 @@ export function groupResults(
 }
 
 export function resultKey(result: SearchResult): string {
-  return result.historial
-    ? `${result.slug}#${result.historial.entryId}`
-    : `${result.type}/${result.slug}`;
+  if (result.historial) return `${result.slug}#${result.historial.entryId}`;
+  if (result.section) return `${result.slug}#${result.section.anchor}`;
+  return `${result.type}/${result.slug}`;
 }
 
 /**
- * A history entry opens its PJ on that entry, with the query as the history's search so the
- * words come highlighted.
+ * A history entry opens its parent on that entry, in the tab of the history, with the query as
+ * the history's search so the words come highlighted. A block of a crónica's situation opens
+ * the crónica on that block.
  */
 export function resultTarget(result: SearchResult, query: string): To {
-  if (!result.historial) return `/${result.type}/${result.slug}`;
+  const pathname = `/${result.type}/${result.slug}`;
+  if (result.section) return { pathname, hash: result.section.anchor };
+  if (!result.historial || !isHistorialType(result.type)) return pathname;
+  const tab = HISTORIAL_PROFILES[result.type].tab;
   return {
-    pathname: `/${result.type}/${result.slug}`,
-    search: `?${createSearchParams({ tab: 'historial', ...(query.trim() ? { q: query.trim() } : {}) })}`,
+    pathname,
+    search: `?${createSearchParams({ tab, ...(query.trim() ? { q: query.trim() } : {}) })}`,
     hash: result.historial.entryId,
   };
 }

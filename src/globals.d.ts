@@ -7,9 +7,18 @@ declare module 'virtual:grimorio/content' {
   export const issues: import('./content/types').ContentIssue[];
   /** The maps of the link graph as [key, value] pairs. */
   export const links: Record<keyof import('./content/links').LinkMaps, [string, string[]][]>;
-  export const pjSummaries: Record<string, import('./content/pj-historial').PjSummary>;
-  /** Each PJ's history without the text of its entries, newest first. */
-  export const pjHistoriales: Record<string, import('./content/pj-historial').HistorialItemMeta[]>;
+  /** Totals of each history (PJ, crónica), by slug. */
+  export const historialSummaries: Record<
+    string,
+    import('./content/historial-items').HistorialSummary
+  >;
+  /** Each history without the text of its entries, in its type's order, by slug. */
+  export const historialItems: Record<
+    string,
+    import('./content/historial-items').HistorialItemMeta[]
+  >;
+  /** What is derived from each crónica at build time, by slug. */
+  export const cronicas: Record<string, import('./content/cronica').CronicaMeta>;
 }
 
 /** Built by src/content/vite-plugin-content.ts; its own chunk, loaded by search-data.ts. */

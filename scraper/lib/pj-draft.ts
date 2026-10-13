@@ -1,4 +1,4 @@
-import { Document as YamlDocument, isScalar, visit } from 'yaml';
+import { Document as YamlDocument, isScalar } from 'yaml';
 import { normalize, slugify } from '../../src/content/normalize';
 import { ALIGNMENT_LABELS, readAlignment } from '../../src/content/pj';
 import {
@@ -11,8 +11,10 @@ import {
   UNKNOWN_ACCOUNT,
 } from '../config';
 import type { ImageNote } from './clean-post';
-import { daysBetween, isoDay, spanishDay } from './dates';
-import { escapeMarkdown, postToMarkdown, redactPersonalData } from './markdown';
+import { daysBetween, isoDay } from './dates';
+import { flowLists, YAML_OPTIONS } from './entry-file';
+import { historyEntry as writeHistoryEntry } from './history-entry';
+import { escapeMarkdown, redactPersonalData } from './markdown';
 import type { PjSubforum } from './pj-index';
 import {
   emptySheet,
@@ -85,9 +87,6 @@ export interface PjDraftInput {
    */
   firstNameAlias?: boolean;
 }
-
-/** Same YAML style everywhere the importer writes: one line per value, lists in brackets. */
-export const YAML_OPTIONS = { lineWidth: 0, flowCollectionPadding: false } as const;
 
 /** Heading in "Otros datos" for what the player added to the alignment. */
 const ALIGNMENT_NOTE = 'Nota sobre el alineamiento';
@@ -284,11 +283,7 @@ function frontmatter(values: {
     importado: values.today,
     tags: values.free ? ['importado', FREE_SHEET_TAG] : ['importado'],
   });
-  visit(doc, {
-    Seq: (_key, seq) => {
-      seq.flow = true;
-    },
-  });
+  flowLists(doc);
   const estado = doc.get('estado', true);
   if (isScalar(estado)) {
     estado.comment = values.lastPost
@@ -309,10 +304,8 @@ function subforumSexo(subforum: PjSubforum | undefined): string | undefined {
 }
 
 function historyEntry(post: ForumPost, report: DraftReport): string[] {
-  const { markdown, discordPaste, quotes, images, droppedLinks } = postToMarkdown(post.html);
-  const day = post.postedAt ? isoDay(post.postedAt) : 'sin fecha';
-  const author = redactPersonalData(post.authorName) || 'autor desconocido';
-  const handle = post.authorHandle ? ` (@${post.authorHandle})` : '';
+  const { blocks, day, converted, oddities } = writeHistoryEntry(post);
+  const { discordPaste, quotes, images, droppedLinks } = converted;
 
   report.entries++;
   report.newest ??= day;
@@ -321,17 +314,7 @@ function historyEntry(post: ForumPost, report: DraftReport): string[] {
   if (quotes > 0) report.quotes.push(post.number);
   report.images.push(...images.map((image) => ({ post: post.number, image })));
   report.droppedLinks.push(...droppedLinks.map((kind) => ({ post: post.number, kind })));
-  if (!post.postedAt) report.oddPosts.push(`#${post.number}: sin fecha`);
-  if (!post.authorName) report.oddPosts.push(`#${post.number}: sin autor`);
-  if (!post.authorHandle) report.oddPosts.push(`#${post.number}: sin @usuario`);
-  if (!markdown) report.oddPosts.push(`#${post.number}: sin texto tras la limpieza`);
-
-  const lines = [`### ${day} · ${author}${handle}`, markdown || '_(sin texto)_'];
-  if (post.editedAt && post.editedBy) {
-    report.edited.push(post.number);
-    lines.push(
-      `_Editado el ${spanishDay(post.editedAt)} por ${redactPersonalData(post.editedBy)}_`,
-    );
-  }
-  return lines;
+  report.oddPosts.push(...oddities);
+  if (post.editedAt && post.editedBy) report.edited.push(post.number);
+  return blocks;
 }

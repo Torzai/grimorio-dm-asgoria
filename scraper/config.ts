@@ -51,7 +51,7 @@ export const AUTH_FILE = fileURLToPath(new URL('./auth.json', import.meta.url));
 export const THREAD_URL_PATTERN = /^https:\/\/asgoria\.com\.ar\/foro\/topic\/([a-z0-9_-]+)\/?$/;
 
 /** Kinds of thread the importer knows; each one has its own folder in raw/ and in _inbox/. */
-export const THREAD_KINDS = ['pj'] as const;
+export const THREAD_KINDS = ['pj', 'cronica'] as const;
 
 /** Pause between two requests to the forum. */
 export const REQUEST_DELAY_MS = 1_500;
@@ -430,3 +430,39 @@ export const SEXO_PATTERNS = [
 
 /** A new PJ is 'activo' when the newest post of its thread is younger than this. */
 export const ACTIVE_DAYS = 180;
+
+// ---------------------------------------------------------------------------------------------
+// Tracked topics: single threads kept up to date by `scrape:topics`
+// ---------------------------------------------------------------------------------------------
+
+/** Entry types a tracked topic can become; each is written to content/<type>/<thread-slug>.md. */
+export type TopicType = 'cronica';
+
+export interface TrackedTopic {
+  /** https://asgoria.com.ar/foro/topic/<slug> */
+  url: string;
+  type: TopicType;
+  /** Slug of the zona the topic is about; a minimal zona entry is created when it is missing. */
+  zona?: string;
+  /** Title of that zona entry when it has to be created; by default the slug, capitalized. */
+  zonaTitle?: string;
+  /** Title of the entry when it is created; by default the thread title. Kept on reimport. */
+  title?: string;
+}
+
+/** Threads that describe a region or a plot. Add one and run `npm run scrape:topics`. */
+export const TRACKED_TOPICS: readonly TrackedTopic[] = [
+  {
+    url: 'https://asgoria.com.ar/foro/topic/topico-situacion-actual-gadelica',
+    type: 'cronica',
+    zona: 'gadelica',
+    zonaTitle: 'Gadélica',
+    title: 'Situación actual de Gadélica',
+  },
+];
+
+/** The content folder: real entries, which `scrape:topics` writes to content/<type>/. */
+export const CONTENT_DIR = fileURLToPath(new URL('../content/', import.meta.url));
+
+/** Heading of post #1 in a crónica: the situation as it stands. */
+export const SITUACION_HEADING = 'Situación';

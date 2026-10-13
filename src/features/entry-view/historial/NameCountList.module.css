@@ -1,0 +1,41 @@
+/* Aside boxes of a history: "Narrado por", "Suele jugar con". */
+
+.counts {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  margin: 0;
+  list-style: none;
+}
+
+.countRow {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-12);
+}
+
+.countLink {
+  text-decoration: none;
+}
+
+.countLink:hover {
+  text-decoration: underline;
+  text-underline-offset: var(--space-4);
+}
+
+.countValue {
+  color: var(--color-text-subtle);
+}
+
+.showAll {
+  align-self: flex-start;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font-size: var(--font-size-sm);
+  color: var(--color-gold-bright);
+}
+
+.showAll:hover {
+  color: var(--color-gold-hover);
+}

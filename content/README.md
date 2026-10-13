@@ -35,3 +35,47 @@ Para que el importador no vuelva a tocar una ficha, añade a su frontmatter:
 ```yaml
 importar: false
 ```
+
+## Crónicas (`cronica/`)
+
+Una crónica es un hilo del foro que cuenta la situación de una región o el avance de una trama.
+La ficha tiene dos secciones:
+
+- `## Situación`: el post #1, que su autor va editando. Cada párrafo que empieza con una
+  etiqueta corta en negrita (`**Magia:** …`) abre un bloque: sale en el índice de la pestaña
+  "Situación" y la búsqueda lo encuentra por separado ("Situación de Gadélica · Magia").
+- `## Historial`: las respuestas, como **anexos**, en el orden del hilo y con el mismo formato
+  de entrada que los PJ (`### AAAA-MM-DD · Nombre (@usuario)`). El título de cada anexo es su
+  primer encabezado o su primera línea en negrita; si no tiene, sus primeras palabras.
+
+Campos: `title`, `hilo` (obligatorio), `zona?`, `resumen?`, `importado?`, `importar?`, `tags` y
+`relacionados`. Plantilla en `_templates/cronica.md`.
+
+### Seguir un hilo del foro
+
+Los hilos que se importan como crónica están en `TRACKED_TOPICS`, en `scraper/config.ts`. Para
+añadir uno, copia una entrada de la lista:
+
+```ts
+{
+  url: 'https://asgoria.com.ar/foro/topic/<hilo>',
+  type: 'cronica',
+  zona: 'gadelica',          // opcional: slug de la zona
+  zonaTitle: 'Gadélica',     // opcional: título si hay que crear la ficha de zona
+  title: 'Situación actual de Gadélica', // opcional: título al crear la ficha
+},
+```
+
+Y después:
+
+```sh
+npm run scrape:login                 # solo si la sesión ha caducado
+npm run scrape:topics                # baja los hilos nuevos y escribe content/cronica/<hilo>.md
+npm run scrape:topics -- --refresh   # además, vuelve a bajar la última página de cada hilo
+npm run validate
+```
+
+Al reimportar, igual que con los PJ: se conserva todo el frontmatter (solo cambian `hilo` e
+`importado`), el cuerpo se regenera y una ficha con `importar: false` no se toca. Si la zona del
+hilo no tiene ficha, se crea una mínima (`title` y `tags: [importado]`) para que el enlace
+funcione; su contenido se escribe a mano.

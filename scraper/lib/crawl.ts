@@ -1,10 +1,10 @@
 import { existsSync } from 'node:fs';
-import { readFile, writeFile } from 'node:fs/promises';
+import { readdir, readFile, writeFile } from 'node:fs/promises';
 import { join, relative } from 'node:path';
 import { MAX_PAGES } from '../config';
 import { CrawlStop, type ForumClient } from './forum-client';
 import { parseHtml } from './html';
-import { countPosts, pageFileName, readPagination } from './thread-page';
+import { countPosts, pageFileName, pageNumberOf, readPagination } from './thread-page';
 
 export interface CrawlOptions {
   /** Download every page again. */
@@ -87,4 +87,10 @@ export async function crawlThread(
     url = nextUrl;
   }
   return { pages, downloaded, partial: false };
+}
+
+/** Number of the last page-NN.html in `dir`; undefined when there is none. */
+export async function lastPageOnDisk(dir: string): Promise<number | undefined> {
+  const numbers = (await readdir(dir)).flatMap((name) => pageNumberOf(name) ?? []);
+  return numbers.length > 0 ? Math.max(...numbers) : undefined;
 }

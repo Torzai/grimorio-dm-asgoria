@@ -1,10 +1,10 @@
 import { existsSync } from 'node:fs';
-import { appendFile, mkdir, readdir, readFile } from 'node:fs/promises';
+import { appendFile, mkdir, readFile } from 'node:fs/promises';
 import { join, relative } from 'node:path';
 import { parseArgs } from 'node:util';
 import { PJ_CRAWL_LOG, PJ_INDEX_FILE, RAW_DIR } from './config';
 import { extractThreadDir } from './extract-thread';
-import { crawlThread } from './lib/crawl';
+import { crawlThread, lastPageOnDisk } from './lib/crawl';
 import { CrawlStop, ForumClient } from './lib/forum-client';
 import { pjIndexSchema, type PjIndexEntry } from './lib/pj-index';
 import {
@@ -13,7 +13,7 @@ import {
   pjThreadSummary,
   type PjThreadOutcome,
 } from './lib/pj-thread';
-import { pageNumberOf, threadDumpSchema } from './lib/thread-page';
+import { threadDumpSchema } from './lib/thread-page';
 
 // npm run scrape:pjs -- [--limit N] [--only <slug>]… [--refresh]
 // Downloads, one after another, the PJ threads listed in scraper/raw/pj/_index.json (made by
@@ -127,11 +127,6 @@ async function crawlPj(entry: PjIndexEntry): Promise<CrawlOutcome> {
       downloaded,
     };
   }
-}
-
-async function lastPageOnDisk(dir: string): Promise<number | undefined> {
-  const numbers = (await readdir(dir)).flatMap((name) => pageNumberOf(name) ?? []);
-  return numbers.length > 0 ? Math.max(...numbers) : undefined;
 }
 
 async function printSummary(listed: number): Promise<void> {

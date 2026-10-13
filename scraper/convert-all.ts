@@ -5,24 +5,16 @@ import { parseArgs } from 'node:util';
 import { isScalar, isSeq, parseDocument, type Document } from 'yaml';
 import { normalize } from '../src/content/normalize';
 import { ALIGNMENT_LABELS, readAlignment } from '../src/content/pj';
-import {
-  DISCORD_TAG_PATTERN,
-  EMAIL_PATTERN,
-  PJ_CONTENT_DIR,
-  PJ_CONVERT_REPORT,
-  PJ_INDEX_FILE,
-  RAW_DIR,
-} from './config';
+import { PJ_CONTENT_DIR, PJ_CONVERT_REPORT, PJ_INDEX_FILE, RAW_DIR } from './config';
 import { localDay } from './lib/dates';
-import { pjIndexSchema, type PjIndexEntry } from './lib/pj-index';
 import {
-  draftMarkdown,
-  pjFirstName,
-  pjTitle,
-  renderPjDraft,
+  FRONTMATTER_BLOCK,
+  normalizeNewlines,
+  personalDataIn,
   YAML_OPTIONS,
-  type PjDraft,
-} from './lib/pj-draft';
+} from './lib/entry-file';
+import { pjIndexSchema, type PjIndexEntry } from './lib/pj-index';
+import { draftMarkdown, pjFirstName, pjTitle, renderPjDraft, type PjDraft } from './lib/pj-draft';
 import {
   classifyPjThread,
   errorMessage,
@@ -89,7 +81,6 @@ interface FrontmatterFixes {
 }
 
 const PJ_RAW_DIR = join(RAW_DIR, 'pj');
-const FRONTMATTER_BLOCK = /^---[ \t]*\n([\s\S]*?\n)?---[ \t]*\n/;
 
 const today = localDay(new Date());
 const index = await readIndex();
@@ -359,18 +350,6 @@ function fixFrontmatter(
     }
   }
   return fixes;
-}
-
-/** Last line of defence: the cleanup already redacted these from every text of the entry. */
-function personalDataIn(markdown: string): string | undefined {
-  if (new RegExp(EMAIL_PATTERN.source).test(markdown)) return 'algo con forma de email';
-  if (new RegExp(DISCORD_TAG_PATTERN.source).test(markdown)) return 'una etiqueta nombre#1234';
-  return undefined;
-}
-
-function normalizeNewlines(text: string): string {
-  const withoutBom = text.charCodeAt(0) === 0xfeff ? text.slice(1) : text;
-  return withoutBom.replace(/\r\n?/g, '\n');
 }
 
 function buildReport(): string[] {

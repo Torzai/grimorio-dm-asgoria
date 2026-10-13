@@ -1,16 +1,13 @@
-import {
-  useEffect,
-  useId,
-  useMemo,
-  useRef,
-  useState,
-  type KeyboardEvent,
-  type ReactNode,
-} from 'react';
-import { Link, createSearchParams, useSearchParams, type To } from 'react-router';
+import { useEffect, useId, useMemo, type ReactNode } from 'react';
+import { Link, createSearchParams, useSearchParams } from 'react-router';
 import type { EntryContext } from '@/content/content-queries';
-import { pjHistorialOf, pjSummaryOf, splitPjBody, type PjBody } from '@/content/pj-data';
-import { ownNamesOf, type NameCount, type PjSummary } from '@/content/pj-historial';
+import {
+  historialItemsOf,
+  historialSummaryOf,
+  splitHistorialBody,
+  type HistorialBody,
+} from '@/content/historial-data';
+import { ownNamesOf, type HistorialSummary } from '@/content/historial-items';
 import { PJ_ESTADO_LABELS } from '@/content/type-labels';
 import type { EntryMeta } from '@/content/types';
 import { useEntryBody } from '@/content/use-entry-body';
@@ -20,7 +17,10 @@ import { AsideBox, EntryAside } from '../EntryAside';
 import { MarkdownBody } from '../EntryBody';
 import { editorUrl } from '../editor-link';
 import pageStyles from '../EntryPage.module.css';
-import { HistorialPanel } from './HistorialPanel';
+import { EntryTabs } from '../EntryTabs';
+import tabStyles from '../EntryTabs.module.css';
+import { HistorialPanel } from '../historial/HistorialPanel';
+import { NameCountList, NarratorsBox } from '../historial/NameCountList';
 import styles from './PjView.module.css';
 
 const TABS = [
@@ -30,8 +30,7 @@ const TABS = [
 
 type TabId = (typeof TABS)[number]['id'];
 
-const EMPTY_SUMMARY: PjSummary = { total: 0, dms: [], companions: [], years: [] };
-const TOP_DMS = 5;
+const EMPTY_SUMMARY: HistorialSummary = { total: 0, dms: [], companions: [], years: [] };
 
 interface PjViewProps {
   entry: EntryMeta<'pj'>;
@@ -46,13 +45,14 @@ interface PjViewProps {
  * PJ's body, loaded when the PJ opens.
  */
 export function PjView({ entry, context, title }: PjViewProps) {
-  const summary = pjSummaryOf(entry.slug) ?? EMPTY_SUMMARY;
-  const items = pjHistorialOf(entry.slug);
+  const summary = historialSummaryOf(entry.slug) ?? EMPTY_SUMMARY;
+  const items = historialItemsOf(entry.slug);
   const [params, setParams] = useSearchParams();
   const tab: TabId = params.get('tab') === 'ficha' ? 'ficha' : 'historial';
   const rawBody = useEntryBody(entry.path);
   const body = useMemo(
-    () => (rawBody === undefined ? undefined : splitPjBody(rawBody, ownNamesOf(entry))),
+    () =>
+      rawBody === undefined ? undefined : splitHistorialBody(rawBody, 'pj', ownNamesOf(entry)),
     [rawBody, entry],
   );
   // Splits the entries little by little, so the first search of the history is instant.
@@ -133,7 +133,7 @@ export function PjView({ entry, context, title }: PjViewProps) {
         )}
       </dl>
 
-      <Tabs
+      <EntryTabs
         tabs={TABS.map(({ id, label }) => ({
           id,
           label,
@@ -145,12 +145,12 @@ export function PjView({ entry, context, title }: PjViewProps) {
         onSelect={selectTab}
       />
 
-      <div className={styles.columns}>
+      <div className={tabStyles.columns}>
         <div
           role="tabpanel"
           id={panelId(tab)}
           aria-labelledby={tabId(tab)}
-          className={styles.panel}
+          className={tabStyles.panel}
         >
           {tab === 'historial' ? (
             <HistorialPanel entry={entry} items={items} summary={summary} body={body} />
@@ -168,7 +168,7 @@ export function PjView({ entry, context, title }: PjViewProps) {
 }
 
 /** Tags at once; the sheet once the body is loaded. */
-function FichaTab({ entry, body }: { entry: EntryMeta<'pj'>; body: PjBody | undefined }) {
+function FichaTab({ entry, body }: { entry: EntryMeta<'pj'>; body: HistorialBody | undefined }) {
   const { tags = [] } = entry.data;
   return (
     <div className={styles.ficha}>
@@ -187,13 +187,13 @@ function FichaTab({ entry, body }: { entry: EntryMeta<'pj'>; body: PjBody | unde
         </ul>
       )}
       {!body ? (
-        <p className={styles.loading} aria-busy="true">
+        <p className={tabStyles.loading} aria-busy="true">
           Cargando…
         </p>
       ) : body.fichaBody ? (
         <MarkdownBody markdown={body.fichaBody} />
       ) : (
-        <p className={styles.loading}>Esta ficha todavía no tiene trasfondo.</p>
+        <p className={tabStyles.loading}>Esta ficha todavía no tiene trasfondo.</p>
       )}
     </div>
   );
@@ -239,85 +239,11 @@ function Fact({ label, children }: { label: string; children: ReactNode }) {
   );
 }
 
-interface TabsProps {
-  tabs: { id: TabId; label: string; count?: number; tabId: string; panelId: string }[];
-  selected: TabId;
-  onSelect: (id: TabId) => void;
-}
-
-/** ARIA tabs: one tab stop, arrows (and Home/End) move and select. */
-function Tabs({ tabs, selected, onSelect }: TabsProps) {
-  const refs = useRef(new Map<TabId, HTMLButtonElement>());
-
-  function handleKeyDown(event: KeyboardEvent<HTMLButtonElement>) {
-    const index = tabs.findIndex((tab) => tab.id === selected);
-    const last = tabs.length - 1;
-    const next =
-      event.key === 'ArrowRight'
-        ? (index + 1) % tabs.length
-        : event.key === 'ArrowLeft'
-          ? (index - 1 + tabs.length) % tabs.length
-          : event.key === 'Home'
-            ? 0
-            : event.key === 'End'
-              ? last
-              : undefined;
-    if (next === undefined) return;
-    event.preventDefault();
-    onSelect(tabs[next].id);
-    refs.current.get(tabs[next].id)?.focus();
-  }
-
-  return (
-    <div role="tablist" aria-label="Secciones de la ficha" className={styles.tabs}>
-      {tabs.map((tab) => (
-        <button
-          key={tab.id}
-          ref={(element) => {
-            if (element) refs.current.set(tab.id, element);
-            else refs.current.delete(tab.id);
-          }}
-          type="button"
-          role="tab"
-          id={tab.tabId}
-          aria-selected={tab.id === selected}
-          aria-controls={tab.id === selected ? tab.panelId : undefined}
-          tabIndex={tab.id === selected ? 0 : -1}
-          className={styles.tab}
-          onClick={() => onSelect(tab.id)}
-          onKeyDown={handleKeyDown}
-        >
-          {tab.label}
-          {tab.count !== undefined && <span className={styles.tabCount}> {tab.count}</span>}
-        </button>
-      ))}
-    </div>
-  );
-}
-
 /** "Narrado por" and "Suele jugar con", before the boxes every entry has. */
-function PjAsideBoxes({ summary }: { summary: PjSummary }) {
-  const [showAllDms, setShowAllDms] = useState(false);
-  const dms = showAllDms ? summary.dms : summary.dms.slice(0, TOP_DMS);
-  const listId = useId();
-
+function PjAsideBoxes({ summary }: { summary: HistorialSummary }) {
   return (
     <>
-      <AsideBox title="Narrado por">
-        <NameCountList id={listId} items={dms} />
-        {summary.dms.length > TOP_DMS && (
-          <button
-            type="button"
-            className={styles.showAll}
-            aria-expanded={showAllDms}
-            aria-controls={listId}
-            onClick={() => setShowAllDms((value) => !value)}
-          >
-            {showAllDms ? 'Ver solo 5' : `Ver los ${summary.dms.length}`}{' '}
-            <span aria-hidden="true">{showAllDms ? '↑' : '→'}</span>
-          </button>
-        )}
-      </AsideBox>
+      <NarratorsBox narrators={summary.dms} />
       {summary.companions.length > 0 && (
         <AsideBox title="Suele jugar con">
           <NameCountList
@@ -339,40 +265,5 @@ function PjAsideBoxes({ summary }: { summary: PjSummary }) {
         </AsideBox>
       )}
     </>
-  );
-}
-
-interface CountLink {
-  to: To;
-  title?: string;
-}
-
-function NameCountList<T extends NameCount>({
-  id,
-  items,
-  linkFor,
-}: {
-  id?: string;
-  items: readonly T[];
-  linkFor?: (item: T) => CountLink | undefined;
-}) {
-  return (
-    <ul id={id} className={styles.counts}>
-      {items.map((item) => {
-        const link = linkFor?.(item);
-        return (
-          <li key={item.name} className={styles.countRow}>
-            {link ? (
-              <Link className={styles.countLink} to={link.to} title={link.title}>
-                {item.name}
-              </Link>
-            ) : (
-              <span>{item.name}</span>
-            )}
-            <span className={styles.countValue}>{item.count}</span>
-          </li>
-        );
-      })}
-    </ul>
   );
 }

@@ -1,49 +1,51 @@
 import { matchesAll } from '@/content/highlight';
+import type { HistorialItemMeta, NameCount } from '@/content/historial-items';
 import { normalize } from '@/content/normalize';
-import type { HistorialItemMeta, NameCount } from '@/content/pj-historial';
 
-/** The history filters, as read from the URL (?q=&dm=&con=&anio=). */
+/** The history filters, as read from the URL (?q=&dm=&con=&anio=, or ?autor= in a crónica). */
 export interface HistorialFilters {
   /** Normalized words of ?q=, all required. */
   terms: readonly string[];
-  /** Narrator's name. */
-  dm?: string;
+  /** Narrator's (author's) name. */
+  author?: string;
   /** A participant's name. */
   con?: string;
   /** 'AAAA' */
   year?: string;
 }
 
-export interface YearGroup {
+export interface HistorialGroup {
+  /** 'AAAA'; '' when the history is not grouped by year. */
   year: string;
-  /** Entries of the year that pass the filters, newest first. */
+  /** Entries of the group that pass the filters, in the history's order. */
   items: HistorialItemMeta[];
-  /** Entries of the year, filtered or not. */
+  /** Entries of the group, filtered or not. */
   total: number;
 }
 
 const sameName = (a: string, b: string) => normalize(a) === normalize(b);
 
-export function hasFilters({ terms, dm, con }: HistorialFilters): boolean {
-  return terms.length > 0 || dm !== undefined || con !== undefined;
+export function hasFilters({ terms, author, con }: HistorialFilters): boolean {
+  return terms.length > 0 || author !== undefined || con !== undefined;
 }
 
 /** What the search terms are looked for in: the whole text, or the preview while it loads. */
 export type SearchTextOf = (item: HistorialItemMeta) => string;
 
 /**
- * The entries that pass every filter, grouped by year, newest first. `keep` is shown even
- * when it doesn't pass them: it is the entry a link points to.
+ * The entries that pass every filter: grouped by year, newest first, when `byYear`; else in one
+ * group, in the history's order. `keep` is shown even when it doesn't pass them: it is the entry
+ * a link points to.
  */
 export function groupHistorial(
   items: readonly HistorialItemMeta[],
   filters: HistorialFilters,
   searchTextOf: SearchTextOf,
-  keep?: string,
-): YearGroup[] {
-  const groups = new Map<string, YearGroup>();
+  { keep, byYear }: { keep?: string; byYear: boolean },
+): HistorialGroup[] {
+  const groups = new Map<string, HistorialGroup>();
   for (const item of items) {
-    const year = item.date.slice(0, 4);
+    const year = byYear ? item.date.slice(0, 4) : '';
     const group = groups.get(year) ?? { year, items: [], total: 0 };
     groups.set(year, group);
     group.total += 1;
@@ -53,7 +55,8 @@ export function groupHistorial(
     .filter(
       (group) =>
         group.items.length > 0 &&
-        (!filters.year ||
+        (!byYear ||
+          !filters.year ||
           group.year === filters.year ||
           group.items.some((item) => item.id === keep)),
     )
@@ -62,10 +65,10 @@ export function groupHistorial(
 
 function passes(
   item: HistorialItemMeta,
-  { terms, dm, con }: HistorialFilters,
+  { terms, author, con }: HistorialFilters,
   searchTextOf: SearchTextOf,
 ): boolean {
-  if (dm && !sameName(item.authorName, dm)) return false;
+  if (author && !sameName(item.authorName, author)) return false;
   if (con && !item.participantes.some((name) => sameName(name, con))) return false;
   return terms.length === 0 || matchesAll(searchTextOf(item), terms);
 }

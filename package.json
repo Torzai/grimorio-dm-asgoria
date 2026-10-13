@@ -17,7 +17,8 @@
     "scrape:convert": "tsx scraper/convert-pj.ts",
     "scrape:discover-pjs": "tsx scraper/discover-pjs.ts",
     "scrape:pjs": "tsx scraper/crawl-pjs.ts",
-    "scrape:convert-all": "tsx scraper/convert-all.ts"
+    "scrape:convert-all": "tsx scraper/convert-all.ts",
+    "scrape:topics": "tsx scraper/sync-topics.ts"
   },
   "dependencies": {
     "@fontsource/cinzel": "^5.3.0",

@@ -1,9 +1,10 @@
 import { useId, type ReactNode } from 'react';
 import { Link } from 'react-router';
 import type { EntryContext } from '@/content/content-queries';
+import { cronicaMetaOf } from '@/content/cronica-data';
 import { TYPE_LABELS } from '@/content/type-labels';
 import type { EntryMeta } from '@/content/types';
-import { formatDate } from '@/features/entry-list/entry-meta';
+import { formatDate, formatNumericDate } from '@/features/entry-list/entry-meta';
 import styles from './EntryAside.module.css';
 
 const entryPath = (entry: EntryMeta) => `/${entry.type}/${entry.slug}`;
@@ -16,13 +17,19 @@ interface EntryAsideProps {
 
 /** Side boxes of an entry; each one only when it has something to show. */
 export function EntryAside({ context, before }: EntryAsideProps) {
-  const { related, mentionedIn, sessions, inZone } = context;
-  const count = related.length + mentionedIn.length + sessions.length + inZone.length;
+  const { related, mentionedIn, sessions, inZone, cronicas } = context;
+  const count =
+    related.length + mentionedIn.length + sessions.length + inZone.length + cronicas.length;
   if (count === 0 && !before) return null;
 
   return (
     <aside className={styles.aside} aria-label="Fichas relacionadas">
       {before}
+      {cronicas.length > 0 && (
+        <AsideBox title="Crónicas de esta zona">
+          <CronicaList cronicas={cronicas} />
+        </AsideBox>
+      )}
       {related.length > 0 && (
         <AsideBox title="Relacionado">
           <TypedList entries={related} />
@@ -88,6 +95,32 @@ function TypedList({ entries }: { entries: readonly EntryMeta[] }) {
           </Link>
         </li>
       ))}
+    </ul>
+  );
+}
+
+/** Each crónica with the day of its last update, as the sessions' dates. */
+function CronicaList({ cronicas }: { cronicas: readonly EntryMeta[] }) {
+  return (
+    <ul className={styles.list}>
+      {cronicas.map((entry) => {
+        const updated = cronicaMetaOf(entry.slug)?.updated;
+        return (
+          <li key={entry.slug} className={styles.session}>
+            <Link className={styles.link} to={entryPath(entry)}>
+              {entry.data.title}
+            </Link>
+            {updated && (
+              <>
+                {' · '}
+                <time className={styles.date} dateTime={updated}>
+                  {`actualizada ${formatNumericDate(updated)}`}
+                </time>
+              </>
+            )}
+          </li>
+        );
+      })}
     </ul>
   );
 }

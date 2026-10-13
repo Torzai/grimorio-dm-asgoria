@@ -1,0 +1,73 @@
+/* The index of a long post and its blocks: a crónica's situation, an annex. */
+
+.index {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-10);
+  padding: var(--space-14) var(--space-18);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-2);
+}
+
+.indexTitle {
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-medium);
+  font-size: var(--font-size-3xs);
+  letter-spacing: var(--tracking-field);
+  color: var(--color-text-subtle);
+}
+
+/* Two columns when there is room, so a long index still reads at a glance. */
+.indexList {
+  columns: 2 220px;
+  column-gap: var(--space-32);
+  margin: 0;
+  padding-left: var(--space-20);
+}
+
+.indexList li {
+  break-inside: avoid;
+  padding: var(--space-2) 0;
+  color: var(--color-text-subtle);
+}
+
+.indexLink {
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+.indexLink:hover {
+  text-decoration: underline;
+  text-underline-offset: var(--space-4);
+}
+
+.blocks {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+}
+
+.block {
+  /* Clear of the sticky header when the index or a search result scrolls here. */
+  scroll-margin-top: calc(var(--header-height) + var(--space-16));
+  border-radius: var(--radius-sm);
+}
+
+.block[data-flash] {
+  animation: flash var(--flash-duration) ease-out;
+}
+
+@keyframes flash {
+  0%,
+  30% {
+    box-shadow: 0 0 0 var(--focus-ring-width) var(--color-gold);
+    background: var(--color-gold-tint);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .block[data-flash] {
+    animation-duration: 0.01s;
+  }
+}

@@ -22,6 +22,7 @@
 | T12 | CI en GitHub Actions | T11 | No |
 | T13 | Importador: login y crawl del foro (✅ para PJ) | T12 | No |
 | T14 | Importador: conversión a borradores (✅ para PJ) | T13 | No |
+| T15 | Tipo crónica e importador de hilos seguidos | T06d, T14 | 🎭 Sí |
 
 ---
 
@@ -183,3 +184,15 @@
 - Ningún hilo de `_index.json` se pierde: cada uno acaba importado con formulario, importado como `ficha-libre` (post #1 sin formulario: nombre y cuenta del título, sexo del subforo y el post entero en "## Trasfondo"), excluido con su motivo (normas, plantillas o avisos del staff cuyo título no sigue "Nombre ( Cuenta )") o fallido con su error. El informe acaba con los totales de los cuatro grupos.
 - Ficha nueva: `estado` según el último post del hilo (< 180 días → `activo`). Ficha existente: conserva su frontmatter, actualiza `hilo` e `importado` y regenera el cuerpo; con `importar: false` no se toca.
 - Reimportar: `npm run scrape:pjs -- --refresh` y después `npm run scrape:convert-all`. Ver `content/README.md`.
+
+## T15 · Tipo crónica e importador de hilos seguidos 🎭
+- Tipo `cronica` (spec §3 y HU-11): esquema Zod (`hilo` obligatorio, `importado?`, `importar?`), etiquetas "Crónica" / "Crónicas" tras "Lore y facciones", plantilla `content/_templates/cronica.md`.
+- Historial genérico para cualquier tipo con `## Historial`: parseo en `src/content/historial.ts` con un perfil por tipo (orden por fecha o del hilo, título por fecha y autor o detectado, participantes solo en PJ); items y agregados en `historial-items.ts`; datos del navegador en `historial-data.ts`. Estructura de los posts (etiquetas en negrita, título, notas del importador) en `post-structure.ts`; situación y datos derivados de la crónica en `cronica.ts`.
+- Vista `src/features/entry-view/cronica/`: pestañas "Situación" (índice y bloques con anchor) y "Anexos" (el `HistorialPanel` de los PJ, movido a `entry-view/historial/`), aside "Narrado por". Pestañas y "Narrado por" compartidos con la vista de PJ.
+- Búsqueda global: cada bloque de la situación y cada anexo son documentos propios; palette con grupo "Crónicas" y los anexos en "Historial".
+- Zona: caja "Crónicas de esta zona". Home: caja "Crónicas" con la última actualización.
+- Importador: `TRACKED_TOPICS` en `scraper/config.ts`; `npm run scrape:topics [-- --refresh]` baja cada hilo con el crawl de siempre y escribe `content/<tipo>/<hilo>.md` con el motor de limpieza de PJ; conserva el frontmatter, respeta `importar: false` y crea la ficha mínima de la zona si falta.
+
+**Aceptación (comprobación manual en el navegador):** `validate`, `lint` y `build` en verde; "Crónicas" en el sidebar; `/cronica/topico-situacion-actual-gadelica` muestra la situación con su índice y los anexos buscables y filtrables por autor; buscar en la palette un término del hilo devuelve la crónica, un bloque o un anexo; `/zona/gadelica` enlaza a la crónica; la home muestra la caja "Crónicas"; `/pj/einar-eriksson` sigue igual.
+
+**Estado:** ✅ hecha con el hilo de Gadélica.

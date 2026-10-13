@@ -166,8 +166,10 @@ export interface EntryContext {
   mentionedIn: EntryMeta[];
   /** Sessions that link here, newest first. */
   sessions: EntryMeta[];
-  /** For a zona: the entries that belong to it, grouped by type. */
+  /** For a zona: the entries that belong to it, grouped by type; its crónicas go apart. */
   inZone: EntryGroup[];
+  /** For a zona: the crónicas of its situation, sorted by title. */
+  cronicas: EntryMeta[];
 }
 
 /**
@@ -199,10 +201,14 @@ export function getEntryContext(
   const mentionedIn = linking.filter((other) => other.type !== 'sesion').sort(compareByTitle);
   const sessions = linking.filter((other) => other.type === 'sesion').sort(compareByDateDesc);
 
-  const inZone =
-    entry.type === 'zona' ? groupByType(find(content.links.byZona.get(entry.slug)), entry) : [];
+  const ofZone = entry.type === 'zona' ? find(content.links.byZona.get(entry.slug)) : [];
+  const inZone = groupByType(
+    ofZone.filter((other) => other.type !== 'cronica'),
+    entry,
+  );
+  const cronicas = ofZone.filter((other) => other.type === 'cronica').sort(compareByTitle);
 
-  return { zona, related, mentionedIn, sessions, inZone };
+  return { zona, related, mentionedIn, sessions, inZone, cronicas };
 }
 
 /** Entries grouped by type in sidebar order, each group sorted as its list is. */
