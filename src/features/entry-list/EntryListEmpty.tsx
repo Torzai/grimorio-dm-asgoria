@@ -14,6 +14,8 @@ export function EntryListEmpty() {
   if (!knownType) return null;
 
   const count = countByType(entries)[knownType];
+  // Nothing to pick: the list already says how to add the first entry.
+  if (count === 0) return null;
   return (
     <div className={styles.empty}>
       <p className={styles.title}>Elige una ficha de la lista</p>

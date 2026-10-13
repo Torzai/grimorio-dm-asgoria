@@ -21,7 +21,7 @@ export type FrontmatterOf<T extends EntryType> = z.infer<(typeof entrySchemas)[T
 export interface EntryMeta<T extends EntryType = EntryType> {
   slug: string;
   type: T;
-  /** Repo-relative path, e.g. 'content/npc/ejemplo.md'. */
+  /** Repo-relative path, e.g. 'content/npc/<slug>.md'. */
   path: string;
   data: FrontmatterOf<T>;
 }

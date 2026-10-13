@@ -1,7 +1,11 @@
 # Contenido
 
-Una ficha por fichero `.md`, en la carpeta de su tipo (`pj/`, `npc/`, `zona/`…). Plantillas en
-`_templates/`. Las carpetas que empiezan por `_` (`_inbox/`, `_templates/`) no salen en la app.
+Una ficha por fichero `.md`, en la carpeta de su tipo (`pj/`, `npc/`, `zona/`…). Las carpetas que
+empiezan por `_` (`_inbox/`, `_templates/`) no salen en la app.
+
+Para crear una ficha, copia la plantilla de su tipo de `_templates/` (`_templates/npc.md` →
+`npc/<slug>.md`) y rellena sus campos: las plantillas son la referencia. Un tipo sin fichas sigue
+apareciendo en el sidebar, con un 0 y la indicación de cómo crear la primera.
 
 ## PJ importados del foro
 

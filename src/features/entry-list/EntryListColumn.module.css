@@ -174,3 +174,19 @@
     padding: var(--space-24) var(--space-16) var(--space-32);
   }
 }
+
+/* A type with no entries yet: what is missing and how to add the first one. */
+.emptyTitle {
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-lg);
+  line-height: var(--line-height-tight);
+  color: var(--color-gold-bright);
+}
+
+.empty code {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-sm);
+  color: var(--color-text);
+  overflow-wrap: anywhere;
+}

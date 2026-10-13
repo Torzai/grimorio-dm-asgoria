@@ -51,10 +51,9 @@ export function HomePage() {
           <SavedList items={recents} empty="Las fichas que abras aparecerán aquí." />
         </Box>
 
-        <Box title="PJ activos recientes">
-          {activePjs.length === 0 ? (
-            <p className={styles.empty}>Ningún PJ activo tiene historial todavía.</p>
-          ) : (
+        {/* Boxes fed by the content only show when there is something to list. */}
+        {activePjs.length > 0 && (
+          <Box title="PJ activos recientes">
             <ul className={styles.list}>
               {activePjs.map(({ entry, last }) => (
                 <li key={entry.slug}>
@@ -74,13 +73,11 @@ export function HomePage() {
                 </li>
               ))}
             </ul>
-          )}
-        </Box>
+          </Box>
+        )}
 
-        <Box title={TYPE_LABELS.cronica.plural}>
-          {cronicas.length === 0 ? (
-            <p className={styles.empty}>Todavía no hay fichas de situación.</p>
-          ) : (
+        {cronicas.length > 0 && (
+          <Box title={TYPE_LABELS.cronica.plural}>
             <ul className={styles.list}>
               {cronicas.map(({ entry, updated }) => (
                 <li key={entry.slug}>
@@ -93,13 +90,11 @@ export function HomePage() {
                 </li>
               ))}
             </ul>
-          )}
-        </Box>
+          </Box>
+        )}
 
-        <Box title="Últimas sesiones">
-          {sessions.length === 0 ? (
-            <p className={styles.empty}>Todavía no hay sesiones en el diario.</p>
-          ) : (
+        {sessions.length > 0 && (
+          <Box title="Últimas sesiones">
             <ul className={styles.list}>
               {sessions.map((session) => (
                 <li key={session.slug}>
@@ -110,8 +105,8 @@ export function HomePage() {
                 </li>
               ))}
             </ul>
-          )}
-        </Box>
+          </Box>
+        )}
 
         <Box title="Biblioteca">
           <ul className={styles.list}>

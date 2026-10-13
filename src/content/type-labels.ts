@@ -5,18 +5,24 @@ export interface TypeLabel {
   singular: string;
   /** The category as a whole: sidebar, list titles. */
   plural: string;
+  /** The plural inside a sentence: 'Aún no hay <plainPlural>.' */
+  plainPlural: string;
 }
 
 export const TYPE_LABELS: Readonly<Record<EntryType, TypeLabel>> = {
-  npc: { singular: 'NPC', plural: 'NPCs' },
-  pj: { singular: 'PJ', plural: 'Personajes (PJ)' },
-  zona: { singular: 'Zona', plural: 'Zonas y mapas' },
-  lore: { singular: 'Lore', plural: 'Lore y facciones' },
-  cronica: { singular: 'Situación', plural: 'Situación por regiones' },
-  varita: { singular: 'Varita', plural: 'Varitas' },
-  comando: { singular: 'Comando', plural: 'Comandos' },
-  herramienta: { singular: 'Herramienta', plural: 'Herramientas' },
-  sesion: { singular: 'Sesión', plural: 'Diario de sesiones' },
+  npc: { singular: 'NPC', plural: 'NPCs', plainPlural: 'NPCs' },
+  pj: { singular: 'PJ', plural: 'Personajes (PJ)', plainPlural: 'personajes' },
+  zona: { singular: 'Zona', plural: 'Zonas y mapas', plainPlural: 'zonas' },
+  lore: { singular: 'Lore', plural: 'Lore y facciones', plainPlural: 'fichas de lore' },
+  cronica: {
+    singular: 'Situación',
+    plural: 'Situación por regiones',
+    plainPlural: 'fichas de situación',
+  },
+  varita: { singular: 'Varita', plural: 'Varitas', plainPlural: 'varitas' },
+  comando: { singular: 'Comando', plural: 'Comandos', plainPlural: 'comandos' },
+  herramienta: { singular: 'Herramienta', plural: 'Herramientas', plainPlural: 'herramientas' },
+  sesion: { singular: 'Sesión', plural: 'Diario de sesiones', plainPlural: 'sesiones' },
 };
 
 /** Order of the types in the sidebar and anywhere types are listed. */

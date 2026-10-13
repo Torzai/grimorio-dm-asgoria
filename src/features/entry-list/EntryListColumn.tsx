@@ -95,6 +95,26 @@ export function EntryListColumn({ type, activeSlug }: EntryListColumnProps) {
         : 'orden alfabético';
   const headingId = useId();
 
+  // A type with no entries yet: no chips or count line, just how to add the first one.
+  if (total === 0) {
+    return (
+      <section className={styles.column} aria-labelledby={headingId}>
+        <Heading id={headingId} className="visually-hidden">
+          {TYPE_LABELS[type].plural}
+        </Heading>
+        <div className={styles.empty}>
+          <p className={styles.emptyTitle}>{`Aún no hay ${TYPE_LABELS[type].plainPlural}.`}</p>
+          <p>
+            {'Crea una copiando '}
+            <code>{`/content/_templates/${type}.md`}</code>
+            {' en '}
+            <code>{`/content/${type}/`}</code>
+          </p>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className={styles.column} aria-labelledby={headingId}>
       <Heading id={headingId} className="visually-hidden">
@@ -138,15 +158,13 @@ export function EntryListColumn({ type, activeSlug }: EntryListColumnProps) {
             </li>
           ))}
         </ul>
-      ) : hasFilters ? (
+      ) : (
         <div className={styles.empty}>
           <p>No hay fichas con estos filtros</p>
           <button type="button" className={styles.clear} onClick={clearFilters}>
             Limpiar filtros
           </button>
         </div>
-      ) : (
-        <p className={styles.empty}>Todavía no hay fichas de este tipo.</p>
       )}
     </section>
   );

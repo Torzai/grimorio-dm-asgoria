@@ -54,7 +54,13 @@ function CategoryNav() {
           }
         >
           {TYPE_LABELS[type].plural}
-          <span className={styles.navCount}>{counts[type]}</span>
+          <span
+            className={
+              counts[type] === 0 ? `${styles.navCount} ${styles.navCountEmpty}` : styles.navCount
+            }
+          >
+            {counts[type]}
+          </span>
         </NavLink>
       ))}
       <PinnedNav />

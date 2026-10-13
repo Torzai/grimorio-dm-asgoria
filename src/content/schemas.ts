@@ -31,7 +31,7 @@ function expected(subject: string, field: string, what: string) {
       : `${subject} debe ser ${what}; has puesto ${describeValue(issue.input)}`;
 }
 
-const SLUG_HINT = "el nombre de fichero de otra ficha (sin '.md'), p. ej. 'puerto-ejemplo'";
+const SLUG_HINT = "el nombre de fichero de otra ficha (sin '.md'), p. ej. 'gadelica'";
 const LIST_HINT = 'una lista, p. ej. [uno, dos]';
 
 function text(field: string) {
