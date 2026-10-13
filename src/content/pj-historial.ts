@@ -2,7 +2,7 @@ import type { Nodes, Root, RootContent } from 'mdast';
 import remarkGfm from 'remark-gfm';
 import remarkParse from 'remark-parse';
 import { unified } from 'unified';
-import { normalize } from './normalize.ts';
+import { normalize, withoutApostrophes } from './normalize.ts';
 import { parseHistorial, type HistorialEntry } from './pj.ts';
 import type { Entry, EntryMeta } from './types.ts';
 import { parseWikilinks } from './wikilinks.ts';
@@ -139,7 +139,7 @@ function searchTextOf(
   text: string,
   reward = '',
 ): string {
-  return normalize([authorName, names.join(' '), text, reward].join('\n'));
+  return normalize(withoutApostrophes([authorName, names.join(' '), text, reward].join('\n')));
 }
 
 // --- Participants ------------------------------------------------------------------------

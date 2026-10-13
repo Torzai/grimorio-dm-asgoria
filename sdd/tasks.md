@@ -20,8 +20,8 @@
 | T10 | Imágenes y visor de mapas | T06 | No |
 | T11 | README, plantillas y pre-commit | T02 | No |
 | T12 | CI en GitHub Actions | T11 | No |
-| T13 | Importador: login y crawl del foro | T12 | No |
-| T14 | Importador: conversión a borradores | T13 | No |
+| T13 | Importador: login y crawl del foro (✅ para PJ) | T12 | No |
+| T14 | Importador: conversión a borradores (✅ para PJ) | T13 | No |
 
 ---
 
@@ -165,6 +165,10 @@
 
 **Aceptación:** con una sección pequeña de prueba se generan el HTML y el `index.json`; relanzar no vuelve a bajar lo ya bajado; `git status` no muestra nada de `scraper/raw` ni `auth.json`.
 
+**Estado:** ✅ hecha para PJ (los dos subforos `personajes` y `personajes-femeninos`, tratados como una sola lista). Falta generalizar a otras secciones del foro.
+- `npm run scrape:discover-pjs` → `scraper/raw/pj/_index.json` (url, título, subforo, respuestas, último post relativo).
+- `npm run scrape:pjs -- [--limit N] [--only <slug>]… [--refresh]` → `scraper/raw/pj/<hilo>/page-NN.html` + `posts.json`, log en `scraper/raw/pj/_crawl.log`. Salta los hilos cuyo post #1 no es una ficha de autorización.
+
 ## T14 · Importador: conversión a borradores
 > Ya existe un spike para hilos de PJ en `/scraper/` (`convert-pj.ts` → `content/_inbox/pj/`): T14 lo generaliza a otros tipos de hilo.
 - `scraper/convert.ts`: HTML → Markdown con `turndown` (+ plugin GFM para tablas); limpia firmas, citas y boilerplate del foro según config.
@@ -173,3 +177,8 @@
 - `content/README.md` explica cómo pasar un borrador a ficha real (a mano o con Claude).
 
 **Aceptación:** los HTML de prueba de T13 generan borradores legibles con tablas e imágenes; `npm run validate` sigue pasando.
+
+**Estado:** ✅ hecha para PJ, que se escriben directamente como fichas reales en `content/pj/` (no en `_inbox/`).
+- `npm run scrape:convert-all -- [--only <hilo>]…` → `content/pj/<personaje>.md`; informe en `scraper/raw/pj/_convert-report.txt`.
+- Ficha nueva: `estado` según el último post del hilo (< 180 días → `activo`). Ficha existente: conserva su frontmatter, actualiza `hilo` e `importado` y regenera el cuerpo; con `importar: false` no se toca.
+- Reimportar: `npm run scrape:pjs -- --refresh` y después `npm run scrape:convert-all`. Ver `content/README.md`.

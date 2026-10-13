@@ -36,6 +36,11 @@ export function localDay(date: Date): string {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 }
 
+/** Whole days from one 'YYYY-MM-DD' to another (negative when `to` is earlier). */
+export function daysBetween(from: string, to: string): number {
+  return Math.round((Date.parse(to) - Date.parse(from)) / 86_400_000);
+}
+
 function pad(value: string | number): string {
   return String(value).padStart(2, '0');
 }

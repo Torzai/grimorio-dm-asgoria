@@ -1,15 +1,16 @@
-import { normalize } from '@/content/normalize';
+import { normalize, withoutApostrophes } from '@/content/normalize';
 
 /*
- * Search terms are compared without accents or case: 'drak' finds "Drák'Nar". Matches are found
- * in a per-letter normalized copy of the text, whose positions map back to the original.
+ * Search terms are compared without accents, case or apostrophes: 'draknar' finds "Drák'Nar".
+ * Matches are found in a per-letter normalized copy of the text, whose positions map back to
+ * the original.
  */
 
 const COMBINING_MARKS = /[̀-ͯ]/g;
 
 /** The words of a query, normalized; empty for a blank query. */
 export function queryTerms(query: string): string[] {
-  return normalize(query)
+  return normalize(withoutApostrophes(query))
     .split(/\s+/)
     .filter((term) => term !== '');
 }
@@ -28,7 +29,11 @@ export function findRanges(text: string, terms: readonly string[]): Range[] {
   let folded = '';
   const offsets: number[] = [];
   for (let index = 0; index < text.length; index += 1) {
-    const letter = text[index].normalize('NFD').replace(COMBINING_MARKS, '').toLowerCase();
+    // An apostrophe folds to nothing, so a match runs across it: "Drak'Nar" holds 'draknar'.
+    const letter = withoutApostrophes(text[index])
+      .normalize('NFD')
+      .replace(COMBINING_MARKS, '')
+      .toLowerCase();
     for (let k = 0; k < letter.length; k += 1) offsets.push(index);
     folded += letter;
   }

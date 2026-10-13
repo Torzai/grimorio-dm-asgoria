@@ -4,7 +4,7 @@ import { dirname, join, relative, resolve } from 'node:path';
 import { parseArgs } from 'node:util';
 import { EMAIL_PATTERN, INBOX_DIR } from './config';
 import { localDay } from './lib/dates';
-import { renderPjDraft, type DraftReport } from './lib/pj-draft';
+import { draftMarkdown, renderPjDraft, type DraftReport } from './lib/pj-draft';
 import { threadDumpSchema } from './lib/thread-page';
 
 // npm run scrape:convert -- --dir <carpeta> [--force]
@@ -29,12 +29,14 @@ async function convert(dir: string, force: boolean): Promise<void> {
   );
   const draft = renderPjDraft({
     threadUrl: dump.url,
+    threadTitle: dump.title,
     posts: dump.posts,
     today: localDay(new Date()),
   });
+  const markdown = draftMarkdown(draft);
 
   // Last line of defence: redactPersonalData already ran on every text that reached the draft.
-  if (new RegExp(EMAIL_PATTERN.source).test(draft.markdown)) {
+  if (new RegExp(EMAIL_PATTERN.source).test(markdown)) {
     console.error(
       '✖ El borrador contiene algo con forma de email; no se escribe. Revisa la limpieza.',
     );
@@ -52,7 +54,7 @@ async function convert(dir: string, force: boolean): Promise<void> {
     return;
   }
   await mkdir(dirname(file), { recursive: true });
-  await writeFile(file, draft.markdown);
+  await writeFile(file, markdown);
   console.log(`✔ Borrador escrito en ${shown}`);
   printReport(draft.report);
 }

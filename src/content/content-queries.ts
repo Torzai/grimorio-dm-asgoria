@@ -14,7 +14,7 @@ export function getEntry(
   return entries.find((entry) => entry.type === type && entry.slug === slug);
 }
 
-export const FILTER_KEYS = ['zona', 'faccion', 'estado', 'tag'] as const;
+export const FILTER_KEYS = ['zona', 'faccion', 'estado', 'sexo', 'tag'] as const;
 
 export type FilterKey = (typeof FILTER_KEYS)[number];
 
@@ -22,7 +22,7 @@ export type FilterKey = (typeof FILTER_KEYS)[number];
 export type EntryFilters = Partial<Record<FilterKey, string>>;
 
 export interface FilterValue {
-  /** What goes in the URL: a zona slug, a faction's exact text, a PJ's estado or a tag. */
+  /** What goes in the URL: a zona slug, a faction's exact text, a PJ's estado or sexo, or a tag. */
   value: string;
   /** What the DM reads; for zonas, the title of the zona entry; for estados, 'Activo'… */
   label: string;
@@ -39,13 +39,13 @@ const collator = new Intl.Collator('es', { sensitivity: 'base' });
 
 /**
  * Filters that make sense for a type: no zona filter among zonas, factions only for NPCs and
- * estado only for PJs.
+ * estado and sexo only for PJs.
  */
 export function filterKeysFor(type: EntryType): FilterKey[] {
   return FILTER_KEYS.filter((key) => {
     if (key === 'zona') return type !== 'zona';
     if (key === 'faccion') return type === 'npc';
-    if (key === 'estado') return type === 'pj';
+    if (key === 'estado' || key === 'sexo') return type === 'pj';
     return true;
   });
 }
@@ -58,6 +58,8 @@ function filterValuesOf(entry: EntryMeta, key: FilterKey): string[] {
       return entry.data.type === 'npc' && entry.data.faccion ? [entry.data.faccion] : [];
     case 'estado':
       return entry.data.type === 'pj' ? [entry.data.estado] : [];
+    case 'sexo':
+      return entry.data.type === 'pj' && entry.data.sexo ? [entry.data.sexo] : [];
     case 'tag':
       return entry.data.tags ?? [];
   }

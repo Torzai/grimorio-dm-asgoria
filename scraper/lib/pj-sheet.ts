@@ -1,5 +1,6 @@
 import { normalize } from '../../src/content/normalize';
 import {
+  MIN_FORM_LABELS,
   NO_CLASS_ANSWER,
   SHEET_CLASS_LABELS,
   SHEET_DISCARDED_LABEL,
@@ -25,6 +26,8 @@ export interface PjSheet {
   discarded: string[];
   /** Cleanup notes of the long answers (images, removed links…). */
   notes: Omit<ConvertedPost, 'markdown'>[];
+  /** Answered fields whose label is one of the form's (known fields, classes or sections). */
+  knownLabels: number;
 }
 
 interface Answer {
@@ -51,6 +54,7 @@ export function parseSheet(html: string): PjSheet {
     others: [],
     discarded: [],
     notes: [],
+    knownLabels: 0,
   };
   const classes: { order: number; value: string }[] = [];
   const sectionAnswers = new Map<string, Answer>();
@@ -59,6 +63,8 @@ export function parseSheet(html: string): PjSheet {
     const field = fieldKeys.get(answer.key);
     const classIndex = classOrder.get(answer.key);
     const section = sectionKeys.get(answer.key);
+    // An empty template has the labels but no answers, so only answered labels count.
+    if ((field || classIndex !== undefined || section) && answer.text) sheet.knownLabels++;
     if (SHEET_DISCARDED_LABEL.test(answer.key)) {
       sheet.discarded.push(answer.label);
     } else if (field) {
@@ -82,6 +88,14 @@ export function parseSheet(html: string): PjSheet {
     if (markdown) sheet.sections.push({ heading, markdown });
   }
   return sheet;
+}
+
+/**
+ * True when the post is an authorization form: enough of its tables carry labels of the form.
+ * Rules, templates and pinned notices of the subforums have none.
+ */
+export function isAuthorizationForm(html: string): boolean {
+  return parseSheet(html).knownLabels >= MIN_FORM_LABELS;
 }
 
 /** Comparable form of a label: 'Descripción Física (opcional):' → 'descripcion fisica'. */

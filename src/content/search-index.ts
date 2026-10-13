@@ -1,5 +1,5 @@
 import MiniSearch, { type AsPlainObject, type Options } from 'minisearch';
-import { normalize } from './normalize.ts';
+import { normalize, withoutApostrophes } from './normalize.ts';
 import type { HistorialItem } from './pj-historial.ts';
 import type { Entry, EntryType } from './types.ts';
 
@@ -66,13 +66,14 @@ const STOPWORDS = new Set(['de', 'del', 'la', 'el', 'los', 'las', 'y', 'en', 'a'
 // Also splits on symbols such as '|', so '[[slug|texto]]' indexes 'texto' on its own.
 const SEPARATORS = /[\n\r\p{Z}\p{P}\p{S}]+/u;
 
+/** Apostrophes join instead of split: "Drak'Nar" is one word, 'draknar'. */
 function tokenize(text: string): string[] {
-  return text.split(SEPARATORS);
+  return withoutApostrophes(text).split(SEPARATORS);
 }
 
-/** Same in indexing and in queries: lowercase, no accents, no stopwords. */
+/** Same in indexing and in queries: lowercase, no accents or apostrophes, no stopwords. */
 function processTerm(term: string): string | null {
-  const normalized = normalize(term);
+  const normalized = normalize(withoutApostrophes(term));
   return normalized && !STOPWORDS.has(normalized) ? normalized : null;
 }
 

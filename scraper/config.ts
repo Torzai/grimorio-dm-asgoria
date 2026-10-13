@@ -44,8 +44,11 @@ export const AUTH_FILE = fileURLToPath(new URL('./auth.json', import.meta.url));
 // Crawl
 // ---------------------------------------------------------------------------------------------
 
-/** Only threads of this forum can be crawled: https://asgoria.com.ar/foro/topic/<slug>. */
-export const THREAD_URL_PATTERN = /^https:\/\/asgoria\.com\.ar\/foro\/topic\/([a-z0-9-]+)\/?$/;
+/**
+ * Only threads of this forum can be crawled: https://asgoria.com.ar/foro/topic/<slug>. Slugs
+ * keep the underscores of account names ("…-murder_zombie").
+ */
+export const THREAD_URL_PATTERN = /^https:\/\/asgoria\.com\.ar\/foro\/topic\/([a-z0-9_-]+)\/?$/;
 
 /** Kinds of thread the importer knows; each one has its own folder in raw/ and in _inbox/. */
 export const THREAD_KINDS = ['pj'] as const;
@@ -61,6 +64,72 @@ export const RAW_DIR = fileURLToPath(new URL('./raw/', import.meta.url));
 
 /** Drafts for the DMs to review. The app and `validate` skip every folder starting with '_'. */
 export const INBOX_DIR = fileURLToPath(new URL('../content/_inbox/', import.meta.url));
+
+// ---------------------------------------------------------------------------------------------
+// PJ subforums: both are treated as one list
+// ---------------------------------------------------------------------------------------------
+
+/**
+ * The PJ authorization threads live in these two subforums; `id` is stored in _index.json and
+ * `sexo` is what a PJ gets when its form leaves the field empty.
+ */
+export const PJ_SUBFORUMS = [
+  { id: 'personajes', url: 'https://asgoria.com.ar/foro/forum/personajes', sexo: 'Masculino' },
+  {
+    id: 'personajes-femeninos',
+    url: 'https://asgoria.com.ar/foro/forum/personajes-femeninos',
+    sexo: 'Femenino',
+  },
+] as const;
+
+/** Safety cap on the pages of one subforum listing. */
+export const MAX_LISTING_PAGES = 100;
+
+// ---------------------------------------------------------------------------------------------
+// Subforum listing (Asgaros Forum)
+// ---------------------------------------------------------------------------------------------
+//
+// <div id="af-wrapper">
+//   <div class="pages"><strong>Página 1 de 4</strong><a href="…?part=2">Siguiente <i class="fa-step-forward"></i></a></div>
+//   <div class="content-element topic topic-normal">
+//     <div class="topic-name"><a href="https://asgoria.com.ar/foro/topic/<slug>">Nombre ( Cuenta )</a>…</div>
+//     <div class="topic-stats"><span class="topic-stats-posts">12 Respuestas</span>…</div>
+//     <div class="topic-poster"><div class="forum-poster-summary"><a href="…#postid-9254">hace 4 semanas</a><br><small>…autor…</small></div></div>
+//   </div>
+// </div>
+//
+// Pagination reuses SELECTORS.pageCounter and SELECTORS.nextPageIcon.
+
+export const LISTING_SELECTORS = {
+  /** One row per thread (sticky ones included; they are skipped later if post #1 is no form). */
+  topic: '#af-wrapper .topic',
+  /** Link to the thread, with its title as text. */
+  topicLink: '.topic-name a[href*="/foro/topic/"]',
+  /** "12 Respuestas"; the number is found with REPLIES_PATTERN. */
+  replies: '.topic-stats',
+  /**
+   * Date of the last post: relative ("hace 4 semanas"), so it is kept as text in `lastPostAgo`.
+   * If the forum ever shows an absolute date, POST_DATE_PATTERN turns it into `lastPostAt`.
+   */
+  lastPostDate: '.topic-poster .forum-poster-summary > a',
+} as const;
+
+/** "12 Respuestas", "1 respuesta", "12 Replies". */
+export const REPLIES_PATTERN = /(\d[\d.,]*)\s*(?:respuestas?|replies|reply)/i;
+
+/** Discovery output: one list with the threads of both subforums. */
+export const PJ_INDEX_FILE = fileURLToPath(new URL('./raw/pj/_index.json', import.meta.url));
+
+/** One line per thread crawled by `scrape:pjs`. */
+export const PJ_CRAWL_LOG = fileURLToPath(new URL('./raw/pj/_crawl.log', import.meta.url));
+
+/** Report of the last `scrape:convert-all`. */
+export const PJ_CONVERT_REPORT = fileURLToPath(
+  new URL('./raw/pj/_convert-report.txt', import.meta.url),
+);
+
+/** Where `scrape:convert-all` writes the PJ entries (real entries, not drafts). */
+export const PJ_CONTENT_DIR = fileURLToPath(new URL('../content/pj/', import.meta.url));
 
 // ---------------------------------------------------------------------------------------------
 // Thread page (Asgaros Forum)
@@ -297,3 +366,21 @@ export const SHEET_SECTIONS = [
  * stay in scraper/raw/ and never reach a draft. Matched against the normalized label.
  */
 export const SHEET_DISCARDED_LABEL = /correo|e-?mail|discord|foro|usuario/;
+
+/** Post #1 is an authorization form when at least this many known labels have an answer. */
+export const MIN_FORM_LABELS = 3;
+
+/** "Einar Eriksson ( Fernando10100 )": name and account, when the form lacks them. */
+export const THREAD_TITLE_PATTERN = /^(.*?)\s*\(\s*([^()]*?)\s*\)\s*$/;
+
+/** `cuenta_nwn` when neither the form nor the thread title give it (the field is required). */
+export const UNKNOWN_ACCOUNT = 'desconocida';
+
+/** Answers to "Sexo del Personaje", compared normalized; anything else is kept as written. */
+export const SEXO_PATTERNS = [
+  { value: 'Masculino', pattern: /^(masc|hombre|varon|macho|m\.?$)/ },
+  { value: 'Femenino', pattern: /^(fem|mujer|hembra|f\.?$)/ },
+] as const;
+
+/** A new PJ is 'activo' when the newest post of its thread is younger than this. */
+export const ACTIVE_DAYS = 180;

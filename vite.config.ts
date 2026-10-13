@@ -16,6 +16,8 @@ export default defineConfig(({ command }) => ({
     __REPO_ROOT__: JSON.stringify(command === 'serve' ? process.cwd().replaceAll('\\', '/') : ''),
   },
   build: {
+    // The content chunk grows with every imported PJ (hundreds of them, with their histories).
+    chunkSizeWarningLimit: 1500,
     rolldownOptions: {
       output: {
         // Keeps every chunk under Vite's 500 kB warning; all of them still load eagerly.

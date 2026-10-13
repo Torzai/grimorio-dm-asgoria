@@ -146,6 +146,8 @@ export const entrySchemas = {
     hilo: webAddress('hilo').optional(),
     /** When the entry was brought from the forum by the importer. */
     importado: isoDate('importado').optional(),
+    /** false: the importer never touches this entry again (scrape:convert-all). */
+    importar: boolean('importar').optional(),
   }),
   zona: z.object({
     type: z.literal('zona'),
