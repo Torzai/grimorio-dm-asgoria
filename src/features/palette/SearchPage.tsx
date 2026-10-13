@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import { useSearchIndex } from '@/content/search-data';
 import { search } from '@/content/search-index';
-import { queryTerms } from '@/features/entry-view/pj/highlight';
+import { queryTerms } from '@/content/highlight';
 import { Page } from '@/ui/Page';
 import {
   KIND_LABELS,

@@ -1,7 +1,9 @@
 import { useEffect, useState, type ReactNode } from 'react';
+import { findRanges } from '@/content/highlight';
 import type { HistorialItemMeta, HistorialItemText } from '@/content/pj-historial';
+import { PinIconButton } from '@/features/pins/PinButton';
+import { historialItem } from '@/features/pins/saved-items';
 import { MarkdownBody } from '../EntryBody';
-import { findRanges } from './highlight';
 import styles from './HistorialPanel.module.css';
 
 const MONTHS = ['ENE', 'FEB', 'MAR', 'ABR', 'MAY', 'JUN', 'JUL', 'AGO', 'SEP', 'OCT', 'NOV', 'DIC'];
@@ -30,49 +32,56 @@ export function HistorialEntry({ item, text, slug, terms, open, onToggle }: Hist
 
   return (
     <article id={item.id} className={styles.entry} data-open={open ? '' : undefined}>
-      <button
-        type="button"
-        className={styles.entryHead}
-        aria-expanded={open}
-        aria-controls={open ? bodyId : undefined}
-        onClick={onToggle}
-      >
-        <time className={styles.date} dateTime={item.date}>
-          <span className={styles.day}>{day}</span>
-          <span className={styles.monthYear}>{`${MONTHS[Number(month) - 1]} ${year}`}</span>
-        </time>
-        <span className={styles.summary}>
-          <span className={styles.narrator}>
-            Narró <span className={styles.narratorName}>{item.authorName}</span>
+      <div className={styles.entryTop}>
+        <button
+          type="button"
+          className={styles.entryHead}
+          aria-expanded={open}
+          aria-controls={open ? bodyId : undefined}
+          onClick={onToggle}
+        >
+          <time className={styles.date} dateTime={item.date}>
+            <span className={styles.day}>{day}</span>
+            <span className={styles.monthYear}>{`${MONTHS[Number(month) - 1]} ${year}`}</span>
+          </time>
+          <span className={styles.summary}>
+            <span className={styles.narrator}>
+              Narró <span className={styles.narratorName}>{item.authorName}</span>
+            </span>
+            {item.participantes.length > 0 && (
+              <span className={styles.participants}>
+                {item.participantes.slice(0, MAX_CHIPS).map((name) => (
+                  <span key={name} className={styles.participant}>
+                    <Highlighted text={name} terms={terms} />
+                  </span>
+                ))}
+                {extra > 0 && (
+                  <span
+                    className={styles.more}
+                    title={item.participantes.slice(MAX_CHIPS).join(', ')}
+                  >
+                    {`+${extra}`}
+                  </span>
+                )}
+              </span>
+            )}
+            {/* Open, the body starts with the same text. */}
+            {!open && item.preview && (
+              <span className={styles.preview}>
+                <Highlighted text={item.preview} terms={terms} />
+              </span>
+            )}
           </span>
-          {item.participantes.length > 0 && (
-            <span className={styles.participants}>
-              {item.participantes.slice(0, MAX_CHIPS).map((name) => (
-                <span key={name} className={styles.participant}>
-                  <Highlighted text={name} terms={terms} />
-                </span>
-              ))}
-              {extra > 0 && (
-                <span
-                  className={styles.more}
-                  title={item.participantes.slice(MAX_CHIPS).join(', ')}
-                >
-                  {`+${extra}`}
-                </span>
-              )}
-            </span>
-          )}
-          {/* Open, the body starts with the same text. */}
-          {!open && item.preview && (
-            <span className={styles.preview}>
-              <Highlighted text={item.preview} terms={terms} />
-            </span>
-          )}
-        </span>
-        <span className={styles.caret} aria-hidden="true">
-          {open ? '▴' : '▾'}
-        </span>
-      </button>
+          <span className={styles.caret} aria-hidden="true">
+            {open ? '▴' : '▾'}
+          </span>
+        </button>
+        {open && (
+          <div className={styles.entryPin}>
+            <PinIconButton item={historialItem(slug, item.id)} />
+          </div>
+        )}
+      </div>
 
       {open && (
         <div id={bodyId} className={styles.entryBody}>

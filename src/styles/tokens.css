@@ -127,6 +127,7 @@
   /* The mockup's 360px flex-basis is content-box: + 28px padding + 2px border. */
   --search-basis: 390px;
   --icon-button-size: 44px;
+  --icon-button-size-sm: 32px; /* pin button of a history entry, remove button of a pin */
   --icon-size: 18px;
   --icon-stroke: 1.8;
   --historial-date-width: 72px; /* date column of a history entry */

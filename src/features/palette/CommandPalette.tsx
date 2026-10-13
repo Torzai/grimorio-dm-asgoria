@@ -6,19 +6,23 @@ import {
   useState,
   type FocusEvent,
   type KeyboardEvent,
+  type ReactNode,
 } from 'react';
 import { createPortal } from 'react-dom';
 import { Link, useNavigate } from 'react-router';
+import { queryTerms } from '@/content/highlight';
+import { recentActivePjs } from '@/content/pj-data';
 import { useSearchIndex } from '@/content/search-data';
-import { search } from '@/content/search-index';
+import { search, type SearchResult } from '@/content/search-index';
 import { useContent } from '@/content/use-content';
-import { queryTerms } from '@/features/entry-view/pj/highlight';
+import { itemOfResult, resultOfItem, type ResolvedItem } from '@/features/pins/saved-items';
+import { usePins, useRecents } from '@/features/pins/use-saved-items';
+import { PaletteContext, usePalette, type PaletteControls } from './palette-context';
 import { PalettePreview } from './PalettePreview';
 import {
   KIND_LABELS,
   groupResults,
   kindsWithResults,
-  recentActivePjs,
   resultTarget,
   searchPageTarget,
   type ResultGroup,
@@ -31,20 +35,24 @@ import styles from './CommandPalette.module.css';
 const DEBOUNCE_MS = 80;
 const MAX_PER_GROUP = 6;
 const SUGGESTIONS = 8;
+const NOTICE_MS = 1500;
 
 type KindFilter = ResultKind | 'all';
 
+interface PaletteProviderProps {
+  children: ReactNode;
+}
+
 /**
- * The header's search box and the palette it opens. Ctrl+K / Cmd+K opens it from anywhere,
- * '/' when the focus is not in a text field. The query is kept here, so it is still there when
- * the palette opens again.
+ * Owns the palette: its open state, its query and its shortcuts. Ctrl+K / Cmd+K opens it from
+ * anywhere, '/' when the focus is not in a text field; PaletteTrigger opens it on click. The
+ * query is kept here, so it is still there when the palette opens again.
  */
-export function PaletteLauncher() {
+export function PaletteProvider({ children }: PaletteProviderProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
-  const triggerRef = useRef<HTMLButtonElement>(null);
   const openerRef = useRef<HTMLElement | null>(null);
-  // Set while the focus goes back to the trigger, which would open the palette again.
+  // Set while the focus goes back to the opener, which would open the palette again.
   const restoringFocus = useRef(false);
 
   useEffect(() => {
@@ -74,10 +82,18 @@ export function PaletteLauncher() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [open]);
 
-  function openFrom(opener: HTMLElement) {
-    openerRef.current = opener;
-    setOpen(true);
-  }
+  const controls = useMemo<PaletteControls>(
+    () => ({
+      isOpen: open,
+      query,
+      openFrom(opener) {
+        openerRef.current = opener;
+        setOpen(true);
+      },
+      isRestoringFocus: () => restoringFocus.current,
+    }),
+    [open, query],
+  );
 
   function close(restoreFocus: boolean) {
     setOpen(false);
@@ -89,48 +105,59 @@ export function PaletteLauncher() {
     restoringFocus.current = false;
   }
 
-  function handleTriggerFocus(event: FocusEvent<HTMLButtonElement>) {
-    // Coming back to the window refocuses the trigger with no related target: not a request.
-    if (open || restoringFocus.current || event.relatedTarget === null) return;
-    openFrom(event.currentTarget);
-  }
-
   return (
-    <>
-      <button
-        ref={triggerRef}
-        type="button"
-        className={styles.trigger}
-        aria-haspopup="dialog"
-        aria-keyshortcuts="Control+K Meta+K /"
-        onFocus={handleTriggerFocus}
-        onClick={(event) => {
-          if (!open) openFrom(event.currentTarget);
-        }}
-      >
-        <svg
-          className={styles.triggerIcon}
-          aria-hidden="true"
-          viewBox="0 0 24 24"
-          fill="none"
-          strokeLinecap="round"
-        >
-          <circle cx="11" cy="11" r="7" />
-          <path d="M20 20l-4-4" />
-        </svg>
-        <span className={query ? styles.triggerQuery : styles.triggerPlaceholder}>
-          {query || 'Busca un NPC, comando, varita, zona…'}
-        </span>
-        <kbd className={styles.shortcut} aria-hidden="true">
-          Ctrl K
-        </kbd>
-      </button>
+    <PaletteContext value={controls}>
+      {children}
       {open &&
         createPortal(
           <PaletteDialog query={query} onQueryChange={setQuery} onClose={close} />,
           document.body,
         )}
-    </>
+    </PaletteContext>
+  );
+}
+
+/**
+ * A search box that opens the palette: the header's, and the large one of the home
+ * ('large').
+ */
+export function PaletteTrigger({ large = false }: { large?: boolean }) {
+  const { isOpen, query, openFrom, isRestoringFocus } = usePalette();
+
+  function handleFocus(event: FocusEvent<HTMLButtonElement>) {
+    // Coming back to the window refocuses the trigger with no related target: not a request.
+    if (isOpen || isRestoringFocus() || event.relatedTarget === null) return;
+    openFrom(event.currentTarget);
+  }
+
+  return (
+    <button
+      type="button"
+      className={large ? `${styles.trigger} ${styles.triggerLarge}` : styles.trigger}
+      aria-haspopup="dialog"
+      aria-keyshortcuts="Control+K Meta+K /"
+      onFocus={handleFocus}
+      onClick={(event) => {
+        if (!isOpen) openFrom(event.currentTarget);
+      }}
+    >
+      <svg
+        className={styles.triggerIcon}
+        aria-hidden="true"
+        viewBox="0 0 24 24"
+        fill="none"
+        strokeLinecap="round"
+      >
+        <circle cx="11" cy="11" r="7" />
+        <path d="M20 20l-4-4" />
+      </svg>
+      <span className={query ? styles.triggerQuery : styles.triggerPlaceholder}>
+        {query || 'Busca un NPC, comando, varita, zona…'}
+      </span>
+      <kbd className={styles.shortcut} aria-hidden="true">
+        Ctrl K
+      </kbd>
+    </button>
   );
 }
 
@@ -187,7 +214,18 @@ function PaletteDialog({ query, onQueryChange, onClose }: PaletteDialogProps) {
     () => (index && hasQuery ? search(index, searched, { limit: Infinity }) : undefined),
     [index, hasQuery, searched],
   );
-  const suggestions = useMemo(() => recentActivePjs(entries, SUGGESTIONS), [entries]);
+  const { pins, toggle } = usePins();
+  const { recents } = useRecents();
+  const suggestions = useMemo(
+    () =>
+      recentActivePjs(entries, SUGGESTIONS).map(({ entry }): SearchResult => ({
+        slug: entry.slug,
+        type: entry.type,
+        title: entry.data.title,
+        score: 0,
+      })),
+    [entries],
+  );
   const kinds = useMemo(() => (results ? kindsWithResults(results) : []), [results]);
   // A filter whose kind has no results for this query is not shown, nor applied.
   const activeKind: KindFilter =
@@ -196,16 +234,23 @@ function PaletteDialog({ query, onQueryChange, onClose }: PaletteDialogProps) {
 
   const groups: ResultGroup[] = useMemo(() => {
     if (!hasQuery) {
-      return suggestions.length > 0
-        ? groupResults(suggestions).map((group) => ({ ...group, label: 'Actividad reciente' }))
-        : [];
+      return [
+        savedGroup('pins', 'Fijados', pins),
+        savedGroup('recents', 'Recientes', recents),
+        ...groupResults(suggestions).map((group) => ({
+          ...group,
+          key: 'active',
+          label: 'PJ activos',
+          options: group.options.map((option) => ({ ...option, key: `active:${option.key}` })),
+        })),
+      ].filter((group) => group.options.length > 0);
     }
     if (!results) return [];
     return groupResults(results, {
       kind: activeKind === 'all' ? undefined : activeKind,
       maxPerGroup: MAX_PER_GROUP,
     });
-  }, [hasQuery, suggestions, results, activeKind]);
+  }, [hasQuery, pins, recents, suggestions, results, activeKind]);
 
   const options = useMemo(() => groups.flatMap((group) => group.options), [groups]);
   const selected = options.find((option) => option.key === selectedKey) ?? options[0];
@@ -223,6 +268,30 @@ function PaletteDialog({ query, onQueryChange, onClose }: PaletteDialogProps) {
         ? resultTarget(option.result, searched)
         : searchPageTarget(searched, option.kind),
     );
+  }
+
+  // "Fijado" / "Quitado" after Ctrl+Enter, for a moment.
+  const [notice, setNotice] = useState<{ text: string; id: number }>();
+  useEffect(() => {
+    if (!notice) return;
+    const timer = setTimeout(() => setNotice(undefined), NOTICE_MS);
+    return () => clearTimeout(timer);
+  }, [notice]);
+
+  function togglePin(option: ResultOption) {
+    if (!('result' in option)) return;
+    const item = itemOfResult(option.result);
+    const pinned = toggle(item);
+    setNotice((previous) => ({
+      text: pinned ? 'Fijado' : 'Quitado',
+      id: (previous?.id ?? 0) + 1,
+    }));
+    // Unpinned from the "Fijados" group, the row leaves: select the one that takes its place.
+    if (!pinned && option.key.startsWith('pins:')) {
+      const at = options.indexOf(option);
+      const rest = options.filter((other) => other !== option);
+      setSelectedKey(rest[Math.min(at, rest.length - 1)]?.key);
+    }
   }
 
   function moveSelection(to: number) {
@@ -254,7 +323,9 @@ function PaletteDialog({ query, onQueryChange, onClose }: PaletteDialogProps) {
         moveSelection(options.length - 1);
         break;
       case 'Enter':
-        if (selected) pick(selected);
+        if (event.ctrlKey || event.metaKey) {
+          if (selected) togglePin(selected);
+        } else if (selected) pick(selected);
         else if (hasQuery) {
           onClose(false);
           navigate(searchPageTarget(searched));
@@ -414,14 +485,32 @@ function PaletteDialog({ query, onQueryChange, onClose }: PaletteDialogProps) {
           )}
         </div>
 
-        <div className={styles.footer} aria-hidden="true">
-          <span>↑↓ navegar</span>
-          <span>Enter abrir</span>
-          <span>Esc cerrar</span>
+        <div className={styles.footer}>
+          <span aria-hidden="true">↑↓ navegar</span>
+          <span aria-hidden="true">Enter abrir</span>
+          <span aria-hidden="true">Ctrl+Enter fijar</span>
+          <span aria-hidden="true">Esc cerrar</span>
+          <span className={styles.notice} role="status">
+            {notice && <span key={notice.id}>{notice.text}</span>}
+          </span>
         </div>
       </div>
     </div>
   );
+}
+
+/** Pins or recents as a group of the palette, whose keys don't clash with other groups. */
+function savedGroup(key: string, label: string, items: readonly ResolvedItem[]): ResultGroup {
+  return {
+    key,
+    kind: items[0]?.kind ?? 'pj',
+    label,
+    options: items.map((item) => ({
+      key: `${key}:${item.key}`,
+      kind: item.kind,
+      result: resultOfItem(item),
+    })),
+  };
 }
 
 function countLabel(groups: readonly ResultGroup[]): string {

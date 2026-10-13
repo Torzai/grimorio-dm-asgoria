@@ -1,5 +1,6 @@
 import { pjHistoriales, pjSummaries } from 'virtual:grimorio/content';
 import { whenIdle } from './idle.ts';
+import type { EntryMeta } from './types.ts';
 import { parseHistorial, type HistorialEntry } from './pj.ts';
 import {
   historialItem,
@@ -20,6 +21,24 @@ export function pjSummaryOf(slug: string): PjSummary | undefined {
 /** A PJ's history without the text of its entries, newest first; empty for an unknown slug. */
 export function pjHistorialOf(slug: string): readonly HistorialItemMeta[] {
   return pjHistoriales[slug] ?? NO_ITEMS;
+}
+
+export interface ActivePj {
+  entry: EntryMeta<'pj'>;
+  /** Date of the newest history entry, 'AAAA-MM-DD'. */
+  last: string;
+}
+
+/** The active PJs with a history, latest activity first. */
+export function recentActivePjs(entries: readonly EntryMeta[], count: number): ActivePj[] {
+  const active = entries.flatMap((entry): ActivePj[] => {
+    if (entry.data.type !== 'pj' || entry.data.estado !== 'activo') return [];
+    const last = pjSummaryOf(entry.slug)?.last;
+    return last ? [{ entry: entry as EntryMeta<'pj'>, last }] : [];
+  });
+  // ISO dates sort chronologically as plain text.
+  active.sort((a, b) => (a.last === b.last ? 0 : a.last < b.last ? 1 : -1));
+  return active.slice(0, count);
 }
 
 /** What a PJ's loaded body adds to its metadata. */

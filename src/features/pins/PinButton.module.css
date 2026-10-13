@@ -1,0 +1,56 @@
+/* The mockup's primary button ("Fijar" in sdd/design/maqueta-ficha.html). */
+.button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-8);
+  min-height: var(--icon-button-size);
+  padding: 0 var(--space-18);
+  border: var(--border-width) solid var(--color-gold);
+  border-radius: var(--radius-sm);
+  background: var(--color-gold);
+  color: var(--color-on-gold);
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-2xs);
+  letter-spacing: var(--tracking-button);
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.button:hover {
+  border-color: var(--color-gold-hover);
+  background: var(--color-gold-hover);
+}
+
+.icon {
+  flex-shrink: 0;
+  width: var(--icon-size);
+  height: var(--icon-size);
+  stroke-width: var(--icon-stroke);
+}
+
+/* Small square button with only the star. */
+.iconButton {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: var(--icon-button-size-sm);
+  height: var(--icon-button-size-sm);
+  padding: 0;
+  border: var(--border-width) solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text-subtle);
+  cursor: pointer;
+}
+
+.iconButton:hover {
+  border-color: var(--color-gold);
+  color: var(--color-gold-bright);
+}
+
+.iconButton[aria-pressed='true'] {
+  border-color: var(--color-gold);
+  background: var(--color-gold-tint);
+  color: var(--color-gold-bright);
+}

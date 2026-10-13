@@ -1,7 +1,6 @@
 import { createSearchParams, type To } from 'react-router';
-import { pjSummaryOf } from '@/content/pj-data';
 import type { SearchResult } from '@/content/search-index';
-import { ENTRY_TYPES, type EntryMeta, type EntryType } from '@/content/types';
+import { ENTRY_TYPES, type EntryType } from '@/content/types';
 
 /** What a result is for the palette: its entry type, or 'historial' for a history entry. */
 export type ResultKind = EntryType | 'historial';
@@ -59,6 +58,8 @@ export type ResultOption =
   | { key: string; kind: ResultKind; more: number };
 
 export interface ResultGroup {
+  /** Unique among the groups shown together: the kind, or 'pins', 'recents'… */
+  key: string;
   kind: ResultKind;
   label: string;
   options: ResultOption[];
@@ -99,7 +100,7 @@ export function groupResults(
       .map((result) => ({ key: resultKey(result), kind: groupKind, result }));
     const more = ofKind.length - options.length;
     if (more > 0) options.push({ key: `more:${groupKind}`, kind: groupKind, more });
-    return { kind: groupKind, label: KIND_LABELS[groupKind], options };
+    return { key: groupKind, kind: groupKind, label: KIND_LABELS[groupKind], options };
   });
 }
 
@@ -117,7 +118,7 @@ export function resultTarget(result: SearchResult, query: string): To {
   if (!result.historial) return `/${result.type}/${result.slug}`;
   return {
     pathname: `/${result.type}/${result.slug}`,
-    search: `?${createSearchParams({ tab: 'historial', q: query.trim() })}`,
+    search: `?${createSearchParams({ tab: 'historial', ...(query.trim() ? { q: query.trim() } : {}) })}`,
     hash: result.historial.entryId,
   };
 }
@@ -126,21 +127,4 @@ export function resultTarget(result: SearchResult, query: string): To {
 export function searchPageTarget(query: string, kind?: ResultKind): To {
   const params = createSearchParams({ q: query.trim(), ...(kind ? { type: kind } : {}) });
   return { pathname: '/buscar', search: `?${params}` };
-}
-
-/** What the palette suggests without a query: the active PJs with the latest activity. */
-export function recentActivePjs(entries: readonly EntryMeta[], count = 8): SearchResult[] {
-  const active = entries.flatMap((entry) => {
-    if (entry.data.type !== 'pj' || entry.data.estado !== 'activo') return [];
-    const last = pjSummaryOf(entry.slug)?.last;
-    return last ? [{ entry, last }] : [];
-  });
-  // ISO dates sort chronologically as plain text.
-  active.sort((a, b) => (a.last === b.last ? 0 : a.last < b.last ? 1 : -1));
-  return active.slice(0, count).map(({ entry }) => ({
-    slug: entry.slug,
-    type: entry.type,
-    title: entry.data.title,
-    score: 0,
-  }));
 }

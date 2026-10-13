@@ -72,9 +72,9 @@ export function ResultGroups({ groups, query, terms, listbox }: ResultGroupsProp
     return (
       <div role="listbox" id={listbox.id} aria-label={listbox.label} className={styles.list}>
         {groups.map((group) => {
-          const headingId = `${baseId}-${group.kind}`;
+          const headingId = `${baseId}-${group.key}`;
           return (
-            <div key={group.kind} role="group" aria-labelledby={headingId} className={styles.group}>
+            <div key={group.key} role="group" aria-labelledby={headingId} className={styles.group}>
               <span id={headingId} className={styles.heading}>
                 {group.label}
               </span>
@@ -108,9 +108,9 @@ export function ResultGroups({ groups, query, terms, listbox }: ResultGroupsProp
   return (
     <div className={styles.list}>
       {groups.map((group) => {
-        const headingId = `${baseId}-${group.kind}`;
+        const headingId = `${baseId}-${group.key}`;
         return (
-          <section key={group.kind} aria-labelledby={headingId} className={styles.group}>
+          <section key={group.key} aria-labelledby={headingId} className={styles.group}>
             <h2 id={headingId} className={styles.heading}>
               {group.label}
             </h2>

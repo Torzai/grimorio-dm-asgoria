@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { findRanges } from '@/features/entry-view/pj/highlight';
+import { findRanges } from '@/content/highlight';
 
 /** Plain text with every match of the terms wrapped in <mark>. */
 export function Highlighted({ text, terms }: { text: string; terms: readonly string[] }) {

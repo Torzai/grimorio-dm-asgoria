@@ -1,0 +1,145 @@
+/* "Fijados esta sesión" of sdd/design/maqueta-ficha.html: a line, a label and gold links. */
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin-top: var(--space-16);
+  padding-top: var(--space-16);
+  border-top: var(--border-width) solid var(--color-border);
+}
+
+.heading {
+  padding: 0 var(--space-12) var(--space-10);
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-medium);
+  font-size: var(--font-size-3xs);
+  letter-spacing: var(--tracking-label);
+  color: var(--color-text-subtle);
+}
+
+.empty {
+  padding: 0 var(--space-12);
+  font-size: var(--font-size-xs);
+  font-style: italic;
+  color: var(--color-text-subtle);
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  list-style: none;
+}
+
+.row {
+  position: relative;
+}
+
+.link {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-8);
+  padding: var(--space-8) var(--space-12);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-md);
+  text-decoration: none;
+  color: var(--color-gold-bright);
+}
+
+.link:hover {
+  background: var(--color-surface-3);
+  color: var(--color-gold-hover);
+}
+
+.title {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.tag {
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-size: var(--font-size-3xs);
+  color: var(--color-text-subtle);
+}
+
+/* Over the tag, shown on hover or with the focus in the row. */
+.remove {
+  position: absolute;
+  top: var(--space-4);
+  right: var(--space-4);
+  display: grid;
+  place-items: center;
+  width: var(--icon-button-size-sm);
+  height: var(--icon-button-size-sm);
+  padding: 0;
+  border: var(--border-width) solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-3);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-lg);
+  line-height: var(--line-height-tight);
+  cursor: pointer;
+  opacity: 0;
+}
+
+.row:hover .remove,
+.row:focus-within .remove {
+  opacity: 1;
+}
+
+.remove:hover {
+  border-color: var(--color-gold);
+  color: var(--color-gold-bright);
+}
+
+/* Without a mouse there is no hover: always visible. */
+@media (hover: none) {
+  .remove {
+    opacity: 1;
+  }
+}
+
+.clear,
+.confirmButton {
+  padding: var(--space-2) var(--space-8);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  font-family: var(--font-body);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-subtle);
+  text-decoration: underline;
+  text-underline-offset: var(--space-4);
+  cursor: pointer;
+}
+
+.clear {
+  align-self: flex-start;
+  margin: var(--space-6) 0 0 var(--space-4);
+}
+
+.clear:hover,
+.confirmButton:hover {
+  color: var(--color-gold-bright);
+}
+
+.confirm {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-4);
+  margin-top: var(--space-6);
+  padding: 0 var(--space-12);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+
+/* The sidebar becomes a row of categories below 900px; the home shows the pins there. */
+@media (max-width: 899px) {
+  .section {
+    display: none;
+  }
+}

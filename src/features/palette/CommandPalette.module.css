@@ -18,12 +18,27 @@
   cursor: text;
 }
 
+/* The home's search box: the palette's input line, as a box. */
+.triggerLarge {
+  flex: none;
+  width: 100%;
+  gap: var(--space-14);
+  height: var(--palette-input-height);
+  padding: 0 var(--space-22);
+  font-size: var(--font-size-xl);
+}
+
 .triggerIcon {
   flex-shrink: 0;
   width: var(--icon-size);
   height: var(--icon-size);
   stroke: var(--color-gold);
   stroke-width: var(--icon-stroke);
+}
+
+.triggerLarge .triggerIcon {
+  width: var(--palette-icon-size);
+  height: var(--palette-icon-size);
 }
 
 .triggerPlaceholder,
@@ -216,5 +231,27 @@
 
   .previewColumn {
     display: none;
+  }
+}
+
+/* "Fijado" / "Quitado" after Ctrl+Enter: quiet, at the end of the key hints. */
+.notice {
+  margin-left: auto;
+  color: var(--color-gold-bright);
+}
+
+.notice > span {
+  animation: notice-in 0.15s ease-out;
+}
+
+@keyframes notice-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .notice > span {
+    animation: none;
   }
 }

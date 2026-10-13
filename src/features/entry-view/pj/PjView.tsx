@@ -17,6 +17,7 @@ import type { EntryMeta } from '@/content/types';
 import { useContent } from '@/content/use-content';
 import { useEntryBody } from '@/content/use-entry-body';
 import { formatNumericDate } from '@/features/entry-list/entry-meta';
+import { PinButton } from '@/features/pins/PinButton';
 import { AsideBox, EntryAside } from '../EntryAside';
 import { MarkdownBody } from '../EntryBody';
 import { editorUrl } from '../editor-link';
@@ -91,6 +92,7 @@ export function PjView({ entry, context, title }: PjViewProps) {
           <IdentityLine entry={entry} />
         </div>
         <div className={pageStyles.actions}>
+          <PinButton item={{ type: 'pj', slug: entry.slug }} />
           {import.meta.env.DEV && (
             <a
               className={pageStyles.secondaryButton}

@@ -2,11 +2,11 @@ import { memo, useMemo, type ComponentProps } from 'react';
 import Markdown, { type Components, type ExtraProps, type Options } from 'react-markdown';
 import { Link } from 'react-router';
 import remarkGfm from 'remark-gfm';
+import { rehypeMark } from '@/content/highlight';
 import { remarkWikilinks } from '@/content/remark-wikilinks';
 import type { EntryMeta } from '@/content/types';
 import { useContent } from '@/content/use-content';
 import { useEntryBody } from '@/content/use-entry-body';
-import { rehypeMark } from './pj/highlight';
 import styles from './EntryBody.module.css';
 
 const BROKEN_LINK_TITLE = 'Enlace roto: no existe ninguna ficha con ese nombre';

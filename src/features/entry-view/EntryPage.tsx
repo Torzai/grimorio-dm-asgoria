@@ -1,10 +1,14 @@
 import { useEffect, useEffectEvent, useMemo, useRef, type RefObject } from 'react';
-import { Link, createSearchParams, useNavigationType, useParams } from 'react-router';
+import { Link, createSearchParams, useLocation, useNavigationType, useParams } from 'react-router';
 import { getEntry, getEntryContext, isEntryType } from '@/content/content-queries';
+import { pjHistorialOf } from '@/content/pj-data';
 import { TYPE_LABELS } from '@/content/type-labels';
 import type { EntryMeta } from '@/content/types';
 import { useContent } from '@/content/use-content';
 import { NotFoundPage } from '@/features/not-found/NotFoundPage';
+import { PinButton } from '@/features/pins/PinButton';
+import { historialItem } from '@/features/pins/saved-items';
+import { useRecents } from '@/features/pins/use-saved-items';
 import { useDocumentTitle } from '@/hooks/use-document-title';
 import { EntryAside } from './EntryAside';
 import { EntryBody } from './EntryBody';
@@ -27,6 +31,7 @@ function EntryView({ entry }: { entry: EntryMeta }) {
   const titleRef = useRef<HTMLHeadingElement>(null);
   useDocumentTitle(entry.data.title);
   useFocusTitleOnChange(entry, titleRef);
+  useTrackRecent(entry);
 
   if (entry.data.type === 'pj') {
     return (
@@ -67,9 +72,9 @@ function EntryView({ entry }: { entry: EntryMeta }) {
           </h1>
           {subtitle && <p className={styles.subtitle}>{subtitle}</p>}
         </div>
-        {/* The "Fijar" button goes before this one in T09. */}
-        {import.meta.env.DEV && (
-          <div className={styles.actions}>
+        <div className={styles.actions}>
+          <PinButton item={{ type: entry.type, slug: entry.slug }} />
+          {import.meta.env.DEV && (
             <a
               className={styles.secondaryButton}
               href={editorUrl(__REPO_ROOT__, entry.path)}
@@ -77,8 +82,8 @@ function EntryView({ entry }: { entry: EntryMeta }) {
             >
               Editar .md
             </a>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       {tags.length > 0 && (
@@ -105,6 +110,22 @@ function EntryView({ entry }: { entry: EntryMeta }) {
       </div>
     </div>
   );
+}
+
+/**
+ * Puts the open entry at the top of the recents; a link to a history entry (#h-…) puts that
+ * history entry instead.
+ */
+function useTrackRecent(entry: EntryMeta) {
+  const { hash } = useLocation();
+  const { add } = useRecents();
+  const addRecent = useEffectEvent(add);
+  const { type, slug } = entry;
+  useEffect(() => {
+    const id = decodeURIComponent(hash.slice(1));
+    const isHistorial = type === 'pj' && pjHistorialOf(slug).some((item) => item.id === id);
+    addRecent(isHistorial ? historialItem(slug, id) : { type, slug });
+  }, [type, slug, hash]);
 }
 
 /**

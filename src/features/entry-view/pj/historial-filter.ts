@@ -1,6 +1,6 @@
+import { matchesAll } from '@/content/highlight';
 import { normalize } from '@/content/normalize';
 import type { HistorialItemMeta, NameCount } from '@/content/pj-historial';
-import { matchesAll } from './highlight';
 
 /** The history filters, as read from the URL (?q=&dm=&con=&anio=). */
 export interface HistorialFilters {

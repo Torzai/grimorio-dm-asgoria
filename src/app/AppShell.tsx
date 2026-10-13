@@ -4,32 +4,35 @@ import { countByType } from '@/content/content-queries';
 import { TYPE_LABELS, TYPE_NAV_ORDER } from '@/content/type-labels';
 import { useContent } from '@/content/use-content';
 import { ContentIssuesBanner } from '@/features/content-issues/ContentIssuesBanner';
-import { PaletteLauncher } from '@/features/palette/CommandPalette';
+import { PaletteProvider, PaletteTrigger } from '@/features/palette/CommandPalette';
+import { PinnedNav } from '@/features/pins/PinnedNav';
 import styles from './AppShell.module.css';
 
 const MAIN_ID = 'contenido';
 
 export function AppShell() {
   return (
-    <div className={styles.shell}>
-      <a className={styles.skipLink} href={`#${MAIN_ID}`}>
-        Saltar al contenido
-      </a>
-      {import.meta.env.DEV && <ContentIssuesBanner />}
-      <header className={styles.header}>
-        <Link to="/" className={styles.brand}>
-          <span className={styles.brandName}>Asgoria</span>
-          <span className={styles.brandTagline}>Grimorio del DM</span>
-        </Link>
-        <PaletteLauncher />
-      </header>
-      <div className={styles.body}>
-        <CategoryNav />
-        <main id={MAIN_ID} className={styles.main} tabIndex={-1}>
-          <Outlet />
-        </main>
+    <PaletteProvider>
+      <div className={styles.shell}>
+        <a className={styles.skipLink} href={`#${MAIN_ID}`}>
+          Saltar al contenido
+        </a>
+        {import.meta.env.DEV && <ContentIssuesBanner />}
+        <header className={styles.header}>
+          <Link to="/" className={styles.brand}>
+            <span className={styles.brandName}>Asgoria</span>
+            <span className={styles.brandTagline}>Grimorio del DM</span>
+          </Link>
+          <PaletteTrigger />
+        </header>
+        <div className={styles.body}>
+          <CategoryNav />
+          <main id={MAIN_ID} className={styles.main} tabIndex={-1}>
+            <Outlet />
+          </main>
+        </div>
       </div>
-    </div>
+    </PaletteProvider>
   );
 }
 
@@ -54,6 +57,7 @@ function CategoryNav() {
           <span className={styles.navCount}>{counts[type]}</span>
         </NavLink>
       ))}
+      <PinnedNav />
     </nav>
   );
 }

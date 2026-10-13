@@ -1,4 +1,4 @@
-import { normalize, withoutApostrophes } from '@/content/normalize';
+import { normalize, withoutApostrophes } from './normalize.ts';
 
 /*
  * Search terms are compared without accents, case or apostrophes: 'draknar' finds "Drák'Nar".

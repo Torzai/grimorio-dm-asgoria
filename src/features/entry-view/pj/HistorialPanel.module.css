@@ -183,8 +183,19 @@
   }
 }
 
+/* The head button and, while open, the pin button at its right. */
+.entryTop {
+  display: flex;
+  align-items: flex-start;
+}
+
+.entryPin {
+  padding: var(--space-14) var(--space-18) 0 0;
+}
+
 .entryHead {
-  width: 100%;
+  flex: 1;
+  min-width: 0;
   display: grid;
   grid-template-columns: var(--historial-date-width) minmax(0, 1fr) auto;
   align-items: start;

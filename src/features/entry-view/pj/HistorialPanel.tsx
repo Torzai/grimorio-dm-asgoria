@@ -1,5 +1,6 @@
 import { useEffect, useEffectEvent, useId, useMemo, useState } from 'react';
 import { useLocation, useSearchParams } from 'react-router';
+import { queryTerms } from '@/content/highlight';
 import type { PjBody } from '@/content/pj-data';
 import { previewSearchText, type HistorialItemMeta, type PjSummary } from '@/content/pj-historial';
 import type { EntryMeta } from '@/content/types';
@@ -11,7 +12,6 @@ import {
   type HistorialFilters,
   type SearchTextOf,
 } from './historial-filter';
-import { queryTerms } from './highlight';
 import styles from './HistorialPanel.module.css';
 
 const DEBOUNCE_MS = 150;

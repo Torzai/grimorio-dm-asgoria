@@ -16,7 +16,7 @@
 | T06d | Historial de PJ navegable | T06c | 🎭 Sí |
 | T07 | Cards por tipo | T06 | No |
 | T08 | Command palette Ctrl+K ✅ | T06 | No |
-| T09 | Fijados y recientes + home | T08 | No |
+| T09 | Fijados y recientes + home ✅ | T08 | No |
 | T10 | Imágenes y visor de mapas | T06 | No |
 | T11 | README, plantillas y pre-commit | T02 | No |
 | T12 | CI en GitHub Actions | T11 | No |
@@ -125,7 +125,7 @@
 
 **Aceptación (comprobación manual en el navegador):** abrir con atajo, escribir con una errata, navegar con flechas y abrir con Enter; Esc cierra y devuelve el foco.
 
-## T09 · Fijados y recientes + home
+## T09 · Fijados y recientes + home ✅
 - Hook `useLocalStorage` tolerante a fallos.
 - Fijar/desfijar desde la ficha y desde la palette; fijados en el sidebar.
 - Recientes (máx. 10, sin duplicados) al abrir una ficha.
