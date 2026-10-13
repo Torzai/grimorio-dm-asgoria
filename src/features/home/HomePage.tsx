@@ -77,9 +77,9 @@ export function HomePage() {
           )}
         </Box>
 
-        <Box title="Crónicas">
+        <Box title={TYPE_LABELS.cronica.plural}>
           {cronicas.length === 0 ? (
-            <p className={styles.empty}>Todavía no hay crónicas.</p>
+            <p className={styles.empty}>Todavía no hay fichas de situación.</p>
           ) : (
             <ul className={styles.list}>
               {cronicas.map(({ entry, updated }) => (

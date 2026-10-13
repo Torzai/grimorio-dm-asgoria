@@ -12,7 +12,7 @@ export const TYPE_LABELS: Readonly<Record<EntryType, TypeLabel>> = {
   pj: { singular: 'PJ', plural: 'Personajes (PJ)' },
   zona: { singular: 'Zona', plural: 'Zonas y mapas' },
   lore: { singular: 'Lore', plural: 'Lore y facciones' },
-  cronica: { singular: 'Crónica', plural: 'Crónicas' },
+  cronica: { singular: 'Situación', plural: 'Situación por regiones' },
   varita: { singular: 'Varita', plural: 'Varitas' },
   comando: { singular: 'Comando', plural: 'Comandos' },
   herramienta: { singular: 'Herramienta', plural: 'Herramientas' },

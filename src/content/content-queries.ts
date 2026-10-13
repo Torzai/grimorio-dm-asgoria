@@ -85,9 +85,25 @@ function compareByDateDesc(a: EntryMeta, b: EntryMeta): number {
 }
 
 /**
+ * Situations by the title of their region (their zona), so 'Situación actual de Gadélica' sits
+ * between Dhu Nun and Karak; those without a zona go last, by title.
+ */
+function compareByRegion(zoneTitles: ReadonlyMap<string, string>) {
+  const regionOf = (entry: EntryMeta) => (entry.data.zona ? zoneTitles.get(entry.data.zona) : undefined);
+  return (a: EntryMeta, b: EntryMeta): number => {
+    const regionA = regionOf(a);
+    const regionB = regionOf(b);
+    if (regionA === undefined || regionB === undefined) {
+      return Number(regionA === undefined) - Number(regionB === undefined) || compareByTitle(a, b);
+    }
+    return collator.compare(regionA, regionB) || compareByTitle(a, b);
+  };
+}
+
+/**
  * Entries of a type that match every active filter (AND), sorted for the list:
- * alphabetically by title, except the journal, which is newest first.
- * Filters that don't apply to the type are ignored.
+ * alphabetically by title, except the journal, which is newest first, and the situations,
+ * by region. Filters that don't apply to the type are ignored.
  */
 export function listEntries(
   entries: readonly EntryMeta[],
@@ -104,7 +120,13 @@ export function listEntries(
         entry.type === type &&
         active.every(({ key, wanted }) => filterValuesOf(entry, key).includes(wanted)),
     )
-    .sort(type === 'sesion' ? compareByDateDesc : compareByTitle);
+    .sort(
+      type === 'sesion'
+        ? compareByDateDesc
+        : type === 'cronica'
+          ? compareByRegion(getZoneTitles(entries))
+          : compareByTitle,
+    );
 }
 
 /** Title of every zona entry by slug, to show a zona's name instead of its slug. */
@@ -168,7 +190,7 @@ export interface EntryContext {
   sessions: EntryMeta[];
   /** For a zona: the entries that belong to it, grouped by type; its crónicas go apart. */
   inZone: EntryGroup[];
-  /** For a zona: the crónicas of its situation, sorted by title. */
+  /** For a zona: its situation entries (type cronica), sorted by title. */
   cronicas: EntryMeta[];
 }
 

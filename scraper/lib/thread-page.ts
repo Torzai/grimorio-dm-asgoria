@@ -24,6 +24,8 @@ export const forumPostSchema = z.object({
   /** Content only: no signature, reactions or hidden quote copy. */
   html: z.string(),
   page: z.number().int().positive(),
+  /** Id of the post in the page ('postid-1331'), the anchor that links to it. */
+  anchor: z.string().optional(),
 });
 
 /** Shape of raw/<kind>/<slug>/posts.json. */
@@ -87,6 +89,8 @@ export function countPosts(doc: Document): number {
   return doc.querySelectorAll(SELECTORS.post).length;
 }
 
+const POST_ANCHOR = /^postid-\d+$/;
+
 export function extractPosts(doc: Document, page: number): PageExtraction {
   const posts: ForumPost[] = [];
   const problems: string[] = [];
@@ -118,6 +122,7 @@ export function extractPosts(doc: Document, page: number): PageExtraction {
       postedAt,
       html: body ? contentOf(body) : '',
       page,
+      ...(POST_ANCHOR.test(element.id) ? { anchor: element.id } : {}),
     };
 
     const editNote = textOf(element.querySelector(SELECTORS.editNote));

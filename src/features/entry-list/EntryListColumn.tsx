@@ -86,7 +86,12 @@ export function EntryListColumn({ type, activeSlug }: EntryListColumnProps) {
   const countText = hasFilters
     ? `${visible.length} de ${total} ${noun(total)}`
     : `${total} ${noun(total)}`;
-  const orderText = type === 'sesion' ? 'orden cronológico' : 'orden alfabético';
+  const orderText =
+    type === 'sesion'
+      ? 'orden cronológico'
+      : type === 'cronica'
+        ? 'orden alfabético por región'
+        : 'orden alfabético';
   const headingId = useId();
 
   return (

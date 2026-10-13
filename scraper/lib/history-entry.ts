@@ -15,10 +15,13 @@ export interface WrittenEntry {
 
 /**
  * The entry of a reply, in the format every '## Historial' uses (src/content/historial.ts):
- * the PJ importer and the topics importer write it with this one function.
+ * the PJ importer and the topics importer write it with this one function. `converted` is the
+ * part of the post to write, when only a part of it belongs here.
  */
-export function historyEntry(post: ForumPost): WrittenEntry {
-  const converted = postToMarkdown(post.html);
+export function historyEntry(
+  post: ForumPost,
+  converted: ConvertedPost = postToMarkdown(post.html),
+): WrittenEntry {
   const day = post.postedAt ? isoDay(post.postedAt) : 'sin fecha';
   const author = redactPersonalData(post.authorName) || 'autor desconocido';
   const handle = post.authorHandle ? ` (@${post.authorHandle})` : '';

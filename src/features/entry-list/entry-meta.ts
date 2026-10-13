@@ -24,8 +24,9 @@ export function formatNumericDate(isoDate: string): string {
 
 /**
  * Parts of the secondary line of a list card, skipping what the entry doesn't have:
- * zona title, then faction (NPC), category (lore), date (session) or last update (crónica).
- * A PJ shows its estado and the day of its latest history entry instead.
+ * zona title, then faction (NPC), category (lore) or date (session). A PJ shows its estado and
+ * the day of its latest history entry instead, and a situation (crónica), whose title already
+ * names its region, only its last update.
  */
 export function getEntryMeta(entry: EntryMeta, zoneTitles: ReadonlyMap<string, string>): string[] {
   if (entry.data.type === 'pj') {
@@ -34,6 +35,11 @@ export function getEntryMeta(entry: EntryMeta, zoneTitles: ReadonlyMap<string, s
       PJ_ESTADO_LABELS[entry.data.estado],
       newest ? `Última actividad ${formatNumericDate(newest)}` : 'Sin historial',
     ];
+  }
+
+  if (entry.data.type === 'cronica') {
+    const updated = cronicaMetaOf(entry.slug)?.updated;
+    return updated ? [`Última actualización ${formatNumericDate(updated)}`] : [];
   }
 
   const parts: string[] = [];
@@ -49,11 +55,6 @@ export function getEntryMeta(entry: EntryMeta, zoneTitles: ReadonlyMap<string, s
     case 'sesion':
       parts.push(formatDate(entry.data.fecha));
       break;
-    case 'cronica': {
-      const updated = cronicaMetaOf(entry.slug)?.updated;
-      if (updated) parts.push(`Última actualización ${formatNumericDate(updated)}`);
-      break;
-    }
   }
   return parts;
 }

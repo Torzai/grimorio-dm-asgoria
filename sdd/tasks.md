@@ -23,6 +23,7 @@
 | T13 | Importador: login y crawl del foro (✅ para PJ) | T12 | No |
 | T14 | Importador: conversión a borradores (✅ para PJ) | T13 | No |
 | T15 | Tipo crónica e importador de hilos seguidos | T06d, T14 | 🎭 Sí |
+| T15b | Situación por regiones: hilos multi-región | T15 | 🎭 Sí |
 
 ---
 
@@ -193,6 +194,17 @@
 - Zona: caja "Crónicas de esta zona". Home: caja "Crónicas" con la última actualización.
 - Importador: `TRACKED_TOPICS` en `scraper/config.ts`; `npm run scrape:topics [-- --refresh]` baja cada hilo con el crawl de siempre y escribe `content/<tipo>/<hilo>.md` con el motor de limpieza de PJ; conserva el frontmatter, respeta `importar: false` y crea la ficha mínima de la zona si falta.
 
-**Aceptación (comprobación manual en el navegador):** `validate`, `lint` y `build` en verde; "Crónicas" en el sidebar; `/cronica/topico-situacion-actual-gadelica` muestra la situación con su índice y los anexos buscables y filtrables por autor; buscar en la palette un término del hilo devuelve la crónica, un bloque o un anexo; `/zona/gadelica` enlaza a la crónica; la home muestra la caja "Crónicas"; `/pj/einar-eriksson` sigue igual.
+**Aceptación (comprobación manual en el navegador):** `validate`, `lint` y `build` en verde; "Crónicas" en el sidebar; `/cronica/topico-situacion-actual-gadelica` (hoy `/cronica/situacion-gadelica`, ver T15b) muestra la situación con su índice y los anexos buscables y filtrables por autor; buscar en la palette un término del hilo devuelve la crónica, un bloque o un anexo; `/zona/gadelica` enlaza a la crónica; la home muestra la caja "Crónicas"; `/pj/einar-eriksson` sigue igual.
 
 **Estado:** ✅ hecha con el hilo de Gadélica.
+
+## T15b · Situación por regiones: hilos multi-región 🎭
+- Etiquetas: el tipo `cronica` se muestra como "Situación" / "Situación por regiones" (sidebar, palette, home, kickers); la caja de la zona pasa a "Situación de esta zona". El `type`, las carpetas y los esquemas no cambian.
+- Lista "Situación por regiones": orden alfabético por región (título de su zona; sin zona, al final) y línea meta "Última actualización DD/MM/AAAA".
+- `TRACKED_TOPICS` admite `slug?` (nombre del fichero; Gadélica pasa a `content/cronica/situacion-gadelica.md` con su frontmatter), `split?` (regiones con `keywords` para partir un hilo multi-región) y `assign?` (nº de post → región o `'general'`, manda sobre la deducción). Lógica en `scraper/lib/region-split.ts`; los posts guardan su anchor (`postid-N`) para que `hilo` apunte al primer post de cada región.
+- Hilo "Situación otras regiones" partido en una ficha por región (Arvandor, Dhu Nun, Karak, Loren, Monteverde, Mraganur), con las zonas mínimas que faltaban. Decisión de los DMs (13/10/2026): los posts dudosos van a Mraganur ("Mrag" es su pueblo, no otra región) salvo el círculo druídico de Loren (#4) y los tips de la Arboleda (#5), que van a Loren.
+- Documentado en `content/README.md` ("Partir un hilo que mezcla regiones").
+
+**Aceptación (comprobación manual en el navegador):** `validate`, `lint` y `build` en verde; el sidebar muestra "Situación por regiones" con una ficha por región, Gadélica incluida; cada ficha enlaza con su zona y la zona muestra su situación; `/cronica/situacion-gadelica` funciona; los posts #4 y #5 están en la ficha de Loren y los demás dudosos en la de Mraganur; buscar "Arboleda" en la palette lleva a la ficha de Loren.
+
+**Estado:** ✅ hecha.

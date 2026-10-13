@@ -36,12 +36,15 @@ Para que el importador no vuelva a tocar una ficha, añade a su frontmatter:
 importar: false
 ```
 
-## Crónicas (`cronica/`)
+## Situación por regiones (`cronica/`)
 
-Una crónica es un hilo del foro que cuenta la situación de una región o el avance de una trama.
+En la app este tipo se llama **Situación** ("Situación por regiones" en el sidebar); por dentro
+sigue siendo `cronica` (carpeta, `type` y rutas `/cronica/<slug>`). Cada ficha cuenta la situación
+de una región (o el avance de una trama) a partir de un hilo del foro, y su `zona` es la región:
+la ficha de la zona la enlaza en "Situación de esta zona". La lista se ordena por región.
 La ficha tiene dos secciones:
 
-- `## Situación`: el post #1, que su autor va editando. Cada párrafo que empieza con una
+- `## Situación`: el post principal (el #1, que su autor va editando). Cada párrafo que empieza con una
   etiqueta corta en negrita (`**Magia:** …`) abre un bloque: sale en el índice de la pestaña
   "Situación" y la búsqueda lo encuentra por separado ("Situación de Gadélica · Magia").
 - `## Historial`: las respuestas, como **anexos**, en el orden del hilo y con el mismo formato
@@ -63,6 +66,7 @@ añadir uno, copia una entrada de la lista:
   zona: 'gadelica',          // opcional: slug de la zona
   zonaTitle: 'Gadélica',     // opcional: título si hay que crear la ficha de zona
   title: 'Situación actual de Gadélica', // opcional: título al crear la ficha
+  slug: 'situacion-gadelica', // opcional: nombre del fichero; por defecto, el slug del hilo
 },
 ```
 
@@ -79,3 +83,49 @@ Al reimportar, igual que con los PJ: se conserva todo el frontmatter (solo cambi
 `importado`), el cuerpo se regenera y una ficha con `importar: false` no se toca. Si la zona del
 hilo no tiene ficha, se crea una mínima (`title` y `tags: [importado]`) para que el enlace
 funcione; su contenido se escribe a mano.
+
+### Partir un hilo que mezcla regiones (`split`)
+
+Un hilo como "Situación otras regiones" habla de varias regiones a la vez. Con `split`, el
+importador escribe **una ficha por región** (`content/cronica/situacion-<región>.md`, título
+"Situación de <Región>", `zona: <región>`) en lugar de una sola:
+
+```ts
+{
+  url: 'https://asgoria.com.ar/foro/topic/situacion-otras-regiones',
+  type: 'cronica',
+  title: 'Situación general de otras regiones', // ficha de lo que quede sin región
+  split: {
+    regions: [
+      { slug: 'karak', title: 'Karak' },
+      // keywords: lugares, NPCs y facciones que sitúan un post en la región
+      { slug: 'mraganur', title: 'Mraganur', keywords: ['Mrag', 'Hadka', 'Vinter'] },
+    ],
+  },
+  assign: { 4: 'loren', 6: 'mraganur' }, // nº de post → región, decidido a mano
+},
+```
+
+Cómo reparte los posts, en este orden:
+
+1. **`assign`**: si el número del post está ahí, el post entero va a esa región (un `slug` de
+   `regions` o `'general'`). Manda sobre todo lo demás y se respeta en cada reimportación.
+2. **Encabezados**: una línea en negrita que solo es el nombre de una región (`**Karak**`,
+   `**En Karak:**`, `**Situación de Karak**`) abre la parte de esa región dentro del post; así
+   un post que resume varias regiones se reparte entre ellas.
+3. **Deducción**: un post sin encabezados va entero a la región cuyo nombre y `keywords`
+   menciona más. Confianza *alta* si nombra dos o más términos de esa región y de ninguna otra,
+   *media* si una región destaca, *baja* si no nombra ninguna o hay empate; en ese caso va a la
+   ficha general.
+
+En cada región, su primera parte en el orden del hilo es la `## Situación` (con su índice de
+bloques) y el resto son sus anexos en `## Historial`. `hilo` apunta al primer post de la región
+(`…#postid-218`) si está en la primera página del hilo. Lo que quede sin región va a una ficha
+con el slug del hilo y el `title` del tema; si no queda nada, esa ficha no se crea. Las zonas que
+falten se crean mínimas con el `title` de la región.
+
+El informe de `scrape:topics` lista, sin textos, cada post con su región y cómo se decidió
+(`encabezados`, `auto, <confianza>` o `manual; deducida <región>, <confianza>`). Para corregir
+un reparto, añade el número del post a `assign` y vuelve a lanzar
+`npm run scrape:topics -- --refresh`. Si una región se queda sin posts, su ficha anterior no se
+borra sola: bórrala a mano o márcala `importar: false`.

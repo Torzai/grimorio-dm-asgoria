@@ -108,7 +108,7 @@ function HistorialPreview({
   return (
     <>
       <span className={styles.eyebrow}>
-        {isCronica ? 'Anexo de crónica' : 'Entrada de historial'}
+        {isCronica ? 'Anexo de situación' : 'Entrada de historial'}
       </span>
       <h2 className={styles.title}>{hit.parentTitle}</h2>
       {item?.title && (

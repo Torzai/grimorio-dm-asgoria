@@ -40,7 +40,7 @@ export const HISTORIAL_UI: Readonly<Record<HistorialType, HistorialUi>> = {
     authorLabel: 'Filtrar por autor',
     authorAll: 'Autor: todos',
     authorPrefix: 'Autor',
-    empty: 'Esta crónica todavía no tiene anexos.',
+    empty: 'Esta ficha todavía no tiene anexos.',
     noMatches: 'Ningún anexo coincide con la búsqueda y el filtro.',
     copyLink: 'Enlace a este anexo',
   },

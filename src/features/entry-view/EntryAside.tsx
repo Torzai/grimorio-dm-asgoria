@@ -26,7 +26,7 @@ export function EntryAside({ context, before }: EntryAsideProps) {
     <aside className={styles.aside} aria-label="Fichas relacionadas">
       {before}
       {cronicas.length > 0 && (
-        <AsideBox title="Crónicas de esta zona">
+        <AsideBox title="Situación de esta zona">
           <CronicaList cronicas={cronicas} />
         </AsideBox>
       )}

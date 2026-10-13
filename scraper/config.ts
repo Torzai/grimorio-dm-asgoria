@@ -435,19 +435,52 @@ export const ACTIVE_DAYS = 180;
 // Tracked topics: single threads kept up to date by `scrape:topics`
 // ---------------------------------------------------------------------------------------------
 
-/** Entry types a tracked topic can become; each is written to content/<type>/<thread-slug>.md. */
+/** Entry types a tracked topic can become; each is written to content/<type>/<slug>.md. */
 export type TopicType = 'cronica';
+
+/** Region of a post that `split` could not place: it goes to the topic's general entry. */
+export const GENERAL_REGION = 'general';
+
+export interface TopicRegion {
+  /** Slug of the region's zona; its entry is content/cronica/situacion-<slug>.md. */
+  slug: string;
+  /** Its name as the thread writes it ('Dhu Nun'): title of the entry and of a created zona. */
+  title: string;
+  /** Places, NPCs and factions that place a post in the region ('Hadka', 'Vinter'). */
+  keywords?: readonly string[];
+}
+
+export interface TopicSplit {
+  /**
+   * The regions the thread talks about. A bold line that is only a region's name ('**Karak**',
+   * '**En Karak:**') starts that region's part of a post; a post without such lines goes,
+   * whole, to the region whose name and keywords it mentions most.
+   */
+  regions: readonly TopicRegion[];
+}
 
 export interface TrackedTopic {
   /** https://asgoria.com.ar/foro/topic/<slug> */
   url: string;
   type: TopicType;
+  /** Name of the entry file, content/<type>/<slug>.md; by default the thread's slug. */
+  slug?: string;
   /** Slug of the zona the topic is about; a minimal zona entry is created when it is missing. */
   zona?: string;
   /** Title of that zona entry when it has to be created; by default the slug, capitalized. */
   zonaTitle?: string;
-  /** Title of the entry when it is created; by default the thread title. Kept on reimport. */
+  /**
+   * Title of the entry when it is created; by default the thread title. Kept on reimport. With
+   * `split`, the title of the general entry, the one for posts without a region.
+   */
   title?: string;
+  /** A thread on several regions: one entry per region (content/README.md). */
+  split?: TopicSplit;
+  /**
+   * Region of a post by its number, decided by a DM: a region slug of `split` or
+   * GENERAL_REGION. It wins over what `split` deduces, on every reimport.
+   */
+  assign?: Readonly<Record<number, string>>;
 }
 
 /** Threads that describe a region or a plot. Add one and run `npm run scrape:topics`. */
@@ -455,9 +488,29 @@ export const TRACKED_TOPICS: readonly TrackedTopic[] = [
   {
     url: 'https://asgoria.com.ar/foro/topic/topico-situacion-actual-gadelica',
     type: 'cronica',
+    slug: 'situacion-gadelica',
     zona: 'gadelica',
     zonaTitle: 'Gadélica',
     title: 'Situación actual de Gadélica',
+  },
+  {
+    url: 'https://asgoria.com.ar/foro/topic/situacion-otras-regiones',
+    type: 'cronica',
+    title: 'Situación general de otras regiones',
+    split: {
+      regions: [
+        { slug: 'arvandor', title: 'Arvandor' },
+        { slug: 'dhu-nun', title: 'Dhu Nun' },
+        { slug: 'karak', title: 'Karak' },
+        { slug: 'loren', title: 'Loren' },
+        { slug: 'monteverde', title: 'Monteverde' },
+        // The Mrag are the people of Mraganur, not another region.
+        { slug: 'mraganur', title: 'Mraganur', keywords: ['Mrag', 'Hadka', 'Vinter', 'Grimbor'] },
+      ],
+    },
+    // Decided by the DMs on 2026-10-13: the doubtful posts go to Mraganur, except the druid
+    // circle of Loren (#4) and the role tips for the Arboleda (#5).
+    assign: { 2: 'mraganur', 4: 'loren', 5: 'loren', 6: 'mraganur' },
   },
 ];
 

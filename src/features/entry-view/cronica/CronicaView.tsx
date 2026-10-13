@@ -10,6 +10,7 @@ import {
 import { cronicaMetaOf } from '@/content/cronica-data';
 import { historialItemsOf, historialSummaryOf, splitHistorialBody } from '@/content/historial-data';
 import { ownNamesOf, type HistorialSummary } from '@/content/historial-items';
+import { TYPE_LABELS } from '@/content/type-labels';
 import type { EntryMeta } from '@/content/types';
 import { useEntryBody } from '@/content/use-entry-body';
 import { formatNumericDate } from '@/features/entry-list/entry-meta';
@@ -102,7 +103,7 @@ export function CronicaView({ entry, context, title }: CronicaViewProps) {
       <div className={pageStyles.head}>
         <div className={pageStyles.titles}>
           <p className={pageStyles.kicker}>
-            Crónica
+            {TYPE_LABELS.cronica.singular}
             {context.zona && (
               <>
                 {' · '}
@@ -198,7 +199,7 @@ function SituacionTab({ entry, meta, situacion }: SituacionTabProps) {
           Cargando…
         </p>
       ) : isEmpty ? (
-        <p className={tabStyles.loading}>Esta crónica todavía no tiene situación.</p>
+        <p className={tabStyles.loading}>Esta ficha todavía no tiene situación.</p>
       ) : (
         <>
           {situacion.intro && (
