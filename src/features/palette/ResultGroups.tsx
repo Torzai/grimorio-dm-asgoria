@@ -5,7 +5,7 @@ import type { FrontmatterOf } from '@/content/types';
 import { useContent } from '@/content/use-content';
 import { Highlighted } from './Highlighted';
 import {
-  KIND_TAGS,
+  resultTag,
   resultTarget,
   searchPageTarget,
   type ResultGroup,
@@ -56,7 +56,7 @@ export function ResultGroups({ groups, query, terms, listbox }: ResultGroupsProp
             <Highlighted text={option.result.title} terms={terms} />
           </span>
         </span>
-        <span className={styles.tag}>{KIND_TAGS[option.kind]}</span>
+        <span className={styles.tag}>{resultTag(option.result)}</span>
       </>
     ) : (
       <>

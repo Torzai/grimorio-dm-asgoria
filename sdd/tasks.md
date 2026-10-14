@@ -27,6 +27,7 @@
 | T15c | Lore importado de un hilo (cosmología) | T15b | 🎭 Sí |
 | T16 | Casas nobles: PNJ enlazados y secretos | T15c | 🎭 Sí |
 | T17 | Oficios: recetas navegables (Encantamiento) | T16 | 🎭 Sí |
+| T17b | Oficio como herramienta: recetas, componentes y ¿qué puedo fabricar? | T17 | 🎭 Sí |
 
 ---
 
@@ -243,5 +244,18 @@
 - Primer oficio: `content/oficio/encantamiento.md` (20 recetas). Documentado en `content/README.md` ("Oficios").
 
 **Aceptación (comprobación manual en el navegador):** `validate`, `lint` y `build` en verde; el sidebar muestra "Oficios"; `/oficio/encantamiento` abre con su pestaña; el chip "Círculo mágico Aegishjálmur" de una piedra lleva a su receta; "Ver materiales totales" de la Piedra de encantamiento FUERZA muestra el desglose en materiales base; buscar "Sangre de Seidr" en la palette abre la receta "Círculo mágico Aegishjálmur".
+
+**Estado:** ✅ hecha.
+
+## T17b · Oficio como herramienta: recetas, componentes y ¿qué puedo fabricar? 🎭
+- Datos: `content/oficio/encantamiento.md` con el Manual de Encantamiento completo (58 recetas en 4 grupos: Inscripción de pergaminos, Runas, Transmutaciones y Objetos; 20 habilidades; tiradas y notas de la transcripción en el cuerpo).
+- Esquema (amplía T17 sin romperlo): receta con `producto?`, `produce?` (int ≥ 1, 1 por defecto), `nivel?`, `dc?`, `disponible?` (true por defecto), `requisitos?`, `efecto?` y componentes con `cargado?`; oficio con `fuente?` y `habilidades?` (`{ numero, nivel, nombre, requiere?, axp?, descripcion }`). `validate`: warning si un `requiere` apunta a una habilidad inexistente, si hay números de habilidad repetidos o ciclos en recetas o habilidades.
+- Derivados en el build (`src/content/oficio.ts`, puros y reutilizables en el cliente): catálogo de componentes (nombre normalizado, familia por patrón, base o fabricable, recetas que lo producen y que lo usan con la cantidad) y total de materiales base por receta (fabricaciones `ceil(necesario / produce)`, sobrantes, alternativas: la primera receta y aviso de las otras).
+- Calculador puro `whatCanICraft` (`src/content/oficio-craft.ts`): "Puedes hacer ya" (×N veces), "Encadenando" (resolución recursiva consumiendo stock, con la cadena de pasos) y "Te falta poco" (≤ 2 componentes distintos, con qué falta y cuánto); las no disponibles no salen en los dos primeros.
+- Vista (`src/features/entry-view/oficio/`): cuatro pestañas por `?tab=`. Recetas y Componentes son master-detail (lista sticky con una sola parada de tabulación y flechas; detalle con el foco al elegir; en pantallas estrechas, una columna con "Volver"), URLs `?tab=recetas&r=<slug>` y `?tab=componentes&c=<slug>`. ¿Qué puedo fabricar? con combobox de componentes e inventario en `useLocalStorage` (`grimorio.inventario.<oficio>.v1`). Habilidades y tiradas con "Requiere" enlazado (`?h=<nº>`) y el cuerpo de la ficha.
+- Búsqueda global: recetas, componentes y habilidades son documentos propios ("Encantamiento · <nombre>"), etiquetados receta, componente o habilidad en la palette, con vista previa; abren su pestaña con la selección hecha. Los enlaces `#r-…`, `#c-…`, `#h-…` redirigen a la URL nueva.
+- Documentado en `content/README.md` ("Oficios"), `content/_templates/oficio.md` y `sdd/spec.md` (HU-13, §3).
+
+**Aceptación (comprobación manual en el navegador):** `validate` (0 errores), `lint` y `build` en verde; en `/oficio/encantamiento`, elegir "Piedra dimensional" muestra sus componentes y el total con sobrantes, y el chip "Runa menor: Nauthiz" abre ese componente en la biblioteca; "Sales minerales" lista todas las transmutaciones; con el inventario Tallos de juncos 4, Botella de agua 2, Tinta ferrogálica común 2, Polvo de hueso 1, Guijarro 5 y Restos de pieles 1 salen resultados en los tres bloques y el inventario persiste tras recargar; la palette encuentra "Polvo de zafiro" y abre su ficha en Componentes.
 
 **Estado:** ✅ hecha.

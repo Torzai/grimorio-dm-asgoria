@@ -1,6 +1,5 @@
-import { useEffect, useEffectEvent, useId, useMemo, useRef, useState, type RefObject } from 'react';
+import { useEffect, useEffectEvent, useId, useMemo, useRef, type RefObject } from 'react';
 import {
-  Link,
   Navigate,
   useLocation,
   useNavigate,
@@ -9,33 +8,41 @@ import {
   useSearchParams,
 } from 'react-router';
 import { listEntries } from '@/content/content-queries';
-import { queryTerms } from '@/content/highlight';
-import { isOficio, recipesOf, type OficioMeta } from '@/content/oficio';
+import {
+  isOficio,
+  oficioAnchorSearch,
+  recipesOf,
+  type OficioMeta,
+  type OficioTab,
+} from '@/content/oficio';
 import { oficioMetaOf } from '@/content/oficio-data';
 import { TYPE_LABELS } from '@/content/type-labels';
 import type { EntryMeta } from '@/content/types';
 import { useContent } from '@/content/use-content';
-import { useEntryBody } from '@/content/use-entry-body';
 import { NotFoundPage } from '@/features/not-found/NotFoundPage';
-import { Highlighted } from '@/features/palette/Highlighted';
 import { PinButton } from '@/features/pins/PinButton';
 import { useRecents } from '@/features/pins/use-saved-items';
 import { useDocumentTitle } from '@/hooks/use-document-title';
 import { Page } from '@/ui/Page';
-import { MarkdownBody } from '../EntryBody';
 import { editorUrl } from '../editor-link';
 import pageStyles from '../EntryPage.module.css';
 import { EntryTabs } from '../EntryTabs';
-import { scrollAndFlash } from '../scroll-to';
-import { filterRecipes } from './oficio-filter';
-import { RecipeCard } from './RecipeCard';
+import { ComponentsTab } from './ComponentsTab';
+import { CraftTab } from './CraftTab';
+import { plural } from './master-detail';
+import { TAB_BAR_STATE, tabOf, useSetParams } from './oficio-url';
+import { RecipesTab } from './RecipesTab';
+import { SkillsTab } from './SkillsTab';
 import styles from './OficioView.module.css';
 
-const DEBOUNCE_MS = 150;
-const EMPTY_META: OficioMeta = { groups: [], materials: [], crafted: 0 };
+const EMPTY_META: OficioMeta = { groups: [], components: [], levels: [], skills: [] };
 
-/** The URL parameters of an oficio's view. */
-type OficioParam = 'q' | 'grupo';
+/** The parameter that selects something in each tab, when it has one. */
+const SELECTION_PARAM: Partial<Record<OficioTab, string>> = {
+  recetas: 'r',
+  componentes: 'c',
+  habilidades: 'h',
+};
 
 /** Every oficio, in the order of their tabs: alphabetically. */
 function useOficios(): EntryMeta<'oficio'>[] {
@@ -47,9 +54,9 @@ function useOficios(): EntryMeta<'oficio'>[] {
 export function OficioIndex() {
   const [first] = useOficios();
   if (first) return <Navigate to={`/oficio/${first.slug}`} replace />;
-  const { plural, plainPlural } = TYPE_LABELS.oficio;
+  const { plural: title, plainPlural } = TYPE_LABELS.oficio;
   return (
-    <Page title={plural} subtitle={`Aún no hay ${plainPlural}.`} documentTitle={plural}>
+    <Page title={title} subtitle={`Aún no hay ${plainPlural}.`} documentTitle={title}>
       <p className={styles.hint}>
         {'Crea uno copiando '}
         <code>/content/_templates/oficio.md</code>
@@ -99,7 +106,7 @@ export function OficioPage() {
         aria-labelledby={tabId(entry.slug)}
         className={styles.panel}
       >
-        {/* A fresh view per oficio, so its search and open breakdowns don't carry over. */}
+        {/* A fresh view per oficio, so its searches and focus don't carry over. */}
         <OficioView key={entry.slug} entry={entry} titleRef={titleRef} />
       </div>
     </div>
@@ -107,14 +114,19 @@ export function OficioPage() {
 }
 
 /**
- * Arriving at the oficios, the focus goes to the title and the page scrolls to the top, as a full
- * page load would; moving between their tabs keeps the focus on the tabs. Back/forward (POP) and
- * a link to a recipe are left alone.
+ * Arriving at the oficios, the page scrolls to the top and the focus goes to the title, as a full
+ * page load would, or to what the URL opens (a recipe, a component), which takes it itself.
+ * Moving between tabs keeps the focus on the tabs; back and forward (POP) are left alone.
  */
 function useFocusTitleOnArrival(titleRef: RefObject<HTMLHeadingElement | null>) {
   const navigationType = useNavigationType();
   const focusTitle = useEffectEvent(() => {
     if (navigationType === 'POP' || window.location.hash) return;
+    // What the URL opens has already taken the focus and scrolled to itself (child effects
+    // run first).
+    const params = new URLSearchParams(window.location.search);
+    const selection = SELECTION_PARAM[tabOf(params)];
+    if (selection && params.has(selection)) return;
     window.scrollTo(0, 0);
     titleRef.current?.focus({ preventScroll: true });
   });
@@ -139,89 +151,39 @@ interface OficioViewProps {
 }
 
 /**
- * Header, search and group chips, the recipes by group as cards, and the base materials. All of
- * it comes from the metadata derived at build time; only the oficio's notes wait for its body.
+ * Header and the four tools of an oficio, one per tab (?tab=): its recipes, the library of its
+ * components, what can be made with an inventory, and its skills and rolls. All of it comes from
+ * the metadata derived at build time; only the rolls and notes wait for the body.
  */
 function OficioView({ entry, titleRef }: OficioViewProps) {
   useDocumentTitle(entry.data.title);
   useTrackRecent(entry.slug);
   const meta = oficioMetaOf(entry.slug) ?? EMPTY_META;
   const recipes = useMemo(() => recipesOf(meta), [meta]);
-  const names = useMemo(() => new Map(recipes.map(({ id, nombre }) => [id, nombre])), [recipes]);
-  const pathname = `/oficio/${entry.slug}`;
-  const body = useEntryBody(entry.path);
-
-  const [params, setParams] = useSearchParams();
+  const [params] = useSearchParams();
+  const setParams = useSetParams();
   const location = useLocation();
-  const urlQuery = params.get('q') ?? '';
-  const groupParam = params.get('grupo');
-  const group = meta.groups.find(({ id }) => id === groupParam)?.id;
+  const navigate = useNavigate();
+  const tab = tabOf(params);
 
-  function setParam(key: OficioParam, value: string | undefined) {
-    setParams(
-      (previous) => {
-        const next = new URLSearchParams(previous);
-        if (value) next.set(key, value);
-        else next.delete(key);
-        return next;
-      },
-      { replace: true },
-    );
-  }
-
-  // The cards filter as the DM types; the URL follows 150 ms later.
-  const [query, setQuery] = useState(urlQuery);
-  const [syncedQuery, setSyncedQuery] = useState(urlQuery);
-  if (urlQuery !== syncedQuery) {
-    // The URL changed from outside (back button, a link to a recipe): it wins over the box.
-    setSyncedQuery(urlQuery);
-    setQuery(urlQuery);
-  }
-  const commitQuery = useEffectEvent((value: string) => {
-    setSyncedQuery(value.trim());
-    setParam('q', value.trim());
-  });
+  // A link with an anchor (#r-…, #c-…, #h-…: an old link, a [[slug#anchor]] wikilink) opens its
+  // tab with that part selected.
   useEffect(() => {
-    if (query.trim() === urlQuery) return;
-    const timer = setTimeout(() => commitQuery(query), DEBOUNCE_MS);
-    return () => clearTimeout(timer);
-  }, [query, urlQuery]);
-
-  function clearFilters() {
-    setQuery('');
-    setParams(
-      (previous) => {
-        const next = new URLSearchParams(previous);
-        next.delete('q');
-        next.delete('grupo');
-        return next;
-      },
-      { replace: true },
-    );
-  }
-
-  const terms = useMemo(() => queryTerms(query), [query]);
-  // The recipe a link points to (#r-…): a chip, "Se usa en", a search result.
-  const anchor = decodeURIComponent(location.hash.slice(1));
-  const target = names.has(anchor) ? anchor : undefined;
-  const filtered = useMemo(
-    () => filterRecipes(meta, { terms, group }, target),
-    [meta, terms, group, target],
-  );
-  const shown = filtered.reduce((sum, { recipes: list }) => sum + list.length, 0);
-  const filtering = terms.length > 0 || group !== undefined;
-
-  // Scroll to that recipe and flash it, again on every link to it.
-  useEffect(() => {
-    const card = target ? document.getElementById(target) : null;
-    return card ? scrollAndFlash(card, card.querySelector('h3')) : undefined;
-  }, [target, location.key]);
+    const search = oficioAnchorSearch(decodeURIComponent(location.hash.slice(1)));
+    if (search) navigate({ pathname: location.pathname, search }, { replace: true });
+  }, [location.hash, location.pathname, navigate]);
 
   const baseId = useId();
-  const searchId = `${baseId}-search`;
-  const countId = `${baseId}-count`;
-  const materialsId = `${baseId}-materials`;
-  const { title, resumen } = entry.data;
+  const tabId = (id: OficioTab) => `${baseId}-tab-${id}`;
+  const panelId = (id: OficioTab) => `${baseId}-panel-${id}`;
+  const crafted = meta.components.filter((component) => component.producers.length > 0).length;
+  const { title, resumen, fuente } = entry.data;
+  const tabs: { id: OficioTab; label: string; count?: number }[] = [
+    { id: 'recetas', label: 'Recetas', count: recipes.length },
+    { id: 'componentes', label: 'Componentes', count: meta.components.length },
+    { id: 'fabricar', label: '¿Qué puedo fabricar?' },
+    { id: 'habilidades', label: 'Habilidades y tiradas', count: meta.skills.length || undefined },
+  ];
 
   return (
     <>
@@ -235,9 +197,12 @@ function OficioView({ entry, titleRef }: OficioViewProps) {
           <p className={styles.stats}>
             {[
               plural(recipes.length, 'receta', 'recetas'),
-              plural(meta.crafted, 'componente se fabrica', 'componentes se fabrican'),
-              plural(meta.materials.length, 'material base', 'materiales base'),
-            ].join(' · ')}
+              `${plural(meta.components.length, 'componente', 'componentes')} (${meta.components.length - crafted} base, ${crafted} ${crafted === 1 ? 'fabricable' : 'fabricables'})`,
+              meta.skills.length > 0 ? plural(meta.skills.length, 'habilidad', 'habilidades') : '',
+              fuente ? `Fuente: ${fuente}` : '',
+            ]
+              .filter(Boolean)
+              .join(' · ')}
           </p>
         </div>
         <div className={pageStyles.actions}>
@@ -254,135 +219,35 @@ function OficioView({ entry, titleRef }: OficioViewProps) {
         </div>
       </div>
 
-      {body?.trim() && <MarkdownBody markdown={body} />}
-
-      <div className={styles.toolbar}>
-        <div className={styles.search}>
-          <svg
-            className={styles.searchIcon}
-            aria-hidden="true"
-            viewBox="0 0 24 24"
-            fill="none"
-            strokeLinecap="round"
-          >
-            <circle cx="11" cy="11" r="7" />
-            <path d="M20 20l-4-4" />
-          </svg>
-          <label htmlFor={searchId} className="visually-hidden">
-            {`Buscar en las recetas de ${title}`}
-          </label>
-          <input
-            id={searchId}
-            type="search"
-            className={styles.searchInput}
-            value={query}
-            placeholder="Busca una receta o un componente…"
-            autoComplete="off"
-            aria-describedby={countId}
-            onChange={(event) => setQuery(event.target.value)}
+      <div className={styles.tools}>
+        {/* On a phone the four tabs don't fit: they scroll sideways, not the page. */}
+        <div className={styles.tabsScroll}>
+          <EntryTabs
+            label={`Secciones de ${title}`}
+            tabs={tabs.map((item) => ({
+              ...item,
+              tabId: tabId(item.id),
+              panelId: panelId(item.id),
+            }))}
+            selected={tab}
+            onSelect={(next) => {
+              // Marked, so what the tab has open doesn't take the focus from the tabs.
+              if (next !== tab) setParams({ tab: next }, TAB_BAR_STATE);
+            }}
           />
-          <span id={countId} className={styles.count} aria-live="polite">
-            {filtering ? `${shown} de ${plural(recipes.length, 'receta', 'recetas')}` : ''}
-          </span>
         </div>
-        {meta.groups.length > 1 && (
-          <div className={styles.chips} role="group" aria-label="Filtrar por grupo">
-            <button
-              type="button"
-              className={styles.chip}
-              aria-pressed={!group}
-              onClick={() => setParam('grupo', undefined)}
-            >
-              Todos
-            </button>
-            {meta.groups.map(({ id, nombre, recipes: ofGroup }) => (
-              <button
-                key={id}
-                type="button"
-                className={styles.chip}
-                aria-pressed={group === id}
-                aria-label={`${nombre}, ${plural(ofGroup.length, 'receta', 'recetas')}`}
-                onClick={() => setParam('grupo', group === id ? undefined : id)}
-              >
-                {nombre}
-                <span className={styles.chipCount}>{ofGroup.length}</span>
-              </button>
-            ))}
-          </div>
-        )}
+        <div
+          role="tabpanel"
+          id={panelId(tab)}
+          aria-labelledby={tabId(tab)}
+          className={styles.tabPanel}
+        >
+          {tab === 'recetas' && <RecipesTab meta={meta} />}
+          {tab === 'componentes' && <ComponentsTab meta={meta} />}
+          {tab === 'fabricar' && <CraftTab slug={entry.slug} meta={meta} />}
+          {tab === 'habilidades' && <SkillsTab entry={entry} meta={meta} />}
+        </div>
       </div>
-
-      {recipes.length === 0 ? (
-        <p className={styles.empty}>Este oficio todavía no tiene recetas.</p>
-      ) : filtered.length === 0 ? (
-        <div className={styles.empty}>
-          <p>Ninguna receta coincide con la búsqueda.</p>
-          <button type="button" className={styles.chip} onClick={clearFilters}>
-            Limpiar filtros
-          </button>
-        </div>
-      ) : (
-        filtered.map(({ group: { id, nombre, recipes: ofGroup }, recipes: list }) => (
-          <section key={id} className={styles.group} aria-labelledby={`${baseId}-${id}`}>
-            <h2 id={`${baseId}-${id}`} className={styles.groupTitle}>
-              {nombre}{' '}
-              <span className={styles.groupCount}>
-                {filtering
-                  ? `· ${list.length} de ${ofGroup.length}`
-                  : `· ${plural(ofGroup.length, 'receta', 'recetas')}`}
-              </span>
-            </h2>
-            <ul className={styles.cards}>
-              {list.map((recipe) => (
-                <li key={recipe.id}>
-                  <RecipeCard recipe={recipe} pathname={pathname} names={names} terms={terms} />
-                </li>
-              ))}
-            </ul>
-          </section>
-        ))
-      )}
-
-      {meta.materials.length > 0 && (
-        <section id="materiales-base" className={styles.group} aria-labelledby={materialsId}>
-          <h2 id={materialsId} className={styles.groupTitle}>
-            Materiales base{' '}
-            <span className={styles.groupCount}>{`· ${meta.materials.length}`}</span>
-          </h2>
-          <div className={styles.tableScroll}>
-            <table className={styles.table}>
-              <thead>
-                <tr>
-                  <th scope="col">Material</th>
-                  <th scope="col">Recetas que lo usan</th>
-                </tr>
-              </thead>
-              <tbody>
-                {meta.materials.map(({ nombre, usedIn }) => (
-                  <tr key={nombre}>
-                    <th scope="row">
-                      <Highlighted text={nombre} terms={terms} />
-                    </th>
-                    <td>
-                      <ul className={styles.links}>
-                        {usedIn.map((id) => (
-                          <li key={id}>
-                            <Link to={{ pathname, hash: id }}>{names.get(id) ?? id}</Link>
-                          </li>
-                        ))}
-                      </ul>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
-      )}
     </>
   );
-}
-
-function plural(count: number, one: string, many: string): string {
-  return `${count} ${count === 1 ? one : many}`;
 }

@@ -239,47 +239,117 @@ lateral, "Relacionado" lleva al bloque que la ficha enlaza en su texto.
 
 ## Oficios (`oficio/`)
 
-Un oficio (Encantamiento, Herrería…) es una ficha con todas sus recetas, agrupadas. Las recetas
-van en el frontmatter, no en el cuerpo:
+Un oficio (Encantamiento, Herrería…) es una ficha con todas sus recetas, agrupadas, y las
+habilidades de su progresión. Recetas y habilidades van en el frontmatter; el cuerpo es texto
+libre (tiradas, notas):
 
 ```yaml
 ---
 type: oficio
 title: Encantamiento
-resumen: Piedras de encantamiento, círculos mágicos, pergaminos, tintas y rituales.
+resumen: Pergaminos, tintas, círculos mágicos, runas, transmutaciones y piedras de encantamiento.
+fuente: Manual de Encantamiento
 grupos:
-  - nombre: Pergaminos y círculos
+  - nombre: Inscripción de pergaminos
     recetas:
-      - nombre: Pergamino en blanco
+      - nombre: Rollo de pergamino en blanco
+        nivel: 1
+        dc: 14
         componentes:
-          - { nombre: Juncos, cantidad: 2 }
-          - { nombre: Agua, cantidad: 1 }
-      - nombre: Círculo mágico Vegvísir
+          - { nombre: Tallos de juncos, cantidad: 2 }
+          - { nombre: Botella de agua, cantidad: 1 }
+  - nombre: Runas
+    recetas:
+      - nombre: 'Runa menor: Nauthiz'
+        produce: 5
+        nivel: 2
+        dc: 16
         componentes:
-          - { nombre: Pergamino en blanco, cantidad: 1 }
-          - { nombre: Tinta sulfúrica, cantidad: 1 }
-        notas: Una línea opcional sobre la receta.
+          - { nombre: Guijarro, cantidad: 5 }
+          - { nombre: Encantamiento rúnico menor, cantidad: 1, cargado: true }
+          - { nombre: Restos de pieles, cantidad: 1 }
+  - nombre: Transmutaciones
+    recetas:
+      - nombre: 'Transmutar: Polvo de hueso'
+        producto: Polvo de hueso
+        produce: 3
+        nivel: 2
+        dc: 15
+        componentes:
+          - { nombre: Huesos de esqueleto, cantidad: 1 }
+          - { nombre: Sales minerales, cantidad: 1 }
+habilidades:
+  - numero: 1
+    nivel: 1
+    nombre: Encantador básico
+    descripcion: Acceso a la creación de rollos de pergaminos.
+  - numero: 2
+    nivel: 1
+    nombre: Inscribir runas menores
+    requiere: 1
+    axp: 100
+    descripcion: Acceso a la creación de pergaminos con runas menores.
 ---
 
-Texto libre opcional: sale bajo el título del oficio.
+## Tiradas
+
+Texto libre: sale en la pestaña "Habilidades y tiradas", debajo de las habilidades.
 ```
 
-- Cada receta lleva `nombre` y al menos un componente; cada componente, `nombre` y `cantidad`
-  (número entero, 1 o más). Si falta algo, `validate` da error y dice el grupo, la receta y el
-  componente.
-- **Se fabrica o es material base.** Un componente que se llama igual que otra receta del mismo
-  oficio (sin contar mayúsculas ni tildes) se fabrica: en la app es un enlace a su receta. Los
-  demás son **materiales base**. Por eso los nombres tienen que coincidir: "Tinta sulfúrica" en
-  un componente enlaza con la receta "Tinta sulfúrica".
-- Todo lo demás lo calcula la app: "Se usa en" (las recetas que piden cada una), los materiales
-  totales de cada receta (desglosa cada componente fabricable y multiplica las cantidades; cada
-  receta da una unidad) y la tabla de materiales base del oficio.
-- `validate` avisa (warning) si dos recetas se llaman igual (los enlaces llevan a la primera) o
-  si unas recetas se piden en círculo (A pide B y B pide A); en ese caso el desglose se corta ahí.
+**Recetas.** Cada receta lleva `nombre` y al menos un componente. Lo demás es opcional:
 
-En la app, "Oficios" del sidebar abre el primero (por orden alfabético), y cada oficio es una
-pestaña de `/oficio/<slug>`. La búsqueda encuentra cada receta por su nombre y por sus
-componentes ("Encantamiento · Piedra dimensional") y la abre en `/oficio/<slug>#r-<receta>`.
+| Campo | Qué es |
+|---|---|
+| `producto` | Lo que fabrica, si no se llama como la receta ("Transmutar: Polvo de hueso" da "Polvo de hueso"). Varias recetas pueden dar el mismo producto: el polvo elemental sale de dos. |
+| `produce` | Unidades que salen de una fabricación (número entero, 1 o más; 1 si falta). Las runas dan 5. |
+| `nivel`, `dc` | Nivel de encantador y DC de la tirada (números enteros). |
+| `disponible` | `false` para una receta del manual que todavía no se puede hacer; sale atenuada y "No disponible". |
+| `requisitos`, `efecto`, `notas` | Una línea de texto cada uno. |
+
+Cada componente lleva `nombre` y `cantidad` (número entero, 1 o más) y, si el manual lo pide
+"(Cargado)", `cargado: true`. Si falta algo, `validate` da error y dice el grupo, la receta y el
+componente.
+
+**Nombres con dos puntos.** Un nombre como `Runa menor: Nauthiz` va entre comillas simples
+(`'Runa menor: Nauthiz'`): sin ellas, YAML confunde los dos puntos con un campo.
+
+**Habilidades.** Cada una lleva `numero`, `nivel`, `nombre` y `descripcion`; `requiere` (el número
+de la habilidad previa) y `axp` (su coste) son opcionales.
+
+**Lo que calcula la app** (no se escribe):
+
+- **Componentes.** Cada nombre que aparece como componente o como producto es un componente del
+  oficio. Se comparan sin mayúsculas, tildes ni signos: "Runa: Berkana" y "Runa Berkana" son el
+  mismo. Es **fabricable** si alguna receta lo produce y **base** si no; la familia (Polvos, Gemas y
+  minerales, Runas, Tintas, Pergaminos y círculos, Virutas y restos, Rituales, Otros) sale de cómo
+  empieza su nombre. Por eso los nombres tienen que coincidir: "Tinta sulfúrica" en un componente
+  es lo que produce la receta "Tinta sulfúrica".
+- **Total de materiales base** de cada receta: fabrica antes lo intermedio, cada intermedio las
+  veces justas (si una runa da 5 y hacen falta 3, se fabrica una vez y sobran 2) y dice lo que
+  sobra. Si un intermedio tiene varias recetas, cuenta con la primera y avisa de las otras.
+- **¿Qué puedo fabricar?**: con lo que pongas en el inventario, las recetas que puedes hacer ya,
+  las que salen fabricando antes intermedios solo con eso, y las que tienen a lo sumo dos
+  componentes de menos (con lo que falta y cuánto). El inventario se guarda en este navegador, uno
+  por oficio.
+
+`validate` avisa (warning) si dos recetas se llaman igual, si unas recetas se piden en círculo (A
+pide B y B pide A; el desglose se corta ahí), si un `requiere` apunta a una habilidad que no existe,
+si dos habilidades tienen el mismo número o si se requieren en círculo.
+
+**En la app.** "Oficios" del sidebar abre el primero (por orden alfabético); cada oficio es una
+pestaña de `/oficio/<slug>` con cuatro secciones:
+
+- **Recetas** (`?tab=recetas&r=<receta>`): la lista por grupos, con buscador y chips de grupo y de
+  nivel, y la receta elegida con sus componentes, el total de materiales base y dónde se usa.
+- **Componentes** (`?tab=componentes&c=<componente>`): la biblioteca por familias, con buscador y
+  chips Base/Fabricable y de familia, y el componente elegido con las recetas que lo producen y
+  todas las que lo usan.
+- **¿Qué puedo fabricar?** (`?tab=fabricar`): el inventario y sus resultados.
+- **Habilidades y tiradas** (`?tab=habilidades`): las habilidades por nivel y el cuerpo de la ficha.
+
+La búsqueda encuentra cada receta (también por sus componentes), cada componente y cada habilidad
+("Encantamiento · Polvo de zafiro") y los abre en su sección, elegidos. Un enlace
+`[[encantamiento#c-polvo-de-zafiro]]` (o `#r-<receta>`, `#h-<número>`) hace lo mismo.
 
 ### Añadir un oficio
 

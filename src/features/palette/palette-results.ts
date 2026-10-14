@@ -1,5 +1,6 @@
 import { createSearchParams, type To } from 'react-router';
 import { HISTORIAL_PROFILES, isHistorialType } from '@/content/historial';
+import { oficioAnchorSearch, parseOficioAnchor } from '@/content/oficio';
 import type { SearchResult } from '@/content/search-index';
 import { ENTRY_TYPES, type EntryType } from '@/content/types';
 
@@ -57,6 +58,15 @@ export function isResultKind(value: string | null | undefined): value is ResultK
 
 export function kindOf(result: SearchResult): ResultKind {
   return result.historial ? 'historial' : result.type;
+}
+
+/** The label at the right of a result: its kind, or which part of an oficio it is. */
+export function resultTag(result: SearchResult): string {
+  const part =
+    result.type === 'oficio' && result.section
+      ? parseOficioAnchor(result.section.anchor)
+      : undefined;
+  return part ? part.kind : KIND_TAGS[kindOf(result)];
 }
 
 /** One row of a result list: a result, or the "Ver N más" that leads to /buscar. */
@@ -120,11 +130,14 @@ export function resultKey(result: SearchResult): string {
 /**
  * A history entry opens its parent on that entry, in the tab of the history, with the query as
  * the history's search so the words come highlighted. A block of a crónica's situation opens
- * the crónica on that block, and a recipe its oficio on the recipe's card.
+ * the crónica on that block, and a recipe, component or skill its oficio in its tab, selected.
  */
 export function resultTarget(result: SearchResult, query: string): To {
   const pathname = `/${result.type}/${result.slug}`;
-  if (result.section) return { pathname, hash: result.section.anchor };
+  if (result.section) {
+    const search = result.type === 'oficio' ? oficioAnchorSearch(result.section.anchor) : undefined;
+    return search ? { pathname, search } : { pathname, hash: result.section.anchor };
+  }
   if (!result.historial || !isHistorialType(result.type)) return pathname;
   const tab = HISTORIAL_PROFILES[result.type].tab;
   return {

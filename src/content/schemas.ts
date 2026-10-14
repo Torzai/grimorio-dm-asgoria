@@ -105,14 +105,32 @@ function webAddress(field: string) {
   });
 }
 
-/** A recipe of an oficio: what it is called and what it takes, one unit of each component. */
+/**
+ * A recipe of an oficio: what it is called, what it takes and what one fabrication gives
+ * (`produce` units of `producto`, by default one of its own name).
+ */
 const recetaSchema = z.object(
   {
     nombre: text('nombre'),
+    /** What it makes, when it is not called as the recipe ('Transmutar: Polvo de hueso'). */
+    producto: text('producto').optional(),
+    /** Units of the product per fabrication; 1 when missing. */
+    produce: integer('produce', 1).optional(),
+    nivel: integer('nivel', 1).optional(),
+    dc: integer('dc', 1).optional(),
+    /** false: listed in the manual but not craftable yet. */
+    disponible: boolean('disponible').optional(),
+    requisitos: text('requisitos').optional(),
+    efecto: text('efecto').optional(),
     componentes: z
       .array(
         z.object(
-          { nombre: text('nombre'), cantidad: integer('cantidad', 1) },
+          {
+            nombre: text('nombre'),
+            cantidad: integer('cantidad', 1),
+            /** The manual's "(Cargado)": the component goes in charged. */
+            cargado: boolean('cargado').optional(),
+          },
           {
             error: expected(
               'cada componente',
@@ -127,6 +145,25 @@ const recetaSchema = z.object(
     notas: text('notas').optional(),
   },
   { error: expected('cada receta', 'recetas', 'un bloque con nombre y componentes') },
+);
+
+/** A skill of an oficio's progression; `requiere` is the número of the skill it needs. */
+const habilidadSchema = z.object(
+  {
+    numero: integer('numero', 1),
+    nivel: integer('nivel', 1),
+    nombre: text('nombre'),
+    requiere: integer('requiere', 1).optional(),
+    axp: integer('axp', 0).optional(),
+    descripcion: text('descripcion'),
+  },
+  {
+    error: expected(
+      'cada habilidad',
+      'habilidades',
+      'un bloque con numero, nivel, nombre y descripcion',
+    ),
+  },
 );
 
 const grupoSchema = z.object(
@@ -229,8 +266,13 @@ export const entrySchemas = {
   oficio: z.object({
     type: z.literal('oficio'),
     ...commonShape,
-    /** The recipes, in groups; oficio.ts derives what is crafted and the base materials. */
+    /** Where the recipes come from: 'Manual de Encantamiento'. */
+    fuente: text('fuente').optional(),
+    /** The recipes, in groups; oficio.ts derives the components, their recipes and totals. */
     grupos: z.array(grupoSchema, { error: expected("'grupos'", 'grupos', LIST_HINT) }),
+    habilidades: z
+      .array(habilidadSchema, { error: expected("'habilidades'", 'habilidades', LIST_HINT) })
+      .optional(),
   }),
   comando: z.object({
     type: z.literal('comando'),

@@ -1,4 +1,4 @@
-/* An oficio over the whole width: tabs, header (EntryPage's styles), search and recipe cards. */
+/* An oficio over the whole width: tabs, header (EntryPage's styles) and the tabs of its tools. */
 
 .page {
   gap: var(--space-24);
@@ -16,48 +16,209 @@
   color: var(--color-text-subtle);
 }
 
-/* Search box (as in a history) and group chips (as the list filters) */
-
-.toolbar {
+.tools {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-12) var(--space-16);
+  flex-direction: column;
+  gap: var(--space-24);
+  min-width: 0;
 }
 
+.tabsScroll {
+  min-width: 0;
+  overflow-x: auto;
+}
+
+.tabsScroll [role='tab'] {
+  white-space: nowrap;
+}
+
+.tabPanel {
+  min-width: 0;
+}
+
+/* Master-detail: the list sticky on the left, scrolling on its own; the open item on the right. */
+
+.masterDetail {
+  display: grid;
+  grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
+  align-items: start;
+  gap: var(--space-32);
+}
+
+.master {
+  position: sticky;
+  top: calc(var(--header-height) + var(--space-16));
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-14);
+  min-width: 0;
+  max-height: calc(100vh - var(--header-height) - var(--space-32));
+}
+
+.filters {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-10);
+}
+
+.list {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0 var(--space-4) var(--space-16) 0;
+}
+
+.detail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+  min-width: 0;
+}
+
+/* Only on narrow screens, where the list is hidden while something is open. */
+.back {
+  display: none;
+  align-items: center;
+  align-self: flex-start;
+  gap: var(--space-6);
+  min-height: var(--icon-button-size);
+  text-decoration: none;
+}
+
+@media (max-width: 1099px) {
+  .masterDetail {
+    display: block;
+  }
+
+  .master {
+    position: static;
+    max-height: none;
+  }
+
+  .list {
+    overflow-y: visible;
+    padding-right: 0;
+  }
+
+  .masterDetail[data-selected] .master,
+  .masterDetail:not([data-selected]) .detail {
+    display: none;
+  }
+
+  .back {
+    display: inline-flex;
+  }
+}
+
+/* Search box (as in a history) */
+
 .search {
-  composes: search from '../historial/HistorialPanel.module.css';
-  flex: 1 1 320px;
-  max-width: 560px;
+  display: flex;
+  align-items: center;
+  gap: var(--space-10);
+  height: var(--icon-button-size);
+  padding: 0 var(--space-14);
+  border: var(--border-width) solid var(--color-border-accent);
+  border-radius: var(--radius-md);
+  background: var(--color-input);
+}
+
+.search:has(.searchInput:not(:placeholder-shown)),
+.search:focus-within {
+  border-color: var(--color-gold);
 }
 
 .searchIcon {
-  composes: searchIcon from '../historial/HistorialPanel.module.css';
+  flex: none;
+  width: var(--icon-size);
+  height: var(--icon-size);
+  stroke: var(--color-gold);
+  stroke-width: var(--icon-stroke);
 }
 
 .searchInput {
-  composes: searchInput from '../historial/HistorialPanel.module.css';
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  border: 0;
+  background: transparent;
+  color: var(--color-text);
+}
+
+.searchInput::placeholder {
+  color: var(--color-text-placeholder);
+}
+
+/* The box shows its focus with the border. */
+.searchInput:focus-visible {
+  outline: none;
 }
 
 .count {
-  composes: count from '../historial/HistorialPanel.module.css';
+  flex: none;
+  font-size: var(--font-size-xs);
+  font-variant-numeric: lining-nums tabular-nums;
+  color: var(--color-text-subtle);
 }
 
-.chips {
+.count:empty {
+  display: none;
+}
+
+/* Chips: a small label and toggles, one value at most */
+
+.chipRow {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-8);
+  align-items: center;
+  gap: var(--space-6);
+}
+
+.chipLabel,
+.pickerLabel,
+.missingLabel {
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-medium);
+  font-size: var(--font-size-3xs);
+  letter-spacing: var(--tracking-field);
+  text-transform: uppercase;
+  color: var(--color-text-subtle);
+}
+
+.chipLabel {
+  margin-right: var(--space-4);
 }
 
 .chip {
-  composes: chip from '../../entry-list/EntryListColumn.module.css';
   display: inline-flex;
   align-items: center;
-  gap: var(--space-8);
+  gap: var(--space-6);
+  min-height: var(--icon-button-size-sm);
+  padding: 0 var(--space-12);
+  border: var(--border-width) solid var(--color-border-strong);
+  border-radius: var(--radius-pill);
+  background: transparent;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+
+.chip:hover {
+  border-color: var(--color-border-accent);
+  color: var(--color-text);
+}
+
+.chip[aria-pressed='true'] {
+  border-color: var(--color-gold);
+  background: var(--color-gold-tint);
+  color: var(--color-gold-bright);
 }
 
 .chipCount {
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-2xs);
   font-variant-numeric: lining-nums tabular-nums;
   color: var(--color-text-subtle);
 }
@@ -66,83 +227,258 @@
   color: inherit;
 }
 
-.empty {
+/* A text button: "Limpiar filtros", "Vaciar". */
+.clear {
+  align-self: flex-start;
+  padding: var(--space-2) 0;
+  border: 0;
+  background: transparent;
+  font-size: var(--font-size-xs);
+  color: var(--color-gold-bright);
+  text-decoration: underline;
+  text-underline-offset: var(--space-4);
+}
+
+.clear:hover {
+  color: var(--color-gold-hover);
+}
+
+.empty,
+.muted {
+  font-style: italic;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-subtle);
+}
+
+/* The rows of a list, by group under a heading that sticks to the top of the list */
+
+.listSection {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: var(--space-14);
+  gap: var(--space-4);
+}
+
+.listHeading {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-8);
+  padding: var(--space-6) var(--space-4) var(--space-6) var(--space-12);
+  border-bottom: var(--border-width) solid var(--color-border-strong);
+  background: var(--color-bg);
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-2xs);
+  letter-spacing: var(--tracking-button);
+  text-transform: uppercase;
+  color: var(--color-gold-title);
+}
+
+.listCount {
+  font-family: var(--font-body);
+  font-weight: var(--font-weight-regular);
+  font-size: var(--font-size-xs);
+  font-variant-numeric: lining-nums tabular-nums;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--color-text-subtle);
+}
+
+.rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  list-style: none;
+}
+
+.row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-8) var(--space-12);
+  border: var(--border-width) solid transparent;
+  border-radius: var(--radius-md);
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+.row:hover {
+  border-color: var(--color-border);
+  background: var(--color-surface-2);
+  color: var(--color-text);
+}
+
+.row[aria-current='page'] {
+  border-color: var(--color-gold);
+  background: var(--color-surface-3);
+}
+
+/* Inside the row: the list clips what goes past its edges. */
+.row:focus-visible {
+  outline-offset: calc(-1 * var(--focus-ring-width));
+}
+
+.rowTitle {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-6);
+  font-size: var(--font-size-md);
+  line-height: var(--line-height-heading);
+  overflow-wrap: anywhere;
+}
+
+.rowTitle .craftIcon {
+  align-self: center;
+  color: var(--color-gold);
+}
+
+.row[aria-current='page'] .rowTitle {
+  color: var(--color-gold-bright);
+}
+
+.rowUnits {
+  flex: none;
+  font-size: var(--font-size-xs);
+  font-variant-numeric: lining-nums tabular-nums;
+  color: var(--color-gold);
+}
+
+.rowMeta {
+  font-size: var(--font-size-2xs);
+  font-variant-numeric: lining-nums tabular-nums;
+  color: var(--color-text-subtle);
+}
+
+/* Not available yet: dimmed, and its meta says so. */
+.row[data-unavailable] .rowTitle {
   font-style: italic;
   color: var(--color-text-subtle);
 }
 
-/* Groups */
+/* The open item */
 
-.group {
+.detailCard {
   display: flex;
   flex-direction: column;
-  gap: var(--space-16);
-  scroll-margin-top: calc(var(--header-height) + var(--space-16));
-}
-
-.groupTitle {
-  composes: groupTitle from '../historial/HistorialPanel.module.css';
-}
-
-.groupCount {
-  composes: groupCount from '../historial/HistorialPanel.module.css';
-}
-
-.cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr));
-  align-items: start;
-  gap: var(--space-16);
-  list-style: none;
-}
-
-/* A recipe */
-
-.card {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-12);
-  padding: var(--space-16) var(--space-18);
+  gap: var(--space-24);
+  padding: var(--space-24) var(--space-28) var(--space-28);
   border: var(--border-width) solid var(--color-border);
   border-radius: var(--radius-md);
-  background: var(--color-surface-2);
-  /* Clear of the sticky header when a link scrolls here. */
+  background: var(--color-surface);
   scroll-margin-top: calc(var(--header-height) + var(--space-16));
 }
 
-.card[data-flash] {
-  animation: flash var(--flash-duration) ease-out;
+.detailHead {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  padding-bottom: var(--space-16);
+  border-bottom: var(--border-width) solid var(--color-border);
 }
 
-@keyframes flash {
-  0%,
-  30% {
-    border-color: var(--color-gold);
-    box-shadow: 0 0 0 var(--focus-ring-width) var(--color-gold);
-    background: var(--color-gold-tint);
-  }
+.detailKicker {
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-medium);
+  font-size: var(--font-size-2xs);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--color-gold);
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .card[data-flash] {
-    animation-duration: 0.01s;
-  }
-}
-
-.cardTitle {
+.detailTitle {
   font-family: var(--font-display);
   font-weight: var(--font-weight-semibold);
-  font-size: var(--font-size-md);
-  line-height: var(--line-height-heading);
+  font-size: var(--font-size-2xl);
+  line-height: var(--line-height-tight);
   color: var(--color-gold-bright);
   overflow-wrap: anywhere;
 }
 
-/* Components and totals: 'Nombre ×N' chips, crafted ones a gold link to their recipe. */
+.detailMeta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-6) var(--space-12);
+  font-size: var(--font-size-sm);
+  font-variant-numeric: lining-nums tabular-nums;
+  color: var(--color-text-muted);
+}
+
+.badge {
+  padding: 0 var(--space-10);
+  border: var(--border-width) solid var(--color-danger-border);
+  border-radius: var(--radius-pill);
+  background: var(--color-danger-tint);
+  font-size: var(--font-size-2xs);
+  font-style: normal;
+  white-space: nowrap;
+  color: var(--color-danger);
+}
+
+.detailSection,
+.subsection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-10);
+}
+
+.sectionTitle {
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-2xs);
+  letter-spacing: var(--tracking-field);
+  text-transform: uppercase;
+  color: var(--color-gold-title);
+}
+
+.sectionNote {
+  font-style: italic;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-subtle);
+}
+
+.subTitle {
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+.text {
+  font-size: var(--font-size-sm);
+  color: var(--color-text);
+}
+
+.detailCard a,
+.result a,
+.skill a {
+  text-underline-offset: var(--space-4);
+}
+
+.detailEmpty {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  padding: var(--space-24) var(--space-4);
+}
+
+.detailEmptyTitle {
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-2xl);
+  line-height: var(--line-height-tight);
+  color: var(--color-gold-bright);
+}
+
+.detailEmptyLead {
+  font-style: italic;
+  font-size: var(--font-size-lg);
+  color: var(--color-text-muted);
+}
+
+/* Components: 'Nombre ×N' chips that open the component; crafted ones gold, with a hammer. */
 
 .components {
   display: flex;
@@ -165,6 +501,12 @@
   overflow-wrap: anywhere;
 }
 
+.component:hover {
+  border-color: var(--color-border-accent);
+  background: var(--color-surface-3);
+  color: var(--color-text);
+}
+
 .crafted {
   border-color: var(--color-border-accent);
   color: var(--color-gold-bright);
@@ -182,6 +524,19 @@
   color: var(--color-text-subtle);
 }
 
+/* The manual's "(Cargado)". */
+.charged {
+  padding: 0 var(--space-6);
+  border-radius: var(--radius-sm);
+  background: var(--color-gold-tint);
+  font-family: var(--font-display);
+  font-size: var(--font-size-4xs);
+  letter-spacing: var(--tracking-button);
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--color-gold);
+}
+
 .craftIcon {
   flex: none;
   width: var(--font-size-xs);
@@ -190,96 +545,24 @@
   stroke-width: var(--icon-stroke);
 }
 
-.notes {
-  font-style: italic;
-  font-size: var(--font-size-sm);
-  color: var(--color-text-muted);
-}
+/* Fabrications, in order */
 
-/* "Se usa en" and the recipes of a base material */
-
-.usedIn {
+.steps {
   display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: var(--space-4) var(--space-10);
-  font-size: var(--font-size-xs);
+  flex-direction: column;
+  gap: var(--space-4);
+  padding-left: var(--space-24);
+  font-size: var(--font-size-sm);
 }
 
-.label {
-  font-family: var(--font-display);
-  font-weight: var(--font-weight-medium);
-  font-size: var(--font-size-3xs);
-  letter-spacing: var(--tracking-field);
-  text-transform: uppercase;
+.steps li::marker {
+  font-variant-numeric: lining-nums tabular-nums;
   color: var(--color-text-subtle);
 }
 
-.links {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2) var(--space-14);
-  list-style: none;
-}
-
-.links a {
-  text-underline-offset: var(--space-4);
-}
-
-/* "Ver materiales totales" */
-
-.totals {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--space-10);
-  padding-top: var(--space-12);
-  border-top: var(--border-width) solid var(--color-border);
-}
-
-.toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-6);
-  min-height: var(--icon-button-size-sm);
-  padding: 0 var(--space-12) 0 var(--space-8);
-  border: var(--border-width) solid var(--color-border-accent);
-  border-radius: var(--radius-sm);
-  background: transparent;
-  font-family: var(--font-display);
-  font-weight: var(--font-weight-semibold);
-  font-size: var(--font-size-3xs);
-  letter-spacing: var(--tracking-button);
-  text-transform: uppercase;
-  color: var(--color-gold-bright);
-}
-
-.toggle:hover {
-  border-color: var(--color-gold);
-  background: var(--color-gold-tint);
-  color: var(--color-gold-hover);
-}
-
-.chevron {
-  width: var(--icon-size);
-  height: var(--icon-size);
-  stroke: currentColor;
-  stroke-width: var(--icon-stroke);
-}
-
-.toggle[aria-expanded='true'] .chevron {
-  rotate: 90deg;
-}
-
-.totalsBody {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-8);
-}
-
-/* display: flex would otherwise win over the hidden attribute. */
-.totalsBody[hidden] {
-  display: none;
+.stepNote {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-subtle);
 }
 
 .cyclic {
@@ -288,25 +571,429 @@
   color: var(--color-danger);
 }
 
-/* Base materials */
+/* Recipes that use or make something: one per row */
 
-.tableScroll {
-  composes: tableScroll from '../EntryBody.module.css';
+.uses {
+  display: flex;
+  flex-direction: column;
+  list-style: none;
 }
 
-/* The material heads its row, in the body's text rather than the column heads' small caps. */
-.table tbody th {
-  background: transparent;
-  font-family: var(--font-body);
-  font-weight: var(--font-weight-medium);
+.use {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-4) var(--space-10);
+  padding: var(--space-6) 0;
+  border-bottom: var(--border-width) solid var(--color-border);
   font-size: var(--font-size-sm);
-  letter-spacing: normal;
-  white-space: normal;
+}
+
+.use:last-child {
+  border-bottom: 0;
+}
+
+.useMeta {
+  margin-left: auto;
+  font-size: var(--font-size-xs);
+  font-variant-numeric: lining-nums tabular-nums;
+  color: var(--color-text-subtle);
+}
+
+/* ¿Qué puedo fabricar?: the inventory sticky on the left, the results on the right */
+
+.craft {
+  display: grid;
+  grid-template-columns: minmax(300px, 400px) minmax(0, 1fr);
+  align-items: start;
+  gap: var(--space-32);
+}
+
+.inventory {
+  position: sticky;
+  top: calc(var(--header-height) + var(--space-16));
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-14);
+  max-height: calc(100vh - var(--header-height) - var(--space-32));
+  padding: var(--space-20);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+@media (max-width: 1099px) {
+  .craft {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .inventory {
+    position: static;
+    max-height: none;
+  }
+}
+
+.inventoryHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-12);
+}
+
+.panelTitle {
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-xl);
+  color: var(--color-gold-title);
+}
+
+.picker {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.options {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  left: 0;
+  z-index: 2;
+  max-height: calc(var(--icon-button-size) * 6);
+  margin-top: var(--space-4);
+  padding: var(--space-4);
+  overflow-y: auto;
+  border: var(--border-width) solid var(--color-border-accent);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-3);
+  box-shadow: var(--shadow-dialog);
+  list-style: none;
+}
+
+/* display: block would otherwise win over the hidden attribute. */
+.options[hidden] {
+  display: none;
+}
+
+.option {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-12);
+  padding: var(--space-6) var(--space-10);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+}
+
+.option[aria-selected='true'] {
+  background: var(--color-gold-tint);
+  color: var(--color-gold-bright);
+}
+
+.optionMeta {
+  flex: none;
+  font-size: var(--font-size-2xs);
+  color: var(--color-text-subtle);
+}
+
+.pickerEmpty {
+  font-style: italic;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-subtle);
+}
+
+.inventoryRows {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--space-2);
+  list-style: none;
+}
+
+.inventoryRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-10);
+  padding: var(--space-6) 0;
+  border-bottom: var(--border-width) solid var(--color-border);
+}
+
+.inventoryRow:last-child {
+  border-bottom: 0;
+}
+
+.inventoryName {
+  min-width: 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-text);
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+.inventoryName:hover {
+  color: var(--color-gold-hover);
+  text-decoration: underline;
+  text-underline-offset: var(--space-4);
+}
+
+.stepper {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.stepButton {
+  display: inline-grid;
+  place-items: center;
+  width: var(--icon-button-size-sm);
+  height: var(--icon-button-size-sm);
+  padding: 0;
+  border: var(--border-width) solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  font-size: var(--font-size-md);
+  line-height: 1;
+  color: var(--color-text-muted);
+}
+
+.stepButton:hover {
+  border-color: var(--color-gold);
+  color: var(--color-gold-bright);
+}
+
+.removeButton:hover {
+  border-color: var(--color-danger-border);
+  background: var(--color-danger-tint);
+  color: var(--color-danger);
+}
+
+.quantityInput {
+  width: calc(var(--icon-button-size-sm) * 2);
+  height: var(--icon-button-size-sm);
+  padding: 0 var(--space-4);
+  border: var(--border-width) solid var(--color-border-accent);
+  border-radius: var(--radius-sm);
+  background: var(--color-input);
+  font-variant-numeric: lining-nums tabular-nums;
+  text-align: center;
   color: var(--color-text);
 }
 
-.table td {
+.results {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-28);
+  min-width: 0;
+}
+
+.resultBlock {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+}
+
+.blockTitle {
+  padding-bottom: var(--space-6);
+  border-bottom: var(--border-width) solid var(--color-border-strong);
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-xl);
+  color: var(--color-gold-title);
+}
+
+.blockCount {
+  font-weight: var(--font-weight-medium);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-subtle);
+}
+
+.resultList {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
+  align-items: start;
+  gap: var(--space-12);
+  list-style: none;
+}
+
+.result {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  padding: var(--space-12) var(--space-16);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-2);
+}
+
+.resultHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-6) var(--space-12);
+}
+
+.resultName {
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-semibold);
   font-size: var(--font-size-sm);
+  overflow-wrap: anywhere;
+}
+
+.pill {
+  flex: none;
+  padding: 0 var(--space-10);
+  border: var(--border-width) solid var(--color-border-accent);
+  border-radius: var(--radius-pill);
+  font-size: var(--font-size-xs);
+  font-variant-numeric: lining-nums tabular-nums;
+  white-space: nowrap;
+  color: var(--color-gold-bright);
+}
+
+.resultMeta {
+  font-size: var(--font-size-xs);
+  font-variant-numeric: lining-nums tabular-nums;
+  color: var(--color-text-subtle);
+}
+
+/* "1. Rollo de pergamino en blanco ×1 → 2. …" */
+.chain {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-4) var(--space-6);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  list-style: none;
+}
+
+.chain li {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-4);
+}
+
+.arrow {
+  margin-right: var(--space-2);
+  color: var(--color-gold);
+}
+
+.stepNumber {
+  font-variant-numeric: lining-nums tabular-nums;
+  color: var(--color-text-subtle);
+}
+
+.missing {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-6) var(--space-8);
+}
+
+.missingLabel {
+  color: var(--color-danger);
+}
+
+/* Habilidades y tiradas */
+
+.skills {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-32);
+  min-width: 0;
+}
+
+.skillLevels,
+.level {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+}
+
+.skillList {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr));
+  align-items: start;
+  gap: var(--space-12);
+  list-style: none;
+}
+
+.skill {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  padding: var(--space-14) var(--space-16);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-2);
+  /* Clear of the sticky header when a link scrolls here. */
+  scroll-margin-top: calc(var(--header-height) + var(--space-16));
+}
+
+.skill[data-flash] {
+  animation: flash var(--flash-duration) ease-out;
+}
+
+@keyframes flash {
+  0%,
+  30% {
+    border-color: var(--color-gold);
+    box-shadow: 0 0 0 var(--focus-ring-width) var(--color-gold);
+    background: var(--color-gold-tint);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skill[data-flash] {
+    animation-duration: 0.01s;
+  }
+}
+
+.skillHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-10);
+}
+
+.skillName {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-10);
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-md);
+  line-height: var(--line-height-heading);
+  color: var(--color-gold-bright);
+  overflow-wrap: anywhere;
+}
+
+.skillNumber {
+  flex: none;
+  min-width: var(--space-28);
+  padding: var(--space-2) var(--space-6);
+  border: var(--border-width) solid var(--color-border-accent);
+  border-radius: var(--radius-pill);
+  font-size: var(--font-size-2xs);
+  font-variant-numeric: lining-nums tabular-nums;
+  text-align: center;
+  color: var(--color-gold);
+}
+
+.skillRequires {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+
+.notes {
+  padding-top: var(--space-8);
+  border-top: var(--border-width) solid var(--color-border-strong);
 }
 
 /* /oficio with no oficio yet */

@@ -3,7 +3,16 @@ import { getZoneTitles } from '@/content/content-queries';
 import { hasThreadView, isThreadType, THREAD_PROFILES, type ThreadType } from '@/content/cronica';
 import { cronicaMetaOf } from '@/content/cronica-data';
 import { historialItemsOf, historialSummaryOf } from '@/content/historial-data';
-import { recipesOf } from '@/content/oficio';
+import {
+  familyLabel,
+  indexOficio,
+  parseOficioAnchor,
+  recipesOf,
+  type CatalogComponent,
+  type Habilidad,
+  type OficioIndex,
+  type Recipe,
+} from '@/content/oficio';
 import { oficioMetaOf } from '@/content/oficio-data';
 import type { HistorialHit, SearchResult } from '@/content/search-index';
 import { PJ_ESTADO_LABELS, TYPE_LABELS } from '@/content/type-labels';
@@ -60,7 +69,7 @@ export function PalettePreview({ option, terms }: PalettePreviewProps) {
         <OficioPreview
           slug={entry.slug}
           data={entry.data}
-          recipeId={result.section?.anchor}
+          anchor={result.section?.anchor}
           terms={terms}
         />
       );
@@ -104,57 +113,155 @@ function PjPreview({ slug, data }: { slug: string; data: EntryMeta<'pj'>['data']
   );
 }
 
-/** A recipe with its components and what asks for it; or the oficio, with its totals. */
+/** A recipe, component or skill of an oficio, by the anchor of the result; or the oficio. */
 function OficioPreview({
   slug,
   data,
-  recipeId,
+  anchor,
   terms,
 }: {
   slug: string;
   data: EntryMeta<'oficio'>['data'];
-  /** Anchor of the recipe the result is; undefined for the oficio itself. */
-  recipeId: string | undefined;
+  /** Anchor of the part the result is ('r-…', 'c-…', 'h-…'); undefined for the oficio. */
+  anchor: string | undefined;
   terms: readonly string[];
 }) {
   const meta = oficioMetaOf(slug);
-  const recipes = meta ? recipesOf(meta) : [];
-  const recipe = recipes.find(({ id }) => id === recipeId);
-  if (!recipe) {
-    return (
-      <>
-        <span className={styles.eyebrow}>{TYPE_LABELS.oficio.singular}</span>
-        <h2 className={styles.title}>{data.title}</h2>
-        {meta && (
-          <dl className={styles.facts}>
-            <Fact label="Recetas">{recipes.length}</Fact>
-            <Fact label="Materiales base">{meta.materials.length}</Fact>
-          </dl>
-        )}
-        {data.resumen && <p className={styles.text}>{data.resumen}</p>}
-      </>
-    );
+  const part = anchor === undefined ? undefined : parseOficioAnchor(anchor);
+  const index = meta && indexOficio(meta);
+  if (index && part?.kind === 'receta') {
+    const recipe = index.recipes.get(part.value);
+    if (recipe)
+      return <RecipePreview oficio={data.title} recipe={recipe} index={index} terms={terms} />;
+  } else if (index && part?.kind === 'componente') {
+    const component = index.components.get(part.value);
+    if (component)
+      return <ComponentPreview oficio={data.title} component={component} index={index} />;
+  } else if (index && part?.kind === 'habilidad') {
+    const skill = index.skills.get(Number(part.value));
+    if (skill) return <SkillPreview oficio={data.title} skill={skill} index={index} />;
   }
-  const nameOf = new Map(recipes.map(({ id, nombre }) => [id, nombre]));
   return (
     <>
-      <span className={styles.eyebrow}>{`Receta · ${data.title}`}</span>
+      <span className={styles.eyebrow}>{TYPE_LABELS.oficio.singular}</span>
+      <h2 className={styles.title}>{data.title}</h2>
+      {meta && (
+        <dl className={styles.facts}>
+          <Fact label="Recetas">{recipesOf(meta).length}</Fact>
+          <Fact label="Componentes">{meta.components.length}</Fact>
+          <Fact label="Habilidades">{meta.skills.length}</Fact>
+        </dl>
+      )}
+      {data.resumen && <p className={styles.text}>{data.resumen}</p>}
+    </>
+  );
+}
+
+function RecipePreview({
+  oficio,
+  recipe,
+  index,
+  terms,
+}: {
+  oficio: string;
+  recipe: Recipe;
+  index: OficioIndex;
+  terms: readonly string[];
+}) {
+  const usedIn = index.components.get(recipe.producto.key)?.usedIn ?? [];
+  return (
+    <>
+      <span className={styles.eyebrow}>{`Receta · ${oficio}`}</span>
       <h2 className={styles.title}>{recipe.nombre}</h2>
+      <dl className={styles.facts}>
+        <Fact label="Nivel">{recipe.nivel ?? '—'}</Fact>
+        <Fact label="DC">{recipe.dc ?? '—'}</Fact>
+        <Fact label="Produce">{`×${recipe.produce}`}</Fact>
+      </dl>
+      {!recipe.disponible && <p className={styles.text}>No disponible.</p>}
       <Field label="Componentes">
         <ul className={styles.chips}>
-          {recipe.componentes.map(({ nombre, cantidad }, index) => (
-            <li key={index} className={styles.chip}>
+          {recipe.componentes.map(({ key, nombre, cantidad, cargado }) => (
+            <li key={key} className={styles.chip}>
               <Highlighted text={nombre} terms={terms} />
-              {` ×${cantidad}`}
+              {` ×${cantidad}${cargado ? ' · cargado' : ''}`}
             </li>
           ))}
         </ul>
       </Field>
-      {recipe.usedIn.length > 0 && (
+      {usedIn.length > 0 && (
         <Field label="Se usa en">
-          <p className={styles.text}>{recipe.usedIn.map((id) => nameOf.get(id)).join(' · ')}</p>
+          <p className={styles.text}>
+            {usedIn.map(({ recipe: id }) => index.recipes.get(id)?.nombre ?? id).join(' · ')}
+          </p>
         </Field>
       )}
+    </>
+  );
+}
+
+function ComponentPreview({
+  oficio,
+  component,
+  index,
+}: {
+  oficio: string;
+  component: CatalogComponent;
+  index: OficioIndex;
+}) {
+  const { nombre, familia, producers, usedIn } = component;
+  const names = (ids: readonly string[]) =>
+    ids.map((id) => index.recipes.get(id)?.nombre ?? id).join(' · ');
+  return (
+    <>
+      <span className={styles.eyebrow}>{`Componente · ${oficio}`}</span>
+      <h2 className={styles.title}>{nombre}</h2>
+      <dl className={styles.facts}>
+        <Fact label="Familia">{familyLabel(familia)}</Fact>
+        <Fact label="Tipo">{producers.length > 0 ? 'Fabricable' : 'Base'}</Fact>
+        <Fact label="Usado en">
+          {usedIn.length === 1 ? '1 receta' : `${usedIn.length} recetas`}
+        </Fact>
+      </dl>
+      <Field label="Se obtiene de">
+        <p className={styles.text}>{producers.length > 0 ? names(producers) : 'Material base'}</p>
+      </Field>
+      {usedIn.length > 0 && (
+        <Field label="Se usa en">
+          <p className={styles.text}>{names(usedIn.map(({ recipe }) => recipe))}</p>
+        </Field>
+      )}
+    </>
+  );
+}
+
+function SkillPreview({
+  oficio,
+  skill,
+  index,
+}: {
+  oficio: string;
+  skill: Habilidad;
+  index: OficioIndex;
+}) {
+  const { numero, nivel, nombre, requiere, axp, descripcion } = skill;
+  const required = requiere === undefined ? undefined : index.skills.get(requiere);
+  return (
+    <>
+      <span className={styles.eyebrow}>{`Habilidad · ${oficio}`}</span>
+      <h2 className={styles.title}>{`${numero} · ${nombre}`}</h2>
+      <dl className={styles.facts}>
+        <Fact label="Nivel">{nivel}</Fact>
+        <Fact label="Coste">{axp === undefined ? '—' : `${axp} aXP`}</Fact>
+        <Fact label="Requiere">
+          {requiere === undefined
+            ? '—'
+            : required
+              ? `${requiere} · ${required.nombre}`
+              : `nº ${requiere}`}
+        </Fact>
+      </dl>
+      <p className={styles.text}>{descripcion}</p>
     </>
   );
 }

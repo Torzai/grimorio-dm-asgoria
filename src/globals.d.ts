@@ -19,7 +19,7 @@ declare module 'virtual:grimorio/content' {
   >;
   /** What is derived from each crónica at build time, by slug. */
   export const cronicas: Record<string, import('./content/cronica').CronicaMeta>;
-  /** What is derived from each oficio at build time (crafted components, totals), by slug. */
+  /** What is derived from each oficio at build time (catalog of components, totals), by slug. */
   export const oficios: Record<string, import('./content/oficio').OficioMeta>;
 }
 

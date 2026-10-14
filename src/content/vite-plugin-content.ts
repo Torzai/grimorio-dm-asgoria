@@ -18,13 +18,7 @@ import {
   type HistorialSummary,
 } from './historial-items.ts';
 import { readContentFiles } from './load-from-fs.ts';
-import {
-  deriveOficio,
-  isOficio,
-  recipesOf,
-  recipeSearchTitle,
-  type OficioMeta,
-} from './oficio.ts';
+import { deriveOficio, isOficio, oficioSearchParts, type OficioMeta } from './oficio.ts';
 import { nameKey, resolvePjNames, type NameResolution } from './pj-names.ts';
 import { buildIndex, serializeIndex, type SearchSource } from './search-index.ts';
 import type { Entry, EntryMeta } from './types.ts';
@@ -153,20 +147,15 @@ async function compute(rootDir: string): Promise<Computed> {
     });
   }
 
-  // Each recipe of an oficio is a search result of its own, found by its components too.
+  // Each recipe (found by its components too), component and skill of an oficio is a search
+  // result of its own.
   const oficios: Record<string, OficioMeta> = {};
   for (const entry of entries.filter(isOficio)) {
     const { meta } = deriveOficio(entry.data);
     oficios[entry.slug] = meta;
     sources.set(entry.slug, {
       body: entry.body,
-      parts: recipesOf(meta).map((recipe) => ({
-        kind: 'section' as const,
-        anchor: recipe.id,
-        title: recipeSearchTitle(entry.data.title, recipe.nombre),
-        resumen: recipe.componentes.map((componente) => componente.nombre).join(' · '),
-        body: recipe.notas ?? '',
-      })),
+      parts: oficioSearchParts(entry.data.title, meta),
     });
   }
 

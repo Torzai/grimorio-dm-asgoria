@@ -92,12 +92,14 @@ Como DM, quiero que cada PNJ que describe un hilo de información (casas nobles,
 - En el panel de la ficha, "Relacionado" abre la ficha de lore en el bloque del PNJ.
 
 **HU-13 · Oficios y recetas**
-Como DM, quiero consultar las recetas de cada oficio (Encantamiento, Herrería…) y saber al momento cómo se fabrica cada componente y cuántos materiales base pide una receta en total.
-- "Oficios" en el sidebar abre el primero; cada oficio es una pestaña de `/oficio/<slug>`, a todo el ancho (sin columna de lista).
-- Buscador interno (nombre de receta o de componente, sin tildes, con resaltado) y chips por grupo (`?q=&grupo=`).
-- Cada receta es una tarjeta con anchor (`#r-<receta>`): sus componentes ("Nombre ×N"; si se fabrica en el mismo oficio, enlace a su receta con un icono), "Se usa en" y "Ver materiales totales" (desglose recursivo en materiales base).
-- Al final, la tabla "Materiales base": cada material con las recetas que lo piden.
-- Búsqueda global: cada receta es un resultado propio ("Encantamiento · Piedra dimensional"), también por sus componentes, en el grupo "Oficios" de la palette; abre la tarjeta resaltada.
+Como DM, quiero consultar las recetas de cada oficio (Encantamiento, Herrería…) como una herramienta: desde una receta ver todos sus componentes, desde un componente todas las recetas que lo usan, y con lo que tiene un PJ saber qué puede fabricar ya, encadenando o casi.
+- "Oficios" en el sidebar abre el primero; cada oficio es una pestaña de `/oficio/<slug>`, a todo el ancho (sin columna de lista), con cuatro secciones (`?tab=`).
+- **Recetas** (`?tab=recetas&r=<receta>`, por defecto): master-detail. A la izquierda, la lista por grupos con buscador sin tildes y chips de grupo y de nivel (`?q=&grupo=&nivel=`); cada fila con nombre, "×N" si produce más de 1 y "Nv X · DC Y"; las no disponibles, atenuadas. A la derecha, la receta: componentes ("Nombre ×N", "cargado", icono si se fabrica; cada uno abre el componente), "Total de materiales base" (con fabricaciones y sobrantes), "Se usa en", requisitos y efecto.
+- **Componentes** (`?tab=componentes&c=<componente>`): master-detail de la biblioteca por familias, con buscador y chips Base/Fabricable y de familia (`?cq=&origen=&familia=`); cada fila con "usado en N". El componente: "Se obtiene de" (recetas que lo producen, o "Material base") y "Se usa en" (todas las recetas que lo piden, con la cantidad).
+- **¿Qué puedo fabricar?** (`?tab=fabricar`): inventario (buscador con autocompletado, filas con cantidad, −/+, quitar y "Vaciar"; persiste en `grimorio.inventario.<oficio>.v1`) y tres bloques recalculados al momento: "Puedes hacer ya" (×N veces), "Encadenando" (con la cadena de pasos) y "Te falta poco" (a lo sumo 2 componentes distintos, con lo que falta y cuánto).
+- **Habilidades y tiradas** (`?tab=habilidades&h=<nº>`): habilidades por nivel con coste en aXP y "Requiere" enlazado, y el cuerpo de la ficha.
+- Teclado: cada lista es una sola parada de tabulación (flechas, Inicio, Fin; Enter abre y el foco pasa al detalle); el autocompletado es un combobox.
+- Búsqueda global: cada receta (también por sus componentes), componente y habilidad es un resultado propio ("Encantamiento · Polvo de zafiro") en el grupo "Oficios" de la palette, etiquetado receta, componente o habilidad; abre su sección con él elegido. Los enlaces antiguos `#r-<receta>` (y `#c-…`, `#h-…`) llevan a lo mismo.
 
 ## 3. Modelo de contenido
 
@@ -126,7 +128,7 @@ Un fichero = una ficha. El **slug** es el nombre del fichero sin extensión (keb
 | `lore` | `categoria`: `historia` \| `faccion` \| `religion` \| `cultura` \| `cosmologia` | `normas` | `otro`\| `otro`; `hilo?` (URL del hilo del foro; con él, o con anexos en `## Historial`, la ficha se ve como una crónica, con `## Contenido` en lugar de `## Situación`), `importado?` (fecha ISO), `importar?` (bool) |
 | `cronica` | `hilo` (obligatorio, URL del hilo del foro), `importado?` (fecha ISO), `importar?` (bool) |
 | `varita` | `cargas?` (int), `nivel_lanzador?` (int), `recarga?` (bool), `uso?` |
-| `oficio` | `grupos` (obligatorio): lista de `{ nombre, recetas }`; cada receta `{ nombre, componentes, notas? }` y cada componente `{ nombre, cantidad }` (int ≥ 1) |
+| `oficio` | `fuente?`; `grupos` (obligatorio): lista de `{ nombre, recetas }`; cada receta `{ nombre, producto?, produce? (int ≥ 1, 1 por defecto), nivel?, dc?, disponible? (bool, true por defecto), requisitos?, efecto?, notas?, componentes }` y cada componente `{ nombre, cantidad (int ≥ 1), cargado? (bool) }`; `habilidades?`: lista de `{ numero, nivel, nombre, requiere? (nº de la habilidad previa), axp?, descripcion }` |
 | `comando` | `sintaxis` (obligatorio), `ejemplo?`, `ambito`: `jugador` \| `dm` |
 | `herramienta` | `uso?`, `donde?` |
 | `sesion` | `fecha` (obligatorio), `narradores?` (string[]), `participantes?` (slug[] de PJ) |
@@ -151,15 +153,15 @@ Una crónica es un hilo del foro sobre la situación de una región o el avance 
 - **Última actualización**: la fecha máxima entre publicaciones y ediciones (las notas del importador incluidas). Derivada, como la última actividad de un PJ.
 - Al reimportar se conserva el frontmatter (solo cambian `hilo` e `importado`), se regenera el cuerpo y `importar: false` protege la ficha. Si la zona del hilo no existe, se crea una ficha mínima (`title`, `tags: [importado]`).
 
-### Oficio: recetas y materiales base
+### Oficio: recetas, componentes y habilidades
 
-Un oficio guarda sus recetas en el frontmatter (`grupos`). Lo demás se deriva en el build (`src/content/oficio.ts`, función pura) y no se guarda:
+Un oficio guarda sus recetas y habilidades en el frontmatter. Lo demás se deriva en el build (`src/content/oficio.ts`, funciones puras que el cliente reutiliza) y no se guarda:
 
-- **Fabricable**: un componente cuyo nombre normalizado (minúsculas, sin tildes, espacios simples) es el de una receta del **mismo** oficio; enlaza a ella. Si no, es **material base**.
-- **Se usa en**: las recetas que piden cada receta, en el orden del fichero.
-- **Materiales totales**: desglose recursivo de una receta en materiales base, multiplicando cantidades (cada receta da una unidad), en el orden en que aparecen.
-- **Materiales base del oficio**: cada material base con las recetas que lo piden directamente, por orden alfabético.
-- `validate`: **error** si una receta no tiene componentes o una cantidad no es un entero ≥ 1 (con grupo, receta y componente en el mensaje); **warning** si dos recetas tienen el mismo nombre normalizado (los enlaces van a la primera) o si las recetas forman un ciclo (el desglose se corta ahí).
+- **Producto**: lo que fabrica una receta, `producto` o, si falta, su nombre; `produce` unidades por fabricación. Varias recetas pueden dar el mismo producto (alternativas).
+- **Catálogo de componentes**: cada nombre que aparece como componente o producto, normalizado (minúsculas, sin tildes ni signos: `Runa: Berkana` = `Runa Berkana`). Es **fabricable** si alguna receta lo produce y **base** si no. Familia por cómo empieza el nombre: Polvos, Gemas y minerales, Runas, Tintas, Pergaminos y círculos, Virutas y restos, Rituales u Otros. Con las recetas que lo producen y las que lo usan (con la cantidad).
+- **Total de materiales base** de una receta (una fabricación): cada intermedio se fabrica `ceil(necesario / produce)` veces, una vez para todo lo que lo pide (orden topológico), y se anotan los sobrantes. Con alternativas, la primera receta, y se indica que hay otras. Un ciclo se corta y lo que lo cierra cuenta como base.
+- **¿Qué puedo fabricar?** (`src/content/oficio-craft.ts`, pura): con un inventario (componente → unidades), una receta "se puede hacer ya" si su stock cubre sus componentes directos (×N veces, el máximo); "encadenando" si se completa fabricando antes intermedios solo con el inventario (recursivo, consumiendo stock, respetando `produce` y devolviendo los sobrantes, sin reutilizar unidades; con alternativas prueba cada receta); "te falta poco" si, así, le faltan a lo sumo 2 componentes distintos y algo del inventario entra en ella. Un intermedio que no sale se cuenta como falta él mismo si nada del inventario entra en él, o con lo que le falta a su receta si sí. Las recetas no disponibles no se usan ni salen en los dos primeros bloques.
+- `validate`: **error** si una receta no tiene componentes, una cantidad o `produce` no es un entero ≥ 1, o una habilidad no tiene sus campos (con grupo › receta › componente, o la habilidad, en el mensaje); **warning** si dos recetas tienen el mismo nombre normalizado, si las recetas forman un ciclo, si un `requiere` apunta a una habilidad que no existe, si dos habilidades tienen el mismo número o si se requieren en círculo.
 
 ### Convenciones de cuerpo (recomendadas, no validadas)
 
