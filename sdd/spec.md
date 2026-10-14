@@ -91,6 +91,14 @@ Como DM, quiero que cada PNJ que describe un hilo de información (casas nobles,
 - El texto azul del foro (lo sabe muy poca gente) se copia en la ficha del PNJ con el prefijo "Secreto poco conocido: ". La ficha de lore, las crónicas y los PJ no cambian.
 - En el panel de la ficha, "Relacionado" abre la ficha de lore en el bloque del PNJ.
 
+**HU-13 · Oficios y recetas**
+Como DM, quiero consultar las recetas de cada oficio (Encantamiento, Herrería…) y saber al momento cómo se fabrica cada componente y cuántos materiales base pide una receta en total.
+- "Oficios" en el sidebar abre el primero; cada oficio es una pestaña de `/oficio/<slug>`, a todo el ancho (sin columna de lista).
+- Buscador interno (nombre de receta o de componente, sin tildes, con resaltado) y chips por grupo (`?q=&grupo=`).
+- Cada receta es una tarjeta con anchor (`#r-<receta>`): sus componentes ("Nombre ×N"; si se fabrica en el mismo oficio, enlace a su receta con un icono), "Se usa en" y "Ver materiales totales" (desglose recursivo en materiales base).
+- Al final, la tabla "Materiales base": cada material con las recetas que lo piden.
+- Búsqueda global: cada receta es un resultado propio ("Encantamiento · Piedra dimensional"), también por sus componentes, en el grupo "Oficios" de la palette; abre la tarjeta resaltada.
+
 ## 3. Modelo de contenido
 
 Un fichero = una ficha. El **slug** es el nombre del fichero sin extensión (kebab-case, único globalmente). La carpeta debe coincidir con `type`.
@@ -99,7 +107,7 @@ Un fichero = una ficha. El **slug** es el nombre del fichero sin extensión (keb
 
 | Campo | Tipo | Obligatorio | Notas |
 |---|---|---|---|
-| `type` | enum | sí | `npc`, `pj`, `zona`, `lore`, `cronica`, `varita`, `comando`, `herramienta`, `sesion` |
+| `type` | enum | sí | `npc`, `pj`, `zona`, `lore`, `cronica`, `varita`, `oficio`, `comando`, `herramienta`, `sesion` |
 | `title` | string | sí | |
 | `aliases` | string[] | no | Otros nombres o apodos |
 | `tags` | string[] | no | kebab-case |
@@ -118,6 +126,7 @@ Un fichero = una ficha. El **slug** es el nombre del fichero sin extensión (keb
 | `lore` | `categoria`: `historia` \| `faccion` \| `religion` \| `cultura` \| `cosmologia` | `normas` | `otro`\| `otro`; `hilo?` (URL del hilo del foro; con él, o con anexos en `## Historial`, la ficha se ve como una crónica, con `## Contenido` en lugar de `## Situación`), `importado?` (fecha ISO), `importar?` (bool) |
 | `cronica` | `hilo` (obligatorio, URL del hilo del foro), `importado?` (fecha ISO), `importar?` (bool) |
 | `varita` | `cargas?` (int), `nivel_lanzador?` (int), `recarga?` (bool), `uso?` |
+| `oficio` | `grupos` (obligatorio): lista de `{ nombre, recetas }`; cada receta `{ nombre, componentes, notas? }` y cada componente `{ nombre, cantidad }` (int ≥ 1) |
 | `comando` | `sintaxis` (obligatorio), `ejemplo?`, `ambito`: `jugador` \| `dm` |
 | `herramienta` | `uso?`, `donde?` |
 | `sesion` | `fecha` (obligatorio), `narradores?` (string[]), `participantes?` (slug[] de PJ) |
@@ -141,6 +150,16 @@ Una crónica es un hilo del foro sobre la situación de una región o el avance 
 - **Anexos**: sección `## Historial` con el formato de entradas de los PJ (`### AAAA-MM-DD · Nombre (@usuario)`), en el **orden del hilo**: `validate` no exige que vaya del más reciente al más antiguo.
 - **Última actualización**: la fecha máxima entre publicaciones y ediciones (las notas del importador incluidas). Derivada, como la última actividad de un PJ.
 - Al reimportar se conserva el frontmatter (solo cambian `hilo` e `importado`), se regenera el cuerpo y `importar: false` protege la ficha. Si la zona del hilo no existe, se crea una ficha mínima (`title`, `tags: [importado]`).
+
+### Oficio: recetas y materiales base
+
+Un oficio guarda sus recetas en el frontmatter (`grupos`). Lo demás se deriva en el build (`src/content/oficio.ts`, función pura) y no se guarda:
+
+- **Fabricable**: un componente cuyo nombre normalizado (minúsculas, sin tildes, espacios simples) es el de una receta del **mismo** oficio; enlaza a ella. Si no, es **material base**.
+- **Se usa en**: las recetas que piden cada receta, en el orden del fichero.
+- **Materiales totales**: desglose recursivo de una receta en materiales base, multiplicando cantidades (cada receta da una unidad), en el orden en que aparecen.
+- **Materiales base del oficio**: cada material base con las recetas que lo piden directamente, por orden alfabético.
+- `validate`: **error** si una receta no tiene componentes o una cantidad no es un entero ≥ 1 (con grupo, receta y componente en el mensaje); **warning** si dos recetas tienen el mismo nombre normalizado (los enlaces van a la primera) o si las recetas forman un ciclo (el desglose se corta ahí).
 
 ### Convenciones de cuerpo (recomendadas, no validadas)
 

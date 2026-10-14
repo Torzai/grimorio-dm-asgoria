@@ -1,13 +1,14 @@
 import { historialIssues } from './historial.ts';
 import { analyzeLinks, type LinkGraph } from './links.ts';
 import { loadEntries } from './loader.ts';
+import { oficioIssues } from './oficio.ts';
 import { pjIssues } from './pj.ts';
 import type { ContentIssue, Entry, EntryMeta } from './types.ts';
 
 /** What the app holds: every entry without its body, which is loaded when the entry opens. */
 export interface Content {
   entries: EntryMeta[];
-  /** Loader issues, then the warnings of each PJ and of each history, then link issues. */
+  /** Loader issues, the warnings of each PJ, history and oficio, then link issues. */
   issues: ContentIssue[];
   links: LinkGraph;
 }
@@ -27,6 +28,7 @@ export function buildContent(files: Record<string, string>): FullContent {
       ...issues,
       ...entries.flatMap(pjIssues),
       ...entries.flatMap(historialIssues),
+      ...entries.flatMap(oficioIssues),
       ...linkIssues,
     ],
     links,

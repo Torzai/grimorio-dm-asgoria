@@ -15,6 +15,7 @@ export const KIND_ORDER: readonly ResultKind[] = [
   'cronica',
   'zona',
   'varita',
+  'oficio',
   'comando',
   'herramienta',
   'sesion',
@@ -29,6 +30,7 @@ export const KIND_LABELS: Readonly<Record<ResultKind, string>> = {
   cronica: 'Situación por regiones',
   zona: 'Zonas',
   varita: 'Varitas',
+  oficio: 'Oficios',
   comando: 'Comandos',
   herramienta: 'Herramientas',
   sesion: 'Sesiones',
@@ -43,6 +45,7 @@ export const KIND_TAGS: Readonly<Record<ResultKind, string>> = {
   cronica: 'situación',
   zona: 'zona',
   varita: 'varita',
+  oficio: 'oficio',
   comando: 'comando',
   herramienta: 'herramienta',
   sesion: 'sesión',
@@ -117,7 +120,7 @@ export function resultKey(result: SearchResult): string {
 /**
  * A history entry opens its parent on that entry, in the tab of the history, with the query as
  * the history's search so the words come highlighted. A block of a crónica's situation opens
- * the crónica on that block.
+ * the crónica on that block, and a recipe its oficio on the recipe's card.
  */
 export function resultTarget(result: SearchResult, query: string): To {
   const pathname = `/${result.type}/${result.slug}`;

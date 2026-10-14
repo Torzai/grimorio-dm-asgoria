@@ -3,6 +3,8 @@ import { getZoneTitles } from '@/content/content-queries';
 import { hasThreadView, isThreadType, THREAD_PROFILES, type ThreadType } from '@/content/cronica';
 import { cronicaMetaOf } from '@/content/cronica-data';
 import { historialItemsOf, historialSummaryOf } from '@/content/historial-data';
+import { recipesOf } from '@/content/oficio';
+import { oficioMetaOf } from '@/content/oficio-data';
 import type { HistorialHit, SearchResult } from '@/content/search-index';
 import { PJ_ESTADO_LABELS, TYPE_LABELS } from '@/content/type-labels';
 import type { EntryMeta } from '@/content/types';
@@ -53,6 +55,15 @@ export function PalettePreview({ option, terms }: PalettePreviewProps) {
       );
     } else if (entry?.data.type === 'pj') {
       body = <PjPreview slug={entry.slug} data={entry.data} />;
+    } else if (entry?.data.type === 'oficio') {
+      body = (
+        <OficioPreview
+          slug={entry.slug}
+          data={entry.data}
+          recipeId={result.section?.anchor}
+          terms={terms}
+        />
+      );
     } else {
       body = <EntryPreview result={result} entry={entry} zoneTitles={zoneTitles} />;
     }
@@ -89,6 +100,61 @@ function PjPreview({ slug, data }: { slug: string; data: EntryMeta<'pj'>['data']
           <span className={styles.mono}>{cuenta_nwn}</span>
         </Fact>
       </dl>
+    </>
+  );
+}
+
+/** A recipe with its components and what asks for it; or the oficio, with its totals. */
+function OficioPreview({
+  slug,
+  data,
+  recipeId,
+  terms,
+}: {
+  slug: string;
+  data: EntryMeta<'oficio'>['data'];
+  /** Anchor of the recipe the result is; undefined for the oficio itself. */
+  recipeId: string | undefined;
+  terms: readonly string[];
+}) {
+  const meta = oficioMetaOf(slug);
+  const recipes = meta ? recipesOf(meta) : [];
+  const recipe = recipes.find(({ id }) => id === recipeId);
+  if (!recipe) {
+    return (
+      <>
+        <span className={styles.eyebrow}>{TYPE_LABELS.oficio.singular}</span>
+        <h2 className={styles.title}>{data.title}</h2>
+        {meta && (
+          <dl className={styles.facts}>
+            <Fact label="Recetas">{recipes.length}</Fact>
+            <Fact label="Materiales base">{meta.materials.length}</Fact>
+          </dl>
+        )}
+        {data.resumen && <p className={styles.text}>{data.resumen}</p>}
+      </>
+    );
+  }
+  const nameOf = new Map(recipes.map(({ id, nombre }) => [id, nombre]));
+  return (
+    <>
+      <span className={styles.eyebrow}>{`Receta · ${data.title}`}</span>
+      <h2 className={styles.title}>{recipe.nombre}</h2>
+      <Field label="Componentes">
+        <ul className={styles.chips}>
+          {recipe.componentes.map(({ nombre, cantidad }, index) => (
+            <li key={index} className={styles.chip}>
+              <Highlighted text={nombre} terms={terms} />
+              {` ×${cantidad}`}
+            </li>
+          ))}
+        </ul>
+      </Field>
+      {recipe.usedIn.length > 0 && (
+        <Field label="Se usa en">
+          <p className={styles.text}>{recipe.usedIn.map((id) => nameOf.get(id)).join(' · ')}</p>
+        </Field>
+      )}
     </>
   );
 }

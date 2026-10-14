@@ -8,6 +8,7 @@ export const ENTRY_TYPES = [
   'lore',
   'cronica',
   'varita',
+  'oficio',
   'comando',
   'herramienta',
   'sesion',

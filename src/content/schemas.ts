@@ -105,6 +105,38 @@ function webAddress(field: string) {
   });
 }
 
+/** A recipe of an oficio: what it is called and what it takes, one unit of each component. */
+const recetaSchema = z.object(
+  {
+    nombre: text('nombre'),
+    componentes: z
+      .array(
+        z.object(
+          { nombre: text('nombre'), cantidad: integer('cantidad', 1) },
+          {
+            error: expected(
+              'cada componente',
+              'componentes',
+              'un bloque con nombre y cantidad, p. ej. { nombre: Agua, cantidad: 1 }',
+            ),
+          },
+        ),
+        { error: expected("'componentes'", 'componentes', LIST_HINT) },
+      )
+      .min(1, { error: 'no tiene componentes; pon al menos uno con su nombre y su cantidad' }),
+    notas: text('notas').optional(),
+  },
+  { error: expected('cada receta', 'recetas', 'un bloque con nombre y componentes') },
+);
+
+const grupoSchema = z.object(
+  {
+    nombre: text('nombre'),
+    recetas: z.array(recetaSchema, { error: expected("'recetas'", 'recetas', LIST_HINT) }),
+  },
+  { error: expected('cada grupo', 'grupos', 'un bloque con nombre y recetas') },
+);
+
 export const PJ_ESTADOS = ['activo', 'inactivo', 'retirado', 'muerto'] as const;
 const MAX_CLASES = 3;
 
@@ -194,6 +226,12 @@ export const entrySchemas = {
     recarga: boolean('recarga').optional(),
     uso: text('uso').optional(),
   }),
+  oficio: z.object({
+    type: z.literal('oficio'),
+    ...commonShape,
+    /** The recipes, in groups; oficio.ts derives what is crafted and the base materials. */
+    grupos: z.array(grupoSchema, { error: expected("'grupos'", 'grupos', LIST_HINT) }),
+  }),
   comando: z.object({
     type: z.literal('comando'),
     ...commonShape,
@@ -226,6 +264,7 @@ export const entryFrontmatterSchema = z.discriminatedUnion(
     entrySchemas.lore,
     entrySchemas.cronica,
     entrySchemas.varita,
+    entrySchemas.oficio,
     entrySchemas.comando,
     entrySchemas.herramienta,
     entrySchemas.sesion,

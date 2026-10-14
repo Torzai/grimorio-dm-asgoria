@@ -18,6 +18,13 @@ import {
   type HistorialSummary,
 } from './historial-items.ts';
 import { readContentFiles } from './load-from-fs.ts';
+import {
+  deriveOficio,
+  isOficio,
+  recipesOf,
+  recipeSearchTitle,
+  type OficioMeta,
+} from './oficio.ts';
 import { nameKey, resolvePjNames, type NameResolution } from './pj-names.ts';
 import { buildIndex, serializeIndex, type SearchSource } from './search-index.ts';
 import type { Entry, EntryMeta } from './types.ts';
@@ -27,7 +34,7 @@ import type { Entry, EntryMeta } from './types.ts';
  * and hands the browser two virtual modules:
  *   virtual:grimorio/content       every entry without its body, the issues, the link graph,
  *                                  each history (PJ, crónica) without the text of its entries
- *                                  and what is derived from each crónica (eager)
+ *                                  and what is derived from each crónica and each oficio (eager)
  *   virtual:grimorio/search-index  the MiniSearch index, serialized (its own chunk, loaded
  *                                  when the browser is idle or the search is first used)
  * The bodies are not here: load-from-glob.ts imports each .md on its own when it is opened.
@@ -146,6 +153,23 @@ async function compute(rootDir: string): Promise<Computed> {
     });
   }
 
+  // Each recipe of an oficio is a search result of its own, found by its components too.
+  const oficios: Record<string, OficioMeta> = {};
+  for (const entry of entries.filter(isOficio)) {
+    const { meta } = deriveOficio(entry.data);
+    oficios[entry.slug] = meta;
+    sources.set(entry.slug, {
+      body: entry.body,
+      parts: recipesOf(meta).map((recipe) => ({
+        kind: 'section' as const,
+        anchor: recipe.id,
+        title: recipeSearchTitle(entry.data.title, recipe.nombre),
+        resumen: recipe.componentes.map((componente) => componente.nombre).join(' · '),
+        body: recipe.notas ?? '',
+      })),
+    });
+  }
+
   const metas: EntryMeta[] = entries.map(({ slug, type, path, data }) => ({
     slug,
     type,
@@ -164,6 +188,7 @@ async function compute(rootDir: string): Promise<Computed> {
     `export const historialSummaries = ${jsonModuleValue(summaries)};`,
     `export const historialItems = ${jsonModuleValue(items)};`,
     `export const cronicas = ${jsonModuleValue(cronicas)};`,
+    `export const oficios = ${jsonModuleValue(oficios)};`,
   ].join('\n');
   const index = serializeIndex(buildIndex(entries, sources));
   return { contentModule, indexModule: `export default ${jsonModuleValue(index)};` };

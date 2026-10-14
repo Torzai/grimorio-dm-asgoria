@@ -13,10 +13,17 @@ interface EntryTabsProps<T extends string> {
   tabs: readonly EntryTab<T>[];
   selected: T;
   onSelect: (id: T) => void;
+  /** What the tabs are, for screen readers. */
+  label?: string;
 }
 
 /** ARIA tabs of an entry's view: one tab stop, arrows (and Home/End) move and select. */
-export function EntryTabs<T extends string>({ tabs, selected, onSelect }: EntryTabsProps<T>) {
+export function EntryTabs<T extends string>({
+  tabs,
+  selected,
+  onSelect,
+  label = 'Secciones de la ficha',
+}: EntryTabsProps<T>) {
   const refs = useRef(new Map<T, HTMLButtonElement>());
 
   function handleKeyDown(event: KeyboardEvent<HTMLButtonElement>) {
@@ -39,7 +46,7 @@ export function EntryTabs<T extends string>({ tabs, selected, onSelect }: EntryT
   }
 
   return (
-    <div role="tablist" aria-label="Secciones de la ficha" className={styles.tabs}>
+    <div role="tablist" aria-label={label} className={styles.tabs}>
       {tabs.map((tab) => (
         <button
           key={tab.id}

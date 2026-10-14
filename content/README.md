@@ -236,3 +236,54 @@ reconocidos están en `SECRET_COLORS`.
 **Enlaces a un bloque.** Cualquier ficha puede enlazar a una parte de otra con
 `[[slug#anchor]]` o `[[slug#anchor|texto]]`: abre la ficha en ese bloque o anexo. En el panel
 lateral, "Relacionado" lleva al bloque que la ficha enlaza en su texto.
+
+## Oficios (`oficio/`)
+
+Un oficio (Encantamiento, Herrería…) es una ficha con todas sus recetas, agrupadas. Las recetas
+van en el frontmatter, no en el cuerpo:
+
+```yaml
+---
+type: oficio
+title: Encantamiento
+resumen: Piedras de encantamiento, círculos mágicos, pergaminos, tintas y rituales.
+grupos:
+  - nombre: Pergaminos y círculos
+    recetas:
+      - nombre: Pergamino en blanco
+        componentes:
+          - { nombre: Juncos, cantidad: 2 }
+          - { nombre: Agua, cantidad: 1 }
+      - nombre: Círculo mágico Vegvísir
+        componentes:
+          - { nombre: Pergamino en blanco, cantidad: 1 }
+          - { nombre: Tinta sulfúrica, cantidad: 1 }
+        notas: Una línea opcional sobre la receta.
+---
+
+Texto libre opcional: sale bajo el título del oficio.
+```
+
+- Cada receta lleva `nombre` y al menos un componente; cada componente, `nombre` y `cantidad`
+  (número entero, 1 o más). Si falta algo, `validate` da error y dice el grupo, la receta y el
+  componente.
+- **Se fabrica o es material base.** Un componente que se llama igual que otra receta del mismo
+  oficio (sin contar mayúsculas ni tildes) se fabrica: en la app es un enlace a su receta. Los
+  demás son **materiales base**. Por eso los nombres tienen que coincidir: "Tinta sulfúrica" en
+  un componente enlaza con la receta "Tinta sulfúrica".
+- Todo lo demás lo calcula la app: "Se usa en" (las recetas que piden cada una), los materiales
+  totales de cada receta (desglosa cada componente fabricable y multiplica las cantidades; cada
+  receta da una unidad) y la tabla de materiales base del oficio.
+- `validate` avisa (warning) si dos recetas se llaman igual (los enlaces llevan a la primera) o
+  si unas recetas se piden en círculo (A pide B y B pide A); en ese caso el desglose se corta ahí.
+
+En la app, "Oficios" del sidebar abre el primero (por orden alfabético), y cada oficio es una
+pestaña de `/oficio/<slug>`. La búsqueda encuentra cada receta por su nombre y por sus
+componentes ("Encantamiento · Piedra dimensional") y la abre en `/oficio/<slug>#r-<receta>`.
+
+### Añadir un oficio
+
+Para añadir, por ejemplo, Herrería: copia `_templates/oficio.md` a `oficio/herreria.md`, pon el
+`title` y escribe sus grupos y recetas. Al lanzar `npm run validate` sale cualquier error, y en la
+app aparece una pestaña nueva, "Herrería". Los oficios no se enlazan entre sí: un componente solo
+se fabrica si su receta está en el mismo oficio.

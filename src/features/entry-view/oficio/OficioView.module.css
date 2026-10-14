@@ -1,0 +1,323 @@
+/* An oficio over the whole width: tabs, header (EntryPage's styles), search and recipe cards. */
+
+.page {
+  gap: var(--space-24);
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-24);
+  min-width: 0;
+}
+
+.stats {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-subtle);
+}
+
+/* Search box (as in a history) and group chips (as the list filters) */
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-12) var(--space-16);
+}
+
+.search {
+  composes: search from '../historial/HistorialPanel.module.css';
+  flex: 1 1 320px;
+  max-width: 560px;
+}
+
+.searchIcon {
+  composes: searchIcon from '../historial/HistorialPanel.module.css';
+}
+
+.searchInput {
+  composes: searchInput from '../historial/HistorialPanel.module.css';
+}
+
+.count {
+  composes: count from '../historial/HistorialPanel.module.css';
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-8);
+}
+
+.chip {
+  composes: chip from '../../entry-list/EntryListColumn.module.css';
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-8);
+}
+
+.chipCount {
+  font-size: var(--font-size-xs);
+  font-variant-numeric: lining-nums tabular-nums;
+  color: var(--color-text-subtle);
+}
+
+.chip[aria-pressed='true'] .chipCount {
+  color: inherit;
+}
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-14);
+  font-style: italic;
+  color: var(--color-text-subtle);
+}
+
+/* Groups */
+
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+  scroll-margin-top: calc(var(--header-height) + var(--space-16));
+}
+
+.groupTitle {
+  composes: groupTitle from '../historial/HistorialPanel.module.css';
+}
+
+.groupCount {
+  composes: groupCount from '../historial/HistorialPanel.module.css';
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr));
+  align-items: start;
+  gap: var(--space-16);
+  list-style: none;
+}
+
+/* A recipe */
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+  padding: var(--space-16) var(--space-18);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-2);
+  /* Clear of the sticky header when a link scrolls here. */
+  scroll-margin-top: calc(var(--header-height) + var(--space-16));
+}
+
+.card[data-flash] {
+  animation: flash var(--flash-duration) ease-out;
+}
+
+@keyframes flash {
+  0%,
+  30% {
+    border-color: var(--color-gold);
+    box-shadow: 0 0 0 var(--focus-ring-width) var(--color-gold);
+    background: var(--color-gold-tint);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card[data-flash] {
+    animation-duration: 0.01s;
+  }
+}
+
+.cardTitle {
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-md);
+  line-height: var(--line-height-heading);
+  color: var(--color-gold-bright);
+  overflow-wrap: anywhere;
+}
+
+/* Components and totals: 'Nombre ×N' chips, crafted ones a gold link to their recipe. */
+
+.components {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-6);
+  list-style: none;
+}
+
+.component {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-6);
+  max-width: 100%;
+  padding: var(--space-2) var(--space-12);
+  border: var(--border-width) solid var(--color-border-strong);
+  border-radius: var(--radius-pill);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+.crafted {
+  border-color: var(--color-border-accent);
+  color: var(--color-gold-bright);
+}
+
+.crafted:hover {
+  border-color: var(--color-gold);
+  background: var(--color-gold-tint);
+  color: var(--color-gold-hover);
+}
+
+.quantity {
+  font-variant-numeric: lining-nums tabular-nums;
+  white-space: nowrap;
+  color: var(--color-text-subtle);
+}
+
+.craftIcon {
+  flex: none;
+  width: var(--font-size-xs);
+  height: var(--font-size-xs);
+  stroke: currentColor;
+  stroke-width: var(--icon-stroke);
+}
+
+.notes {
+  font-style: italic;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+/* "Se usa en" and the recipes of a base material */
+
+.usedIn {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-4) var(--space-10);
+  font-size: var(--font-size-xs);
+}
+
+.label {
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-medium);
+  font-size: var(--font-size-3xs);
+  letter-spacing: var(--tracking-field);
+  text-transform: uppercase;
+  color: var(--color-text-subtle);
+}
+
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-14);
+  list-style: none;
+}
+
+.links a {
+  text-underline-offset: var(--space-4);
+}
+
+/* "Ver materiales totales" */
+
+.totals {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-10);
+  padding-top: var(--space-12);
+  border-top: var(--border-width) solid var(--color-border);
+}
+
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-6);
+  min-height: var(--icon-button-size-sm);
+  padding: 0 var(--space-12) 0 var(--space-8);
+  border: var(--border-width) solid var(--color-border-accent);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-3xs);
+  letter-spacing: var(--tracking-button);
+  text-transform: uppercase;
+  color: var(--color-gold-bright);
+}
+
+.toggle:hover {
+  border-color: var(--color-gold);
+  background: var(--color-gold-tint);
+  color: var(--color-gold-hover);
+}
+
+.chevron {
+  width: var(--icon-size);
+  height: var(--icon-size);
+  stroke: currentColor;
+  stroke-width: var(--icon-stroke);
+}
+
+.toggle[aria-expanded='true'] .chevron {
+  rotate: 90deg;
+}
+
+.totalsBody {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+/* display: flex would otherwise win over the hidden attribute. */
+.totalsBody[hidden] {
+  display: none;
+}
+
+.cyclic {
+  font-style: italic;
+  font-size: var(--font-size-xs);
+  color: var(--color-danger);
+}
+
+/* Base materials */
+
+.tableScroll {
+  composes: tableScroll from '../EntryBody.module.css';
+}
+
+/* The material heads its row, in the body's text rather than the column heads' small caps. */
+.table tbody th {
+  background: transparent;
+  font-family: var(--font-body);
+  font-weight: var(--font-weight-medium);
+  font-size: var(--font-size-sm);
+  letter-spacing: normal;
+  white-space: normal;
+  color: var(--color-text);
+}
+
+.table td {
+  font-size: var(--font-size-sm);
+}
+
+/* /oficio with no oficio yet */
+
+.hint {
+  color: var(--color-text-muted);
+}
+
+.hint code {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-sm);
+  color: var(--color-text);
+  overflow-wrap: anywhere;
+}

@@ -1,5 +1,6 @@
 import { splitFrontmatter } from './frontmatter.ts';
 import { slugify } from './normalize.ts';
+import { oficioIssueLocation } from './oficio.ts';
 import { SLUG_PATTERN, entryFrontmatterSchema, entrySchemas } from './schemas.ts';
 import { ENTRY_TYPES, type ContentIssue, type Entry, type EntryType } from './types.ts';
 
@@ -81,7 +82,12 @@ function parseEntry(
   if (!parsed.success) {
     for (const issue of parsed.error.issues) {
       const [field] = issue.path;
-      error(issue.message, field === undefined ? undefined : String(field));
+      // Inside an oficio's recipes, which group, recipe and component it is.
+      const where = fields.type === 'oficio' ? oficioIssueLocation(fields, issue.path) : undefined;
+      error(
+        where ? `${where}: ${issue.message}` : issue.message,
+        field === undefined ? undefined : String(field),
+      );
     }
   }
 

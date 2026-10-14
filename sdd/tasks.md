@@ -26,6 +26,7 @@
 | T15b | Situación por regiones: hilos multi-región | T15 | 🎭 Sí |
 | T15c | Lore importado de un hilo (cosmología) | T15b | 🎭 Sí |
 | T16 | Casas nobles: PNJ enlazados y secretos | T15c | 🎭 Sí |
+| T17 | Oficios: recetas navegables (Encantamiento) | T16 | 🎭 Sí |
 
 ---
 
@@ -231,5 +232,16 @@
 - Documentado en `content/README.md` ("PNJ de un hilo de lore") y en `spec.md` (HU-04, HU-12).
 
 **Aceptación (comprobación manual en el navegador):** `validate`, `lint` y `build` en verde; en `/lore/casas-nobles-instituciones` los nombres de los PNJ enlazan a sus fichas; `/npc/sir-wellington` enlaza al bloque de Casa MacQuoid (cuerpo y aside) y el bloque abre resaltado; una ficha con secreto lo muestra como "Secreto poco conocido: …"; buscar "Wellington" en la palette encuentra su ficha; las demás fichas de lore, las crónicas y los PJ no cambian.
+
+**Estado:** ✅ hecha.
+
+## T17 · Oficios: recetas navegables (Encantamiento) 🎭
+- Tipo `oficio` (spec §3 y HU-13): `title`, `resumen?`, `tags?` y `grupos` (`{ nombre, recetas: [{ nombre, componentes: [{ nombre, cantidad }], notas? }] }`). `validate`: error si una receta no tiene componentes o una cantidad no es un entero ≥ 1 (el mensaje dice grupo › receta › componente); warning si dos recetas tienen el mismo nombre normalizado o forman un ciclo. Plantilla `content/_templates/oficio.md`.
+- Datos derivados en el build (`src/content/oficio.ts`, `deriveOficio`, pura): componente fabricable (su nombre normalizado es el de otra receta del mismo oficio) o material base, "Se usa en", materiales totales (desglose recursivo multiplicando cantidades, con detección de ciclos) y materiales base del oficio con sus recetas. El plugin de contenido los entrega como `oficios` en `virtual:grimorio/content` (`oficio-data.ts`).
+- Navegación: "Oficios" en el sidebar con el nº de oficios; `/oficio` abre el primero; `/oficio/<slug>` muestra una pestaña por oficio (`EntryTabs`) a todo el ancho, sin columna de lista. Vista en `src/features/entry-view/oficio/`: buscador interno y chips por grupo (`?q=&grupo=`), recetas por grupo como tarjetas con anchor `#r-<receta>` (componentes "Nombre ×N", enlace con icono si se fabrica, "Se usa en", "Ver materiales totales") y tabla "Materiales base".
+- Búsqueda global: cada receta es un documento propio ("<Oficio> · <Receta>", componentes buscables) en el grupo "Oficios" de la palette, con vista previa de componentes; abre `/oficio/<slug>#r-<receta>` con la tarjeta resaltada.
+- Primer oficio: `content/oficio/encantamiento.md` (20 recetas). Documentado en `content/README.md` ("Oficios").
+
+**Aceptación (comprobación manual en el navegador):** `validate`, `lint` y `build` en verde; el sidebar muestra "Oficios"; `/oficio/encantamiento` abre con su pestaña; el chip "Círculo mágico Aegishjálmur" de una piedra lleva a su receta; "Ver materiales totales" de la Piedra de encantamiento FUERZA muestra el desglose en materiales base; buscar "Sangre de Seidr" en la palette abre la receta "Círculo mágico Aegishjálmur".
 
 **Estado:** ✅ hecha.
